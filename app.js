@@ -122,16 +122,27 @@
 
   function formatNewsDate(raw) {
     const s = String(raw || "");
-    const m = s.match(/^(?:[A-Z][a-z]{2}\s+){2}\d{1,2}\s+\d{4}\s+\d{2}:\d{2}:\d{2}\s+GMT[+-]\d{4}(?:\s*\([^)]*\))?(.*)$/);
-    if (!m) return s;
-    const d = new Date(s.split(" • ")[0]);
+    const parts = s.split(" • ");
+    const datePart = (parts[0] || "").replace(/\s*\([^)]*\)/g, "").trim();
+    if (!/GMT[+-]\d{4}/.test(datePart)) return s;
+    const d = new Date(datePart);
     if (isNaN(d.getTime())) return s;
     const thai = `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} น.`;
-    return `${thai}${m[1] || ""}`;
+    return parts.length > 1 ? `${thai} • ${parts.slice(1).join(" • ")}` : thai;
+  }
+
+  function fixDriveImgUrl(url) {
+    const s = String(url || "").trim();
+    if (!s) return "";
+    // Reject truncated/corrupt base64 data URLs from older posts
+    if (s.startsWith("data:image/") && s.length >= 45900) return "";
+    const m = s.match(/drive\.google\.com\/thumbnail\?id=([^&]+)/);
+    if (m) return `https://lh3.googleusercontent.com/d/${m[1]}=w900`;
+    return s;
   }
 
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { filterSystems, authenticateUser, canAccessExecutive, isAdminUser, canManageNews };
+    module.exports = { filterSystems, authenticateUser, canAccessExecutive, isAdminUser, canManageNews, formatNewsDate, fixDriveImgUrl };
     return;
   }
 
@@ -1773,12 +1784,14 @@
         <button class="btn-primary" id="openBroadcastBtn" style="margin:0 0 14px">+ แจ้งข่าวถึงครูและ ผอ. ทุกคน</button>
         ${state.announcements
           .map(
-            (a, i) => `
+            (a, i) => {
+              const safeImg = fixDriveImgUrl(a.image);
+              return `
             <div class="info-card ${a.urgent ? "urgent" : ""}" style="animation-delay:${i * 28}ms">
               <h3>${a.title}</h3>
               <div class="info-meta">${formatNewsDate(a.date)}</div>
               <p>${a.body}</p>
-              ${a.image ? `<img class="news-thumb" src="${a.image}" data-img-preview="${a.id}" onerror="this.style.display='none'" alt="" />` : ""}
+              ${safeImg ? `<img class="news-thumb" src="${safeImg}" data-img-preview="${a.id}" onerror="this.style.display='none'" alt="" />` : ""}
               ${
                 canManageNews(state.currentUser, a)
                   ? `<div class="news-card-foot">
@@ -1787,7 +1800,8 @@
                     </div>`
                   : ""
               }
-            </div>`
+            </div>`;
+            }
           )
           .join("")}`;
     } else {

@@ -746,6 +746,11 @@
       return json;
     }
 
+    function toLh3(url, w = 800) {
+      const m = String(url || "").match(/id=([^&]+)/);
+      return m ? `https://lh3.googleusercontent.com/d/${m[1]}=w${w}` : url;
+    }
+
     function openSheet(html) {
       $("sheetContent").innerHTML = html;
       $("sheetBackdrop").classList.add("open");
@@ -1120,7 +1125,7 @@
             if (res && res.photo) {
               state.photos.unshift(res.photo);
               renderPhotos();
-              if (!firstCover) firstCover = res.photo.full || res.photo.thumb || "";
+              if (!firstCover) firstCover = toLh3(res.photo.full || res.photo.thumb || "", 900);
             }
             item.status = "สำเร็จ";
             item.cls = "done";

@@ -154,7 +154,7 @@ input, textarea {
 }
 
 @media (max-width: 520px) {
-  html, body { background: #FFFFFF; }
+  html, body { background: var(--ios-bg); }
   .stage { padding: 0; display: block; }
   .iphone-frame {
     width: 100%;
@@ -1663,7 +1663,7 @@ input, textarea {
 /* Real Mobile Device & Installed PWA: Always hide desktop iPhone hardware shell & fake status bar */
 @media (max-width: 520px), (display-mode: standalone), (pointer: coarse) {
   html, body {
-    background: #FFFFFF;
+    background: var(--ios-bg);
     overflow: hidden;
     position: fixed;
     width: 100%;

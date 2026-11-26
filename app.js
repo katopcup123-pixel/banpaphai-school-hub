@@ -3,7 +3,7 @@
   const STORAGE_USER = "bpp_connect_user_v1";
   const STORAGE_THEME = "bpp_connect_theme_v1";
   const STORAGE_ACCENT = "bpp_connect_accent_v1";
-  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v5";
+  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v6";
   const STORAGE_REMOTE = "bpp_connect_remote_url_v1";
   const STORAGE_NEWS_API = "bpp_connect_news_api_v1";
   const STORAGE_ONESIGNAL = "bpp_connect_onesignal_id_v1";
@@ -287,10 +287,14 @@
   };
 
   function applyTheme() {
+    const isDark = state.theme === "dark";
+    const bgHex = isDark ? "#0B0D12" : "#F7F9FC";
     document.documentElement.dataset.theme = state.theme;
     document.documentElement.style.setProperty("--ios-blue", state.accent);
+    document.documentElement.style.backgroundColor = bgHex;
+    if (document.body) document.body.style.backgroundColor = bgHex;
     if (els.metaThemeColor) {
-      els.metaThemeColor.content = state.theme === "dark" ? "#0B0D12" : "#F7F9FC";
+      els.metaThemeColor.content = isDark ? "#121216" : "#F7F9FC";
     }
     try {
       localStorage.setItem(STORAGE_THEME, state.theme);
@@ -1540,7 +1544,7 @@
   function closeInAppViewer() {
     haptic();
     clearTimeout(inAppFallbackTimer);
-    const shouldRefreshNews = activeInAppUrl.includes("album.html") || activeInAppUrl.includes("docs.html");
+    const shouldRefreshNews = activeInAppUrl.includes("album.html") || activeInAppUrl.includes("docs.html") || activeInAppUrl.includes("attendance.html");
     els.inAppOverlay.classList.remove("open");
     setTimeout(() => {
       els.inAppOverlay.classList.add("hidden");
@@ -1836,13 +1840,173 @@
     }
   }
 
+  // --- Admin Student Database Manager (Import DMC CSV / Add / Edit / Delete) ---
+  function openAdminStudentFormSheet(existing = null) {
+    if (!isAdminUser(state.currentUser) || !window.BPP_STUDENTS_HELPER) return;
+    haptic();
+    const s = existing || { id: "", code: "", grade: "ป.1", room: "1", gender: "ช", prefix: "เด็กชาย", firstName: "", lastName: "" };
+    const grades = window.BPP_GRADE_ORDER || ["อ.2", "อ.3", "ป.1", "ป.2", "ป.3", "ป.4", "ป.5", "ป.6"];
+    els.sheetBody.innerHTML = `
+      <h3 style="margin:0 0 10px">${existing ? "แก้ไขข้อมูลนักเรียน" : "เพิ่มนักเรียนใหม่"}</h3>
+      <select class="admin-select" id="stuGrade">
+        ${grades.map((g) => `<option value="${g}" ${s.grade === g ? "selected" : ""}>ชั้น ${g}</option>`).join("")}
+      </select>
+      <select class="admin-select" id="stuGender">
+        <option value="ช" ${s.gender === "ช" ? "selected" : ""}>ชาย (เด็กชาย)</option>
+        <option value="ญ" ${s.gender === "ญ" ? "selected" : ""}>หญิง (เด็กหญิง)</option>
+      </select>
+      <input class="admin-input" id="stuCode" placeholder="เลขประจำตัวนักเรียน 4 หลัก (เช่น 2094)" value="${s.code}" />
+      <input class="admin-input" id="stuFirst" placeholder="ชื่อจริง" value="${s.firstName}" />
+      <input class="admin-input" id="stuLast" placeholder="นามสกุล" value="${s.lastName}" />
+      <button type="button" class="btn-primary" id="stuSaveBtn">${existing ? "บันทึกการแก้ไข" : "เพิ่มนักเรียน"}</button>
+      <button type="button" class="btn-secondary" id="stuCancelBtn">ยกเลิก</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+    document.getElementById("stuCancelBtn").onclick = closeSheet;
+    document.getElementById("stuSaveBtn").onclick = () => {
+      const firstName = document.getElementById("stuFirst").value.trim();
+      const lastName = document.getElementById("stuLast").value.trim();
+      const grade = document.getElementById("stuGrade").value;
+      const gender = document.getElementById("stuGender").value;
+      const code = document.getElementById("stuCode").value.trim() || String(Date.now()).slice(-4);
+      if (!firstName) { notifyIsland("กรุณากรอกชื่อนักเรียน"); return; }
+
+      const list = window.BPP_STUDENTS_HELPER.loadStudents();
+      const entry = {
+        id: existing ? existing.id : (code || `stu-${Date.now()}`),
+        code,
+        grade,
+        room: "1",
+        gender,
+        prefix: gender === "ญ" ? "เด็กหญิง" : "เด็กชาย",
+        firstName,
+        lastName
+      };
+      const next = existing
+        ? list.map((x) => (x.id === existing.id ? entry : x))
+        : [...list, entry];
+      window.BPP_STUDENTS_HELPER.saveStudents(next);
+      closeSheet();
+      playSound("success");
+      notifyIsland(existing ? `แก้ไข ${entry.prefix}${firstName} แล้ว` : `เพิ่ม ${entry.prefix}${firstName} (${grade}) แล้ว`);
+      render();
+    };
+  }
+
+  function openAdminStudentListSheet() {
+    if (!isAdminUser(state.currentUser) || !window.BPP_STUDENTS_HELPER) return;
+    haptic();
+    let filterGrade = "all";
+    let query = "";
+
+    function drawList() {
+      const list = window.BPP_STUDENTS_HELPER.loadStudents();
+      const grades = ["all", ...(window.BPP_GRADE_ORDER || []).filter((g) => list.some((s) => s.grade === g))];
+      const q = query.trim().toLowerCase();
+      const shown = list.filter((s) => {
+        if (filterGrade !== "all" && s.grade !== filterGrade) return false;
+        if (!q) return true;
+        return `${s.firstName} ${s.lastName} ${s.code} ${s.grade}`.toLowerCase().includes(q);
+      });
+
+      els.sheetBody.innerHTML = `
+        <h3 style="margin:0 0 8px">รายชื่อนักเรียนทั้งหมด (${list.length} คน)</h3>
+        <input class="admin-input" id="stuSearchBox" placeholder="ค้นหาชื่อ หรือรหัสนักเรียน..." value="${query}" style="margin-top:0" />
+        <div style="display:flex;gap:6px;overflow-x:auto;padding:8px 0 6px">
+          ${grades.map((g) => `<button type="button" class="admin-mini-btn" data-sgrade="${g}" style="${filterGrade === g ? "background:var(--ios-blue);color:#fff" : ""}">${g === "all" ? "ทั้งหมด" : g}</button>`).join("")}
+        </div>
+        <div style="max-height:46vh;overflow-y:auto;margin:6px 0 10px">
+          ${shown.map((s) => `
+            <div class="admin-sys-row">
+              <div style="min-width:0;flex:1">
+                <strong style="font-size:13px">${s.prefix}${s.firstName} ${s.lastName}</strong>
+                <div class="info-meta" style="margin:0">ชั้น ${s.grade} • รหัส ${s.code}</div>
+              </div>
+              <button type="button" class="admin-mini-btn" data-stu-edit="${s.id}">แก้</button>
+              <button type="button" class="admin-mini-btn del" data-stu-del="${s.id}">ลบ</button>
+            </div>`).join("") || `<div style="text-align:center;padding:18px;font-size:12.5px;color:var(--ios-secondary)">ไม่พบรายชื่อนักเรียน</div>`}
+        </div>
+        <button type="button" class="btn-secondary" id="stuListCloseBtn">ปิด</button>
+      `;
+
+      document.getElementById("stuListCloseBtn").onclick = closeSheet;
+      const box = document.getElementById("stuSearchBox");
+      box.oninput = (e) => { query = e.target.value; drawList(); };
+      els.sheetBody.querySelectorAll("[data-sgrade]").forEach((b) => {
+        b.onclick = () => { filterGrade = b.dataset.sgrade; drawList(); };
+      });
+      els.sheetBody.querySelectorAll("[data-stu-edit]").forEach((b) => {
+        b.onclick = () => {
+          const target = list.find((x) => x.id === b.dataset.stuEdit);
+          if (target) openAdminStudentFormSheet(target);
+        };
+      });
+      els.sheetBody.querySelectorAll("[data-stu-del]").forEach((b) => {
+        b.onclick = () => {
+          const next = list.filter((x) => x.id !== b.dataset.stuDel);
+          window.BPP_STUDENTS_HELPER.saveStudents(next);
+          notifyIsland("ลบรายชื่อนักเรียนแล้ว");
+          drawList();
+          render();
+        };
+      });
+    }
+
+    els.sheetBackdrop.classList.add("open");
+    drawList();
+  }
+
+  els.main.addEventListener("change", (e) => {
+    if (e.target.id !== "adminImportStuCsv" || !isAdminUser(state.currentUser) || !window.BPP_STUDENTS_HELPER) return;
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const parsed = window.BPP_STUDENTS_HELPER.parseCsv(String(reader.result || ""));
+      if (!parsed.length) {
+        notifyIsland("ไม่พบรายชื่อนักเรียนในไฟล์ CSV กรุณาตรวจสอบรูปแบบไฟล์ DMC");
+        return;
+      }
+      window.BPP_STUDENTS_HELPER.saveStudents(parsed);
+      playSound("success");
+      notifyIsland(`นำเข้าฐานข้อมูลนักเรียนสำเร็จ ${parsed.length} คน!`);
+      render();
+    };
+    reader.readAsText(file, "UTF-8");
+  });
+
   function renderSettings() {
     const u = state.currentUser;
     const isAdmin = isAdminUser(u);
     const isDark = state.theme === "dark";
 
+    const stuHelper = window.BPP_STUDENTS_HELPER;
+    const stuList = stuHelper ? stuHelper.loadStudents() : [];
+    const stuGradesSummary = stuList.length
+      ? (window.BPP_GRADE_ORDER || [])
+          .map((g) => {
+            const c = stuList.filter((s) => s.grade === g).length;
+            return c ? `${g}: ${c}` : "";
+          })
+          .filter(Boolean)
+          .join(" • ")
+      : "ยังไม่มีข้อมูล";
+
     const adminHtml = isAdmin
       ? `
+        <div class="info-card">
+          <h3>ฐานข้อมูลนักเรียน (${stuList.length} คน) <span class="admin-badge">เฉพาะแอดมิน</span></h3>
+          <div class="info-meta">${stuGradesSummary}</div>
+          <label class="btn-primary" style="display:block;text-align:center;cursor:pointer">
+            📂 นำเข้าไฟล์รายชื่อนักเรียน (.csv / DMC ปีใหม่)
+            <input type="file" id="adminImportStuCsv" accept=".csv,text/csv" style="display:none" />
+          </label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+            <button type="button" class="btn-secondary" id="adminAddStuBtn" style="margin:0">+ เพิ่มนักเรียน</button>
+            <button type="button" class="btn-secondary" id="adminManageStuBtn" style="margin:0">📋 แก้ไข / ลบ</button>
+          </div>
+          <button type="button" class="btn-secondary" id="adminResetStuBtn" style="margin-top:8px;font-size:12px">รีเซ็ตกลับรายชื่อตั้งต้น (${(window.BPP_DEFAULT_STUDENTS || []).length} คน)</button>
+        </div>
         <div class="info-card">
           <h3>จัดการผู้ใช้งาน <span class="admin-badge">เฉพาะแอดมิน</span></h3>
           <div class="info-meta">เพิ่มผู้ใช้ หรือรีเซ็ตรหัสผ่านให้ครูที่ลืมรหัสได้ทันที</div>
@@ -2163,6 +2327,16 @@
 
     if (e.target.id === "editSelfProfileBtn") { openSelfProfileSheet(); return; }
     if (e.target.id === "adminAddUserBtn") { openAdminUserSheet(null); return; }
+    if (e.target.id === "adminAddStuBtn" && isAdminUser(state.currentUser)) { openAdminStudentFormSheet(null); return; }
+    if (e.target.id === "adminManageStuBtn" && isAdminUser(state.currentUser)) { openAdminStudentListSheet(); return; }
+    if (e.target.id === "adminResetStuBtn" && isAdminUser(state.currentUser)) {
+      if (window.BPP_STUDENTS_HELPER) {
+        window.BPP_STUDENTS_HELPER.resetStudents();
+        notifyIsland("รีเซ็ตรายชื่อนักเรียนกลับค่าตั้งต้นแล้ว");
+        render();
+      }
+      return;
+    }
 
     const admUsrEdit = e.target.closest("[data-adm-usr-edit]");
     if (admUsrEdit && isAdminUser(state.currentUser)) {

@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>เช็คสถิตินักเรียน — BPP Connect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #F2F4F8;
+      --surface: #FFFFFF;
+      --surface-soft: rgba(255, 255, 255, 0.86);
+      --text: #1C1C1E;
+      --secondary: #6C6C70;
+      --sep: rgba(60, 60, 67, 0.12);
+      --accent: #007AFF;
+      --green: #16A34A;
+      --red: #DC2626;
+      --amber: #D97706;
+      --purple: #7C3AED;
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    [data-theme="dark"] {
+      --bg: #0B0D12;
+      --surface: #1C1C1E;
+      --surface-soft: rgba(28, 28, 32, 0.88);
+      --text: #F2F2F7;
+      --secondary: #98989F;
+      --sep: rgba(255, 255, 255, 0.1);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    .app { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+
+    /* Top Bar */
+    .topbar {
+      flex-shrink: 0;
+      padding: 12px 16px 10px;
+      background: var(--surface-soft);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border-bottom: 0.5px solid var(--sep);
+    }
+    .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .title-wrap h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+    .user-sub { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary); margin-top: 2px; }
+    .mini-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
+
+    .date-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--sep);
+      border-radius: 12px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .date-pill input[type="date"] {
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Segmented Tabs */
+    .seg-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      background: rgba(118, 118, 128, 0.14);
+      padding: 3px;
+      border-radius: 12px;
+    }
+    .seg-tab {
+      border: none;
+      background: transparent;
+      color: var(--secondary);
+      font: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 7px 6px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .seg-tab.active {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .body-scroll {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 12px 14px 36px;
+    }
+
+    /* Animated KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border-radius: 15px;
+      padding: 10px 6px;
+      text-align: center;
+      border: 1px solid var(--sep);
+      animation: popIn 0.35s var(--spring) both;
+    }
+    .kpi-label { font-size: 11px; color: var(--secondary); font-weight: 600; }
+    .kpi-val { font-size: 20px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .kpi-val.c-green { color: var(--green); }
+    .kpi-val.c-red { color: var(--red); }
+    .kpi-val.c-amber { color: var(--amber); }
+    .kpi-val.c-accent { color: var(--accent); }
+
+    /* Grade Filter Pills */
+    .grade-bar {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      padding: 2px 0 10px;
+      scrollbar-width: none;
+    }
+    .grade-bar::-webkit-scrollbar { display: none; }
+    .grade-pill {
+      flex-shrink: 0;
+      border: 1px solid var(--sep);
+      background: var(--surface);
+      color: var(--text);
+      font: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 7px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform 0.14s ease, background 0.2s ease;
+    }
+    .grade-pill:active { transform: scale(0.94); }
+    .grade-pill.active { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+
+    .quick-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .thai-date-label { font-size: 12.5px; font-weight: 600; color: var(--secondary); }
+
+    .btn-primary, .btn-soft {
+      border: none;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 9px 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.14s ease, opacity 0.2s ease;
+    }
+    .btn-primary { background: var(--accent); color: #FFFFFF; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.24); }
+    .btn-soft { background: var(--surface); color: var(--text); border: 1px solid var(--sep); }
+    .btn-primary:active, .btn-soft:active { transform: scale(0.96); }
+
+    /* Student Check-in Cards */
+    .stu-list { display: flex; flex-direction: column; gap: 8px; }
+    .stu-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 11px 12px;
+      border: 1px solid var(--sep);
+      animation: slideUp 0.26s ease both;
+    }
+    .stu-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .stu-name-wrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .stu-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: rgba(0, 122, 255, 0.1);
+      color: var(--accent);
+      font-size: 11.5px;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .stu-num.female { background: rgba(236, 72, 153, 0.12); color: #DB2777; }
+    .stu-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stu-meta { font-size: 11px; color: var(--secondary); }
+
+    .status-pills { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .st-btn {
+      border: 1px solid var(--sep);
+      background: var(--bg);
+      color: var(--secondary);
+      font: inherit;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 6px 2px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .st-btn:active { transform: scale(0.93); }
+    .st-btn.active.s-present { background: var(--green); color: #FFF; border-color: var(--green); }
+    .st-btn.active.s-absent  { background: var(--red); color: #FFF; border-color: var(--red); }
+    .st-btn.active.s-sick    { background: var(--amber); color: #FFF; border-color: var(--amber); }
+    .st-btn.active.s-personal{ background: var(--purple); color: #FFF; border-color: var(--purple); }
+    .st-btn.active.s-late    { background: var(--accent); color: #FFF; border-color: var(--accent); }
+
+    .action-footer {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    /* Statistics Table */
+    .card-box {
+      background: var(--surface);
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid var(--sep);
+      margin-bottom: 12px;
+    }
+    .card-box h2 { margin: 0 0 10px; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+    .table-wrap { overflow-x: auto; }
+    table.stat-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    table.stat-table th, table.stat-table td {
+      padding: 8px 6px;
+      border-bottom: 0.5px solid var(--sep);
+      text-align: center;
+      white-space: nowrap;
+    }
+    table.stat-table th:first-child, table.stat-table td:first-child { text-align: left; font-weight: 600; }
+    table.stat-table thead th { font-size: 11.5px; color: var(--secondary); font-weight: 700; }
+    table.stat-table tfoot td { font-weight: 700; border-top: 1.5px solid var(--sep); border-bottom: none; background: rgba(0, 122, 255, 0.06); }
+
+    .absent-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 0.5px solid var(--sep);
+      font-size: 13px;
+    }
+    .absent-item:last-child { border-bottom: none; }
+    .tag-st {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      color: #FFF;
+    }
+    .tag-absent { background: var(--red); }
+    .tag-sick { background: var(--amber); }
+    .tag-personal { background: var(--purple); }
+    .tag-late { background: var(--accent); }
+
+    /* Official A4 Print Report Preview */
+    .report-toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .report-paper {
+      background: #FFFFFF;
+      color: #111827;
+      border-radius: 14px;
+      padding: 22px 18px;
+      box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+      border: 1px solid #E5E7EB;
+    }
+    .rep-head { text-align: center; margin-bottom: 14px; }
+    .rep-head img { width: 54px; height: 54px; object-fit: contain; margin-bottom: 6px; }
+    .rep-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: #111827; }
+    .rep-head p { margin: 3px 0 0; font-size: 13px; color: #374151; }
+    .rep-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 12px 0; }
+    .rep-table th, .rep-table td { border: 1px solid #374151; padding: 6px 4px; text-align: center; color: #111827; }
+    .rep-table th { background: #F3F4F6; font-weight: 700; }
+    .rep-table td:first-child { text-align: left; padding-left: 8px; font-weight: 600; }
+    .rep-table tfoot td { font-weight: 700; background: #F9FAFB; }
+    .rep-absent-box { margin-top: 12px; font-size: 12.5px; line-height: 1.65; color: #111827; }
+    .rep-sign-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 28px;
+      text-align: center;
+      font-size: 12.5px;
+      color: #111827;
+    }
+    .rep-sign-line { margin-top: 32px; }
+
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 90;
+      background: rgba(15, 23, 42, 0.92);
+      color: #FFF;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 999px;
+      display: none;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.show { display: block; }
+    .hidden { display: none !important; }
+
+    @keyframes popIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Crisp Official A4 Print Mode */
+    @media print {
+      @page { size: A4 portrait; margin: 14mm; }
+      html, body { height: auto; background: #FFFFFF !important; color: #000 !important; }
+      .app { display: block; height: auto; overflow: visible; }
+      .topbar, .report-toolbar, .toast, #viewCheckin, #viewStats { display: none !important; }
+      .body-scroll { overflow: visible; padding: 0 !important; }
+      #viewReport { display: block !important; }
+      .report-paper { box-shadow: none; border: none; padding: 0; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="top-row">
+        <div class="title-wrap">
+          <h1>เช็คสถิตินักเรียน</h1>
+          <div class="user-sub" id="userSub">โรงเรียนบ้านป่าไผ่</div>
+        </div>
+        <label class="date-pill">
+          <span>📅</span>
+          <input type="date" id="attDateInput" />
+        </label>
+      </div>
+      <div class="seg-tabs" role="tablist">
+        <button type="button" class="seg-tab active" data-view="checkin">เช็คชื่อรายวัน</button>
+        <button type="button" class="seg-tab" data-view="stats">สรุปสถิติ</button>
+        <button type="button" class="seg-tab" data-view="report">แบบรายงาน A4</button>
+      </div>
+    </header>
+
+    <main class="body-scroll">
+      <!-- 1. Check-in View -->
+      <section id="viewCheckin">
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">มาเรียน</div><div class="kpi-val c-green" id="kpiPresent">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">ขาด</div><div class="kpi-val c-red" id="kpiAbsent">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">ลา/สาย</div><div class="kpi-val c-amber" id="kpiLeave">0</div></div>
+          <div class="kpi-card"><div class="kpi-label">ร้อยละ</div><div class="kpi-val c-accent" id="kpiPct">100%</div></div>
+        </div>
+
+        <div class="grade-bar" id="gradeBar"></div>
+
+        <div class="quick-bar">
+          <span class="thai-date-label" id="thaiDateLabel"></span>
+          <button type="button" class="btn-soft" id="markAllPresentBtn">✓ มาครบทุกคน (ชั้นนี้)</button>
+        </div>
+
+        <div class="stu-list" id="studentList"></div>
+
+        <div class="action-footer">
+          <button type="button" class="btn-primary" id="saveAttBtn">💾 บันทึกสถิติวันนี้</button>
+          <button type="button" class="btn-soft" id="shareNewsBtn">📢 ส่งสรุปเข้าประกาศ</button>
+        </div>
+      </section>
+
+      <!-- 2. Statistics View -->
+      <section id="viewStats" class="hidden">
+        <div class="quick-bar">
+          <div class="seg-tabs" style="width:210px">
+            <button type="button" class="seg-tab active" data-period="day">สรุปรายวัน</button>
+            <button type="button" class="seg-tab" data-period="month">สรุปรายเดือน</button>
+          </div>
+          <button type="button" class="btn-primary" id="goPrintBtn">🖨️ ปริ้นรายงาน A4</button>
+        </div>
+        <div class="card-box">
+          <h2 id="statsHeading">สถิติแยกตามระดับชั้น</h2>
+          <div class="table-wrap" id="statsTableWrap"></div>
+        </div>
+        <div class="card-box" id="absentCard">
+          <h2>รายชื่อนักเรียนที่ไม่มาเรียน / มาสาย</h2>
+          <div id="absentListWrap"></div>
+        </div>
+      </section>
+
+      <!-- 3. Official A4 Print Report View -->
+      <section id="viewReport" class="hidden">
+        <div class="report-toolbar">
+          <div class="seg-tabs" style="flex:1;min-width:190px">
+            <button type="button" class="seg-tab active" data-rperiod="day">รายงานรายวัน</button>
+            <button type="button" class="seg-tab" data-rperiod="month">รายงานรายเดือน</button>
+          </div>
+          <button type="button" class="btn-primary" id="printNowBtn">🖨️ ปริ้น / บันทึก PDF</button>
+        </div>
+        <article class="report-paper" id="reportPaper"></article>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="./apps-config.js"></script>
+  <script src="./students-data.js"></script>
+  <script>
+    // Auto-inherit Dark Mode & Accent Color from BPP Connect
+    document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
+    document.documentElement.style.setProperty("--accent", localStorage.getItem("bpp_connect_accent_v1") || "#007AFF");
+
+    const STORAGE_ATT = "bpp_connect_attendance_v1";
+    const THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+    const THAI_DAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+    const STATUS_OPTS = [
+      { id: "present", label: "มา", cls: "s-present" },
+      { id: "absent", label: "ขาด", cls: "s-absent" },
+      { id: "sick", label: "ลาป่วย", cls: "s-sick" },
+      { id: "personal", label: "ลากิจ", cls: "s-personal" },
+      { id: "late", label: "สาย", cls: "s-late" }
+    ];
+    const STATUS_LABEL = { present: "มาเรียน", absent: "ขาดเรียน", sick: "ลาป่วย", personal: "ลากิจ", late: "มาสาย" };
+
+    function getLoggedInTeacher() {
+      const uid = localStorage.getItem("bpp_connect_user_v1");
+      let users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+      try {
+        const raw = localStorage.getItem("bpp_connect_users_v3");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) users = parsed;
+        }
+      } catch (_) {}
+      return users.find((u) => u.id === uid) || users[0] || { id: "", name: "ครูเวรประจำวัน", shortName: "คุณครู", avatar: "" };
+    }
+
+    function todayYmd() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function formatThaiFullDate(ymd) {
+      const [y, m, d] = ymd.split("-").map(Number);
+      const dt = new Date(y, m - 1, d);
+      return `วัน${THAI_DAYS[dt.getDay()]}ที่ ${d} ${THAI_MONTHS[m - 1]} พ.ศ. ${y + 543}`;
+    }
+
+    function formatThaiMonth(ymd) {
+      const [y, m] = ymd.split("-").map(Number);
+      return `เดือน${THAI_MONTHS[m - 1]} พ.ศ. ${y + 543}`;
+    }
+
+    const teacher = getLoggedInTeacher();
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      students: window.BPP_STUDENTS_HELPER.loadStudents(),
+      records: (() => { try { return JSON.parse(localStorage.getItem(STORAGE_ATT) || "{}"); } catch (_) { return {}; } })(),
+      date: todayYmd(),
+      grade: "all",
+      view: "checkin",
+      period: "day"
+    };
+
+    function showToast(msg) {
+      const el = $("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 2500);
+    }
+
+    function getDayMap(ymd) {
+      if (!state.records[ymd]) state.records[ymd] = {};
+      return state.records[ymd];
+    }
+
+    function getStatus(ymd, stuId) {
+      return (state.records[ymd] && state.records[ymd][stuId]) || "present";
+    }
+
+    function saveRecords() {
+      try { localStorage.setItem(STORAGE_ATT, JSON.stringify(state.records)); } catch (_) {}
+    }
+
+    function getOrderedGrades() {
+      const set = new Set(state.students.map((s) => s.grade));
+      const order = window.BPP_GRADE_ORDER || [];
+      return [...set].sort((a, b) => {
+        const ia = order.indexOf(a), ib = order.indexOf(b);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+      });
+    }
+
+    function computeDailySummary(ymd) {
+      const grades = getOrderedGrades();
+      const rows = grades.map((g) => {
+        const list = state.students.filter((s) => s.grade === g);
+        const male = list.filter((s) => s.gender === "ช").length;
+        const female = list.filter((s) => s.gender === "ญ").length;
+        let present = 0, absent = 0, sick = 0, personal = 0, late = 0;
+        list.forEach((s) => {
+          const st = getStatus(ymd, s.id);
+          if (st === "present") present++;
+          else if (st === "absent") absent++;
+          else if (st === "sick") sick++;
+          else if (st === "personal") personal++;
+          else if (st === "late") late++;
+        });
+        const attended = present + late;
+        const pct = list.length ? ((attended / list.length) * 100).toFixed(1) : "0.0";
+        return { grade: g, male, female, total: list.length, present, absent, sick, personal, late, attended, pct };
+      });
+
+      const totals = rows.reduce((acc, r) => {
+        acc.male += r.male; acc.female += r.female; acc.total += r.total;
+        acc.present += r.present; acc.absent += r.absent; acc.sick += r.sick;
+        acc.personal += r.personal; acc.late += r.late; acc.attended += r.attended;
+        return acc;
+      }, { male: 0, female: 0, total: 0, present: 0, absent: 0, sick: 0, personal: 0, late: 0, attended: 0 });
+      totals.pct = totals.total ? ((totals.attended / totals.total) * 100).toFixed(1) : "0.0";
+
+      const nonPresent = state.students
+        .map((s) => ({ student: s, status: getStatus(ymd, s.id) }))
+        .filter((x) => x.status !== "present");
+
+      return { rows, totals, nonPresent, daysCount: 1 };
+    }
+
+    function computeMonthlySummary(ymd) {
+      const prefix = ymd.slice(0, 7);
+      const savedDays = Object.keys(state.records).filter((k) => k.startsWith(prefix)).sort();
+      const days = savedDays.length ? savedDays : [ymd];
+      const grades = getOrderedGrades();
+
+      const rows = grades.map((g) => {
+        const list = state.students.filter((s) => s.grade === g);
+        const male = list.filter((s) => s.gender === "ช").length;
+        const female = list.filter((s) => s.gender === "ญ").length;
+        let present = 0, absent = 0, sick = 0, personal = 0, late = 0;
+        days.forEach((d) => {
+          list.forEach((s) => {
+            const st = getStatus(d, s.id);
+            if (st === "present") present++;
+            else if (st === "absent") absent++;
+            else if (st === "sick") sick++;
+            else if (st === "personal") personal++;
+            else if (st === "late") late++;
+          });
+        });
+        const totalSlots = list.length * days.length;
+        const attended = present + late;
+        const pct = totalSlots ? ((attended / totalSlots) * 100).toFixed(1) : "0.0";
+        return { grade: g, male, female, total: list.length, present, absent, sick, personal, late, attended, pct };
+      });
+
+      const totals = rows.reduce((acc, r) => {
+        acc.male += r.male; acc.female += r.female; acc.total += r.total;
+        acc.present += r.present; acc.absent += r.absent; acc.sick += r.sick;
+        acc.personal += r.personal; acc.late += r.late; acc.attended += r.attended;
+        return acc;
+      }, { male: 0, female: 0, total: 0, present: 0, absent: 0, sick: 0, personal: 0, late: 0, attended: 0 });
+      const totalSlots = totals.total * days.length;
+      totals.pct = totalSlots ? ((totals.attended / totalSlots) * 100).toFixed(1) : "0.0";
+
+      return { rows, totals, nonPresent: [], daysCount: days.length };
+    }
+
+    function renderCheckin() {
+      const sum = computeDailySummary(state.date);
+      $("kpiPresent").textContent = sum.totals.present;
+      $("kpiAbsent").textContent = sum.totals.absent;
+      $("kpiLeave").textContent = sum.totals.sick + sum.totals.personal + sum.totals.late;
+      $("kpiPct").textContent = `${sum.totals.pct}%`;
+      $("thaiDateLabel").textContent = formatThaiFullDate(state.date);
+
+      const grades = ["all", ...getOrderedGrades()];
+      $("gradeBar").innerHTML = grades.map((g) => {
+        const cnt = g === "all" ? state.students.length : state.students.filter((s) => s.grade === g).length;
+        return `<button type="button" class="grade-pill ${state.grade === g ? "active" : ""}" data-grade="${g}">${g === "all" ? "ทั้งหมด" : g} (${cnt})</button>`;
+      }).join("");
+
+      const filtered = state.grade === "all" ? state.students : state.students.filter((s) => s.grade === state.grade);
+      $("studentList").innerHTML = filtered.map((s, idx) => {
+        const cur = getStatus(state.date, s.id);
+        return `
+          <div class="stu-card" style="animation-delay:${Math.min(idx, 12) * 18}ms">
+            <div class="stu-top">
+              <div class="stu-name-wrap">
+                <div class="stu-num ${s.gender === "ญ" ? "female" : ""}">${idx + 1}</div>
+                <div style="min-width:0">
+                  <div class="stu-name">${s.prefix}${s.firstName} ${s.lastName}</div>
+                  <div class="stu-meta">ชั้น ${s.grade} • รหัส ${s.code} • ${s.gender === "ญ" ? "หญิง" : "ชาย"}</div>
+                </div>
+              </div>
+            </div>
+            <div class="status-pills">
+              ${STATUS_OPTS.map((o) => `
+                <button type="button" class="st-btn ${cur === o.id ? `active ${o.cls}` : ""}" data-stu="${s.id}" data-st="${o.id}">${o.label}</button>
+              `).join("")}
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    function renderStats() {
+      const data = state.period === "month" ? computeMonthlySummary(state.date) : computeDailySummary(state.date);
+      $("statsHeading").textContent = state.period === "month"
+        ? `สถิติสะสม${formatThaiMonth(state.date)} (${data.daysCount} วันทำการ)`
+        : `สถิติประจำ${formatThaiFullDate(state.date)}`;
+
+      $("statsTableWrap").innerHTML = `
+        <table class="stat-table">
+          <thead>
+            <tr>
+              <th>ชั้น</th><th>ชาย</th><th>หญิง</th><th>รวม</th>
+              <th>มา</th><th>ขาด</th><th>ลา</th><th>สาย</th><th>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.rows.map((r) => `
+              <tr>
+                <td>${r.grade}</td><td>${r.male}</td><td>${r.female}</td><td>${r.total}</td>
+                <td style="color:var(--green);font-weight:700">${r.present}</td>
+                <td style="color:${r.absent ? "var(--red)" : "inherit"}">${r.absent}</td>
+                <td>${r.sick + r.personal}</td>
+                <td>${r.late}</td>
+                <td><strong>${r.pct}%</strong></td>
+              </tr>`).join("")}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>รวม</td><td>${data.totals.male}</td><td>${data.totals.female}</td><td>${data.totals.total}</td>
+              <td>${data.totals.present}</td><td>${data.totals.absent}</td>
+              <td>${data.totals.sick + data.totals.personal}</td><td>${data.totals.late}</td>
+              <td>${data.totals.pct}%</td>
+            </tr>
+          </tfoot>
+        </table>`;
+
+      if (state.period === "month") {
+        $("absentCard").classList.add("hidden");
+      } else {
+        $("absentCard").classList.remove("hidden");
+        $("absentListWrap").innerHTML = data.nonPresent.length === 0
+          ? `<div style="font-size:13px;color:var(--green);font-weight:600;padding:6px 0">🎉 นักเรียนมาเรียนครบทุกคน (100%)</div>`
+          : data.nonPresent.map(({ student: s, status }) => `
+              <div class="absent-item">
+                <div><strong>${s.prefix}${s.firstName} ${s.lastName}</strong> <span style="color:var(--secondary);font-size:12px">(${s.grade})</span></div>
+                <span class="tag-st tag-${status}">${STATUS_LABEL[status]}</span>
+              </div>`).join("");
+      }
+    }
+
+    function renderReport() {
+      const isMonth = state.period === "month";
+      const data = isMonth ? computeMonthlySummary(state.date) : computeDailySummary(state.date);
+      const periodText = isMonth
+        ? `ประจำ${formatThaiMonth(state.date)} (รวมบันทึก ${data.daysCount} วัน)`
+        : `ประจำ${formatThaiFullDate(state.date)}`;
+
+      const absentHtml = !isMonth
+        ? `<div class="rep-absent-box">
+            <strong>รายชื่อนักเรียนที่ไม่มาเรียน / มาสาย:</strong>
+            ${data.nonPresent.length === 0
+              ? ` ไม่มี (มาเรียนครบทุกคน)`
+              : `<ol style="margin:6px 0 0;padding-left:20px">${data.nonPresent.map(({ student: s, status }) =>
+                  `<li>${s.prefix}${s.firstName} ${s.lastName} ชั้น ${s.grade} — <strong>${STATUS_LABEL[status]}</strong></li>`
+                ).join("")}</ol>`}
+           </div>`
+        : "";
+
+      $("reportPaper").innerHTML = `
+        <div class="rep-head">
+          <img src="./icons/school-logo.png" alt="ตราโรงเรียนบ้านป่าไผ่" />
+          <h3>แบบรายงานสถิติการมาเรียนของนักเรียน</h3>
+          <p>โรงเรียนบ้านป่าไผ่ สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</p>
+          <p style="font-weight:600;margin-top:4px">${periodText}</p>
+        </div>
+
+        <table class="rep-table">
+          <thead>
+            <tr>
+              <th>ระดับชั้น</th>
+              <th>ชาย</th>
+              <th>หญิง</th>
+              <th>รวม</th>
+              <th>มาเรียน</th>
+              <th>ขาด</th>
+              <th>ลาป่วย</th>
+              <th>ลากิจ</th>
+              <th>สาย</th>
+              <th>ร้อยละ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.rows.map((r) => `
+              <tr>
+                <td>ชั้น ${r.grade}</td>
+                <td>${r.male}</td><td>${r.female}</td><td>${r.total}</td>
+                <td>${r.present}</td><td>${r.absent}</td><td>${r.sick}</td><td>${r.personal}</td><td>${r.late}</td>
+                <td>${r.pct}%</td>
+              </tr>`).join("")}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>รวมทั้งสิ้น</td>
+              <td>${data.totals.male}</td><td>${data.totals.female}</td><td>${data.totals.total}</td>
+              <td>${data.totals.present}</td><td>${data.totals.absent}</td><td>${data.totals.sick}</td><td>${data.totals.personal}</td><td>${data.totals.late}</td>
+              <td>${data.totals.pct}%</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        ${absentHtml}
+
+        <div class="rep-sign-grid">
+          <div>
+            <div>ลงชื่อ......................................................ผู้รายงาน</div>
+            <div class="rep-sign-line">(${teacher.name})</div>
+            <div>ตำแหน่ง ${teacher.position || "ครูโรงเรียนบ้านป่าไผ่"}</div>
+          </div>
+          <div>
+            <div>ลงชื่อ......................................................ผู้รับรอง</div>
+            <div class="rep-sign-line">(นางสาวนภาพร คงแสนคำ)</div>
+            <div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          </div>
+        </div>`;
+    }
+
+    function render() {
+      const av = teacher.avatar ? `<img class="mini-avatar" src="${teacher.avatar}" alt="" />` : "";
+      $("userSub").innerHTML = `${av}<span>ผู้บันทึก: ${teacher.shortName} • นักเรียน ${state.students.length} คน</span>`;
+
+      $("viewCheckin").classList.toggle("hidden", state.view !== "checkin");
+      $("viewStats").classList.toggle("hidden", state.view !== "stats");
+      $("viewReport").classList.toggle("hidden", state.view !== "report");
+
+      document.querySelectorAll("[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === state.view));
+      document.querySelectorAll("[data-period], [data-rperiod]").forEach((b) => {
+        const p = b.dataset.period || b.dataset.rperiod;
+        b.classList.toggle("active", p === state.period);
+      });
+
+      if (state.view === "checkin") renderCheckin();
+      else if (state.view === "stats") renderStats();
+      else renderReport();
+    }
+
+    // --- Event Listeners ---
+    $("attDateInput").value = state.date;
+    $("attDateInput").onchange = (e) => {
+      if (e.target.value) { state.date = e.target.value; render(); }
+    };
+
+    document.querySelectorAll("[data-view]").forEach((btn) => {
+      btn.onclick = () => { state.view = btn.dataset.view; render(); };
+    });
+    document.querySelectorAll("[data-period], [data-rperiod]").forEach((btn) => {
+      btn.onclick = () => { state.period = btn.dataset.period || btn.dataset.rperiod; render(); };
+    });
+
+    $("gradeBar").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-grade]");
+      if (!btn) return;
+      state.grade = btn.dataset.grade;
+      renderCheckin();
+    });
+
+    $("studentList").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-stu]");
+      if (!btn) return;
+      const map = getDayMap(state.date);
+      map[btn.dataset.stu] = btn.dataset.st;
+      saveRecords();
+      renderCheckin();
+    });
+
+    $("markAllPresentBtn").onclick = () => {
+      const map = getDayMap(state.date);
+      const filtered = state.grade === "all" ? state.students : state.students.filter((s) => s.grade === state.grade);
+      filtered.forEach((s) => { map[s.id] = "present"; });
+      saveRecords();
+      renderCheckin();
+      showToast(`ตั้งค่ามาครบทุกคน (${filtered.length} คน) แล้ว`);
+    };
+
+    $("saveAttBtn").onclick = () => {
+      const map = getDayMap(state.date);
+      state.students.forEach((s) => { if (!map[s.id]) map[s.id] = "present"; });
+      saveRecords();
+      showToast(`บันทึกสถิติวันที่ ${state.date.split("-").reverse().join("/")} เรียบร้อย!`);
+    };
+
+    $("shareNewsBtn").onclick = async () => {
+      const apiUrl = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "";
+      if (!apiUrl) { showToast("ยังไม่ได้ตั้งค่าลิงก์ข่าว BPP Connect"); return; }
+      const sum = computeDailySummary(state.date);
+      const t = sum.totals;
+      const title = `สถิตินักเรียน ${formatThaiFullDate(state.date)}`;
+      const body = `มาเรียน ${t.present} คน | ขาด ${t.absent} คน | ลา ${t.sick + t.personal} คน | สาย ${t.late} คน (รวม ${t.total} คน คิดเป็น ${t.pct}%)`;
+      try {
+        await fetch(apiUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "broadcast",
+            id: "att-" + Date.now(),
+            title,
+            body,
+            urgent: false,
+            authorId: teacher.id,
+            author: teacher.name
+          })
+        });
+        showToast("ส่งสรุปสถิติเข้าประกาศ BPP Connect แล้ว!");
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: "BPP_DOC_UPLOADED", title }, location.origin);
+        }
+      } catch (_) {
+        showToast("ส่งประกาศไม่สำเร็จ กรุณาลองใหม่");
+      }
+    };
+
+    $("goPrintBtn").onclick = () => { state.view = "report"; render(); };
+    $("printNowBtn").onclick = () => { window.print(); };
+
+    render();
+  </script>
+</body>
+</html>

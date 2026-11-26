@@ -1,12 +1,13 @@
 // ตั้งค่าแอป BPP Connect — โรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)
 window.SCHOOL_CONFIG = {
-  appVersion: "1.9.6",
+  appVersion: "2.0.0",
   schoolName: "BPP Connect",
   schoolSubtitle: "โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4",
   logoUrl: "./icons/school-logo.png",
   // วางลิงก์ GAS หลังบ้านข่าว & แจ้งเตือน (จาก gas-backend.gs) และ OneSignal App ID ที่นี่
   newsBackendUrl: "https://script.google.com/macros/s/AKfycbyY5tXe6nNyZpdb1EWE8taHLgEJU63sYvZ_vmu8MoiNVOgQc26McD-kNoatNLeeGsYbRw/exec",
   albumApiUrl: "https://script.google.com/macros/s/AKfycbxEl6j7WfPhcyO9zoCFSPB4wgTz69PmBT-L02w-XznZOkeQiz6ZfnHfYOnQB8gdXQVo/exec",
+  docsApiUrl: "",
   oneSignalAppId: "9fa72faa-3c98-4cd9-a1c6-0a39be405861",
   // วางลิงก์ GAS Web App (JSON) หรือลิงก์ JSON สาธารณะ เพื่อให้ทุกเครื่องซิงก์รายการระบบล่าสุดอัตโนมัติ
   remoteConfigUrl: "",
@@ -153,16 +154,15 @@ window.SCHOOL_CONFIG = {
     },
     {
       id: "bdms",
-      name: "ระบบจัดการเอกสารโรงเรียน (BDMS)",
-      shortName: "จัดการเอกสาร",
-      description: "จัดเก็บ ค้นหา และบริหารจัดการเอกสารโรงเรียนบ้านป่าไผ่",
+      name: "ระบบเอกสารธุรการโรงเรียน",
+      shortName: "เอกสารธุรการ",
+      description: "จัดเก็บ ค้นหา และอัปโหลดเอกสารธุรการจากมือถือลง Google Drive",
       division: "general",
-      url: "https://www.banpaphai.ac.th/bppsystem/bdms",
+      url: "./docs.html",
       icon: "folder",
       color: "purple",
       pinned: true,
-      directorOnly: false,
-      openExternal: true
+      directorOnly: false
     },
     {
       id: "certificate",

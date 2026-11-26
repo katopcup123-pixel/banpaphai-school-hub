@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>BPP Docs — ระบบเอกสารธุรการโรงเรียนบ้านป่าไผ่</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #F4F6FB;
+      --surface: #FFFFFF;
+      --glass: rgba(255, 255, 255, 0.84);
+      --fill: rgba(118, 118, 128, 0.11);
+      --border: rgba(15, 23, 42, 0.08);
+      --text: #0F172A;
+      --secondary: #64748B;
+      --muted: #94A3B8;
+      --accent: #007AFF;
+      --accent-soft: rgba(0, 122, 255, 0.11);
+      --spring: cubic-bezier(0.32, 1.18, 0.56, 1);
+      --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0B0D12;
+      --surface: #1C1C1E;
+      --glass: rgba(24, 24, 28, 0.86);
+      --fill: rgba(118, 118, 128, 0.24);
+      --border: rgba(255, 255, 255, 0.09);
+      --text: #F2F2F7;
+      --secondary: #AEAEB2;
+      --muted: #8E8E93;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      touch-action: manipulation;
+      overscroll-behavior: none;
+      overflow: hidden;
+    }
+
+    .app {
+      max-width: 560px;
+      margin: 0 auto;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    /* Locked Frosted-Glass Header */
+    .topbar {
+      flex-shrink: 0;
+      background: var(--glass);
+      backdrop-filter: saturate(180%) blur(24px);
+      border-bottom: 0.5px solid var(--border);
+      padding: calc(10px + env(safe-area-inset-top)) 16px 12px;
+      z-index: 20;
+    }
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .title-wrap { min-width: 0; }
+    .title-wrap h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .user-sub {
+      margin-top: 2px;
+      font-size: 11.5px;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mini-avatar {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+      background: var(--accent);
+      color: #FFFFFF;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 122, 255, 0.25);
+      transition: transform 0.2s var(--spring), opacity 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-primary:active { transform: scale(0.94); opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+
+    .btn-soft {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+      background: var(--fill);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.18s var(--spring);
+    }
+    .btn-soft:active { transform: scale(0.96); }
+
+    /* Search */
+    .search-box {
+      position: relative;
+      margin-top: 10px;
+    }
+    .search-box svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      height: 38px;
+      border: none;
+      background: var(--fill);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 0 12px 0 36px;
+      font-family: inherit;
+      font-size: 16px;
+      outline: none;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .search-input:focus {
+      background: var(--surface);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    /* Scroll Body */
+    .body-scroll {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      padding: 14px 16px calc(32px + env(safe-area-inset-bottom));
+      scrollbar-width: none;
+    }
+    .body-scroll::-webkit-scrollbar { display: none; }
+
+    /* Animated KPI Summary Strip */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 18px;
+      padding: 12px 12px 10px;
+      box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+      animation: popIn 0.36s var(--spring) both;
+      cursor: pointer;
+      transition: transform 0.18s var(--spring), border-color 0.2s;
+    }
+    .stat-card:active { transform: scale(0.95); }
+    .stat-card.active { border-color: var(--accent); box-shadow: 0 4px 14px var(--accent-soft); }
+    .stat-label { font-size: 11.5px; color: var(--secondary); font-weight: 500; }
+    .stat-num {
+      font-size: 22px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin-top: 2px;
+      letter-spacing: -0.02em;
+    }
+    .stat-num.accent { color: var(--accent); }
+
+    /* Category Filter Pills */
+    .cat-bar {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      padding: 2px 0 14px;
+      scrollbar-width: none;
+    }
+    .cat-bar::-webkit-scrollbar { display: none; }
+    .cat-pill {
+      flex-shrink: 0;
+      border: 0.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 7px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform 0.2s var(--spring), background 0.18s, color 0.18s;
+    }
+    .cat-pill:active { transform: scale(0.93); }
+    .cat-pill.active {
+      background: var(--accent);
+      color: #FFFFFF;
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.26);
+    }
+
+    /* Animated Document Cards */
+    .doc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .doc-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 18px;
+      padding: 13px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+      cursor: pointer;
+      animation: slideUp 0.34s var(--ease) both;
+      transition: transform 0.2s var(--spring), box-shadow 0.2s;
+    }
+    .doc-card:active { transform: scale(0.98); }
+
+    .doc-ico {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #FFFFFF;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .t-pdf   { background: linear-gradient(155deg, #F87171, #DC2626); }
+    .t-doc   { background: linear-gradient(155deg, #60A5FA, #2563EB); }
+    .t-sheet { background: linear-gradient(155deg, #34D399, #059669); }
+    .t-img   { background: linear-gradient(155deg, #C084FC, #7C3AED); }
+    .t-file  { background: linear-gradient(155deg, #818CF8, #4338CA); }
+
+    .doc-body { flex: 1; min-width: 0; }
+    .doc-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    .badge-no {
+      font-size: 10.5px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .badge-grp {
+      font-size: 10.5px;
+      font-weight: 600;
+      background: var(--fill);
+      color: var(--secondary);
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .doc-title {
+      margin: 0;
+      font-size: 14.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: var(--text);
+    }
+    .doc-meta {
+      margin-top: 4px;
+      font-size: 11.5px;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* Skeleton Loader */
+    .skel {
+      height: 88px;
+      border-radius: 18px;
+      background: linear-gradient(90deg, var(--fill) 25%, rgba(255,255,255,0.45) 50%, var(--fill) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s ease-in-out infinite;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* Spring Bottom Sheet */
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.36);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.24s ease;
+    }
+    .backdrop.open { opacity: 1; pointer-events: auto; }
+    .sheet {
+      width: 100%;
+      max-width: 560px;
+      max-height: 88dvh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-radius: 26px 26px 0 0;
+      padding: 10px 20px calc(26px + env(safe-area-inset-bottom));
+      transform: translateY(100%);
+      transition: transform 0.36s var(--spring);
+    }
+    .backdrop.open .sheet { transform: translateY(0); }
+    .grabber { width: 38px; height: 5px; border-radius: 999px; background: var(--fill); margin: 0 auto 14px; }
+    .sheet h3 { margin: 0 0 10px; font-size: 17px; font-weight: 700; }
+
+    .field, .select-field {
+      width: 100%;
+      height: 44px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 0 13px;
+      font-family: inherit;
+      font-size: 16px;
+      margin-bottom: 10px;
+      outline: none;
+    }
+    .field:focus, .select-field:focus { border-color: var(--accent); }
+
+    .seg-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .seg-opt {
+      height: 40px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--secondary);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .seg-opt.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .upload-drop {
+      border: 1.5px dashed var(--accent);
+      background: var(--accent-soft);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      color: var(--accent);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .upload-progress {
+      height: 6px;
+      border-radius: 999px;
+      background: var(--fill);
+      overflow: hidden;
+      margin: 8px 0 12px;
+    }
+    .upload-progress span {
+      display: block;
+      height: 100%;
+      width: 45%;
+      background: var(--accent);
+      border-radius: 999px;
+      animation: indeterminate 1.1s ease-in-out infinite;
+    }
+    @keyframes indeterminate {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(260%); }
+    }
+
+    .detail-box {
+      background: var(--bg);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--secondary);
+      margin-bottom: 12px;
+    }
+    .sheet-actions { display: flex; flex-direction: column; gap: 8px; }
+    .sheet-actions .btn-primary, .sheet-actions .btn-soft { width: 100%; height: 44px; border-radius: 14px; }
+
+    .load-more-btn {
+      width: 100%;
+      margin-top: 14px;
+    }
+
+    .empty { text-align: center; padding: 44px 16px; color: var(--secondary); font-size: 14px; }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 80;
+      background: rgba(15, 23, 42, 0.92);
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 999px;
+      display: none;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.show { display: block; }
+    .hidden { display: none !important; }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="top-row">
+        <div class="title-wrap">
+          <h1>ระบบเอกสารธุรการ</h1>
+          <div class="user-sub" id="userSub">โรงเรียนบ้านป่าไผ่</div>
+        </div>
+        <button type="button" class="btn-primary" id="addDocBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          <span>เพิ่มเอกสาร</span>
+        </button>
+      </div>
+      <div class="search-box">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="docSearch" class="search-input" type="search" placeholder="ค้นหาเรื่อง, เลขที่เอกสาร, ผู้บันทึก..." />
+      </div>
+    </header>
+
+    <main class="body-scroll">
+      <div class="stats-grid">
+        <div class="stat-card active" data-grp="all">
+          <div class="stat-label">ทั้งหมด</div>
+          <div class="stat-num accent" id="statAll">0</div>
+        </div>
+        <div class="stat-card" data-grp="ภายใน">
+          <div class="stat-label">ภายใน</div>
+          <div class="stat-num" id="statIn">0</div>
+        </div>
+        <div class="stat-card" data-grp="ภายนอก">
+          <div class="stat-label">ภายนอก</div>
+          <div class="stat-num" id="statOut">0</div>
+        </div>
+      </div>
+
+      <div class="cat-bar" id="catBar"></div>
+      <div class="doc-list" id="docList"></div>
+      <button type="button" class="btn-soft load-more-btn hidden" id="loadMoreBtn">โหลดเอกสารเพิ่มเติม</button>
+    </main>
+  </div>
+
+  <!-- Spring Bottom Sheet -->
+  <div class="backdrop" id="sheetBackdrop">
+    <div class="sheet">
+      <div class="grabber"></div>
+      <div id="sheetContent"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="./apps-config.js"></script>
+  <script>
+    // Inherit Dark Mode & Accent Color from BPP Connect automatically
+    document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
+    document.documentElement.style.setProperty("--accent", localStorage.getItem("bpp_connect_accent_v1") || "#007AFF");
+
+    // Automatically read logged-in teacher from BPP Connect (NO separate login!)
+    function getLoggedInTeacher() {
+      const uid = localStorage.getItem("bpp_connect_user_v1");
+      let users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+      try {
+        const raw = localStorage.getItem("bpp_connect_users_v3");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) users = parsed;
+        }
+      } catch (_) {}
+      return users.find((u) => u.id === uid) || users[0] || { id: "", name: "บุคลากรโรงเรียนบ้านป่าไผ่", shortName: "คุณครู", role: "teacher", avatar: "" };
+    }
+
+    const currentTeacher = getLoggedInTeacher();
+    const isAdmin = currentTeacher.id === "thanakarin" && currentTeacher.role === "admin";
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      docs: [],
+      categories: ["บริหารทั่วไป", "บริหารงานบุคคล", "บริหารงานงบประมาณ", "บริหารงานวิชาการ", "คำสั่งโรงเรียน", "เกรียติบัตร"],
+      group: "all",
+      category: "all",
+      query: "",
+      pageSize: 30
+    };
+
+    function showToast(msg) {
+      const el = $("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    function getDocsApiUrl() {
+      return (localStorage.getItem("bpp_docs_api_url") || (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.docsApiUrl) || "").trim();
+    }
+
+    function detectFileBadge(url) {
+      const u = String(url || "").toLowerCase();
+      if (u.includes("/spreadsheets/") || u.endsWith(".xlsx") || u.endsWith(".xls")) return { cls: "t-sheet", label: "XLS" };
+      if (u.includes("/document/") || u.endsWith(".docx") || u.endsWith(".doc")) return { cls: "t-doc", label: "DOC" };
+      if (u.includes(".pdf")) return { cls: "t-pdf", label: "PDF" };
+      if (/\.(png|jpg|jpeg|webp)/.test(u)) return { cls: "t-img", label: "IMG" };
+      return { cls: "t-file", label: "FILE" };
+    }
+
+    function animateCount(el, target) {
+      const start = Number(el.textContent) || 0;
+      const diff = target - start;
+      const t0 = performance.now();
+      function step(now) {
+        const p = Math.min(1, (now - t0) / 360);
+        el.textContent = Math.round(start + diff * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    function openSheet(html) {
+      $("sheetContent").innerHTML = html;
+      $("sheetBackdrop").classList.add("open");
+    }
+    function closeSheet() { $("sheetBackdrop").classList.remove("open"); }
+    $("sheetBackdrop").addEventListener("click", (e) => { if (e.target === $("sheetBackdrop")) closeSheet(); });
+
+    async function loadDocs() {
+      const av = currentTeacher.avatar ? `<img class="mini-avatar" src="${currentTeacher.avatar}" alt="" />` : "";
+      $("userSub").innerHTML = `${av}<span>ผู้ใช้งาน: ${currentTeacher.shortName}</span>`;
+      $("docList").innerHTML = `<div class="skel"></div><div class="skel"></div><div class="skel"></div>`;
+
+      const apiUrl = getDocsApiUrl();
+      if (!apiUrl) {
+        $("docList").innerHTML = `<div class="empty">พร้อมใช้งานแล้ว — ส่งลิงก์ BPP Docs API ที่ Deploy จาก Code.gs มาเชื่อมต่อเพื่อดึงเอกสารทั้ง 380+ รายการทันที</div>`;
+        renderCategories();
+        return;
+      }
+
+      try {
+        const res = await fetch(`${apiUrl}?action=listDocs`, { cache: "no-store" });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || "โหลดข้อมูลไม่สำเร็จ");
+        state.docs = json.docs || [];
+        if (Array.isArray(json.categories) && json.categories.length) state.categories = json.categories;
+        renderAll();
+      } catch (err) {
+        $("docList").innerHTML = `<div class="empty">ไม่สามารถโหลดเอกสารได้: ${err.message}</div>`;
+      }
+    }
+
+    function renderCategories() {
+      const items = ["all", ...state.categories];
+      $("catBar").innerHTML = items.map((c) => `
+        <button type="button" class="cat-pill ${state.category === c ? "active" : ""}" data-cat="${c}">
+          ${c === "all" ? "ทุกประเภท" : c}
+        </button>
+      `).join("");
+    }
+
+    function renderAll() {
+      const total = state.docs.length;
+      const inCount = state.docs.filter((d) => d.group === "ภายใน").length;
+      const outCount = state.docs.filter((d) => d.group === "ภายนอก").length;
+      animateCount($("statAll"), total);
+      animateCount($("statIn"), inCount);
+      animateCount($("statOut"), outCount);
+
+      document.querySelectorAll(".stat-card").forEach((c) => {
+        c.classList.toggle("active", c.dataset.grp === state.group);
+      });
+      renderCategories();
+
+      const q = state.query.trim().toLowerCase();
+      const filtered = state.docs.filter((d) => {
+        if (state.group !== "all" && d.group !== state.group) return false;
+        if (state.category !== "all" && d.category !== state.category) return false;
+        if (!q) return true;
+        return (
+          d.title.toLowerCase().includes(q) ||
+          d.docNo.toLowerCase().includes(q) ||
+          d.author.toLowerCase().includes(q) ||
+          d.category.toLowerCase().includes(q)
+        );
+      });
+
+      const shown = filtered.slice(0, state.pageSize);
+      $("loadMoreBtn").classList.toggle("hidden", filtered.length <= shown.length);
+
+      if (shown.length === 0) {
+        $("docList").innerHTML = `<div class="empty">ไม่พบเอกสารที่ค้นหา</div>`;
+        return;
+      }
+
+      $("docList").innerHTML = shown.map((d, idx) => {
+        const badge = detectFileBadge(d.fileUrl);
+        return `
+          <article class="doc-card" style="animation-delay:${Math.min(idx, 10) * 24}ms" data-doc-row="${d.rowIndex}">
+            <div class="doc-ico ${badge.cls}">${badge.label}</div>
+            <div class="doc-body">
+              <div class="doc-badges">
+                <span class="badge-no">ฉบับที่ ${d.docNo || "-"}</span>
+                <span class="badge-grp">${d.group}</span>
+                ${d.category ? `<span class="badge-grp">${d.category}</span>` : ""}
+              </div>
+              <h2 class="doc-title">${d.title}</h2>
+              <div class="doc-meta">
+                <span>${d.author || "-"}</span>
+                <span>•</span>
+                <span>${d.date || ""}</span>
+              </div>
+            </div>
+          </article>`;
+      }).join("");
+    }
+
+    function openDocDetail(doc) {
+      const canEdit = isAdmin || (doc.author && doc.author === currentTeacher.name);
+      openSheet(`
+        <h3>${doc.title}</h3>
+        <div class="detail-box">
+          <div><strong>ฉบับที่:</strong> ${doc.docNo || "-"}</div>
+          <div><strong>หมวดหมู่:</strong> ${doc.group} • ${doc.category || "-"}</div>
+          <div><strong>ผู้บันทึก:</strong> ${doc.author || "-"}</div>
+          <div><strong>วันที่เพิ่ม:</strong> ${doc.date || "-"}</div>
+        </div>
+        <div class="sheet-actions">
+          ${doc.fileUrl ? `<a class="btn-primary" href="${doc.fileUrl}" target="_blank" rel="noopener">เปิดดู / ดาวน์โหลดเอกสาร ↗</a>` : ""}
+          ${canEdit ? `<button type="button" class="btn-soft" id="editThisDocBtn">แก้ไขข้อมูลเอกสาร</button>` : ""}
+          <button type="button" class="btn-soft" id="closeDetailBtn">ปิด</button>
+        </div>
+      `);
+      $("closeDetailBtn").onclick = closeSheet;
+      if (canEdit) {
+        $("editThisDocBtn").onclick = () => openDocFormSheet(doc);
+      }
+    }
+
+    function readFileBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => resolve(String(reader.result).split(",")[1]);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function openDocFormSheet(existing = null) {
+      let selectedGroup = existing ? existing.group : "ภายใน";
+      let chosenFile = null;
+      const esc = (v) => String(v || "").replace(/"/g, "&quot;");
+
+      openSheet(`
+        <h3>${existing ? `แก้ไขเอกสารฉบับที่ ${existing.docNo}` : "เพิ่มเอกสารธุรการใหม่"}</h3>
+        <div style="font-size:12.5px;color:var(--secondary);margin-bottom:10px">ผู้บันทึก: <strong>${currentTeacher.name}</strong></div>
+        <div class="seg-group" id="formGroupSeg">
+          <button type="button" class="seg-opt ${selectedGroup === "ภายใน" ? "active" : ""}" data-g="ภายใน">เอกสารภายใน</button>
+          <button type="button" class="seg-opt ${selectedGroup === "ภายนอก" ? "active" : ""}" data-g="ภายนอก">เอกสารภายนอก</button>
+        </div>
+        <select class="select-field" id="fCategory">
+          ${state.categories.map((c) => `<option value="${esc(c)}" ${existing?.category === c ? "selected" : ""}>${c}</option>`).join("")}
+        </select>
+        <input class="field" id="fTitle" placeholder="ชื่อเรื่องเอกสาร" value="${esc(existing?.title)}" />
+        <label class="upload-drop" id="fileDropLabel">
+          <span id="fileDropText">📎 แตะเพื่อแนบไฟล์จากมือถือ (PDF, Word, Excel, รูปภาพ)</span>
+          <input type="file" id="fFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" class="hidden" />
+        </label>
+        <input class="field" id="fUrl" placeholder="หรือวางลิงก์ Google Drive ที่มีอยู่แล้ว" value="${esc(existing?.fileUrl)}" />
+        ${!existing ? `<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:10px"><input type="checkbox" id="fNotify" checked /> แจ้งเตือนเข้าแอป BPP Connect ด้วย</label>` : ""}
+        <div class="upload-progress hidden" id="fProgress"><span></span></div>
+        <div class="sheet-actions">
+          <button type="button" class="btn-primary" id="fSaveBtn">${existing ? "บันทึกการแก้ไข" : "อัปโหลดและบันทึกเอกสาร"}</button>
+          <button type="button" class="btn-soft" id="fCancelBtn">ยกเลิก</button>
+        </div>
+      `);
+
+      $("formGroupSeg").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-g]");
+        if (!b) return;
+        selectedGroup = b.dataset.g;
+        $("formGroupSeg").querySelectorAll(".seg-opt").forEach((x) => x.classList.toggle("active", x === b));
+      });
+
+      $("fFile").onchange = () => {
+        chosenFile = $("fFile").files && $("fFile").files[0];
+        if (chosenFile) {
+          const mb = (chosenFile.size / (1024 * 1024)).toFixed(2);
+          $("fileDropText").textContent = `เลือกแล้ว: ${chosenFile.name} (${mb} MB)`;
+        }
+      };
+
+      $("fCancelBtn").onclick = closeSheet;
+      $("fSaveBtn").onclick = async () => {
+        const title = $("fTitle").value.trim();
+        const category = $("fCategory").value;
+        const fileUrl = $("fUrl").value.trim();
+        if (!title) { showToast("กรุณากรอกชื่อเรื่องเอกสาร"); return; }
+
+        const apiUrl = getDocsApiUrl();
+        if (!apiUrl) { showToast("ยังไม่ได้เชื่อมลิงก์ BPP Docs API"); return; }
+
+        if (chosenFile && chosenFile.size > 20 * 1024 * 1024) {
+          showToast("ไฟล์ใหญ่เกิน 20MB กรุณาอัปขึ้น Drive แล้ววางลิงก์แทน");
+          return;
+        }
+
+        $("fSaveBtn").disabled = true;
+        $("fSaveBtn").textContent = chosenFile ? "กำลังอัปโหลดไฟล์ขึ้น Google Drive..." : "กำลังบันทึกข้อมูล...";
+        $("fProgress").classList.remove("hidden");
+
+        try {
+          const payload = {
+            action: existing ? "editDoc" : "addDoc",
+            rowIndex: existing ? existing.rowIndex : undefined,
+            docNo: existing ? existing.docNo : undefined,
+            group: selectedGroup,
+            category,
+            title,
+            author: currentTeacher.name,
+            fileUrl,
+            notify: !existing && $("fNotify") ? $("fNotify").checked : false
+          };
+          if (chosenFile) {
+            payload.fileName = chosenFile.name;
+            payload.mimeType = chosenFile.type || "application/octet-stream";
+            payload.base64Data = await readFileBase64(chosenFile);
+          }
+
+          const res = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (!json.ok) throw new Error(json.error || "บันทึกไม่สำเร็จ");
+
+          closeSheet();
+          showToast(existing ? "แก้ไขข้อมูลเอกสารแล้ว" : `บันทึกเอกสารฉบับที่ ${json.doc.docNo} สำเร็จ!`);
+          if (!existing && window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: "BPP_ALBUM_UPLOADED", albumName: title, count: 1 }, location.origin);
+          }
+          loadDocs();
+        } catch (err) {
+          showToast(err.message);
+          $("fSaveBtn").disabled = false;
+          $("fSaveBtn").textContent = existing ? "บันทึกการแก้ไข" : "อัปโหลดและบันทึกเอกสาร";
+          $("fProgress").classList.add("hidden");
+        }
+      };
+    }
+
+    // --- Event Listeners ---
+    $("addDocBtn").onclick = () => openDocFormSheet(null);
+    $("docSearch").oninput = (e) => { state.query = e.target.value; state.pageSize = 30; renderAll(); };
+    $("loadMoreBtn").onclick = () => { state.pageSize += 40; renderAll(); };
+
+    document.querySelectorAll(".stat-card").forEach((card) => {
+      card.onclick = () => {
+        state.group = card.dataset.grp;
+        state.pageSize = 30;
+        renderAll();
+      };
+    });
+
+    $("catBar").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-cat]");
+      if (!btn) return;
+      state.category = btn.dataset.cat;
+      state.pageSize = 30;
+      renderAll();
+    });
+
+    $("docList").addEventListener("click", (e) => {
+      const card = e.target.closest("[data-doc-row]");
+      if (!card) return;
+      const doc = state.docs.find((d) => String(d.rowIndex) === card.dataset.docRow);
+      if (doc) openDocDetail(doc);
+    });
+
+    loadDocs();
+  </script>
+</body>
+</html>

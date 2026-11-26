@@ -3,7 +3,7 @@
   const STORAGE_USER = "bpp_connect_user_v1";
   const STORAGE_THEME = "bpp_connect_theme_v1";
   const STORAGE_ACCENT = "bpp_connect_accent_v1";
-  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v4";
+  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v5";
   const STORAGE_REMOTE = "bpp_connect_remote_url_v1";
   const STORAGE_NEWS_API = "bpp_connect_news_api_v1";
   const STORAGE_ONESIGNAL = "bpp_connect_onesignal_id_v1";
@@ -1540,22 +1540,27 @@
   function closeInAppViewer() {
     haptic();
     clearTimeout(inAppFallbackTimer);
-    const wasAlbum = activeInAppUrl.includes("album.html");
+    const shouldRefreshNews = activeInAppUrl.includes("album.html") || activeInAppUrl.includes("docs.html");
     els.inAppOverlay.classList.remove("open");
     setTimeout(() => {
       els.inAppOverlay.classList.add("hidden");
       els.inAppFrame.src = "about:blank";
       activeInAppUrl = "";
-      if (wasAlbum) loadLiveNews(true);
+      if (shouldRefreshNews) loadLiveNews(true);
     }, 340);
   }
 
-  // Listen for live album upload notifications from album.html iframe
+  // Listen for live upload notifications from album.html / docs.html iframes
   window.addEventListener("message", (e) => {
     if (e.origin !== location.origin) return;
     if (e.data && e.data.type === "BPP_ALBUM_UPLOADED") {
       playSound("success");
       notifyIsland(`อัปโหลดอัลบั้ม "${e.data.albumName}" (${e.data.count} รูป)`);
+      loadLiveNews(true);
+    }
+    if (e.data && e.data.type === "BPP_DOC_UPLOADED") {
+      playSound("success");
+      notifyIsland(`บันทึกเอกสาร "${e.data.title || "ใหม่"}" แล้ว`);
       loadLiveNews(true);
     }
   });

@@ -11,6 +11,7 @@
   const STORAGE_USERS = "bpp_connect_users_v3";
   const STORAGE_EVENTS = "bpp_connect_events_v1";
   const STORAGE_SOUND = "bpp_connect_sound_v1";
+  const STORAGE_READ_NEWS = "bpp_connect_read_news_v1";
 
   const STAFF_STATUSES = [
     { id: "school", label: "อยู่โรงเรียน", icon: "🏫", cls: "st-school" },
@@ -198,6 +199,15 @@
     accent: localStorage.getItem(STORAGE_ACCENT) || "#007AFF",
     soundEnabled: localStorage.getItem(STORAGE_SOUND) !== "off",
     jiggleMode: false,
+    readNewsIds: (() => {
+      try {
+        const raw = localStorage.getItem(STORAGE_READ_NEWS);
+        if (raw) return new Set(JSON.parse(raw));
+      } catch (_) {}
+      return new Set();
+    })(),
+    balloonOpen: false,
+    pushSubId: "",
     remoteConfigUrl: localStorage.getItem(STORAGE_REMOTE) || config.remoteConfigUrl || "",
     newsBackendUrl: localStorage.getItem(STORAGE_NEWS_API) || config.newsBackendUrl || "",
     oneSignalAppId: localStorage.getItem(STORAGE_ONESIGNAL) || config.oneSignalAppId || "",
@@ -234,6 +244,10 @@
     userChipBtn: document.getElementById("userChipBtn"),
     userChipLabel: document.getElementById("userChipLabel"),
     bellBtn: document.getElementById("bellBtn"),
+    bellBadge: document.getElementById("bellBadge"),
+    notifBalloon: document.getElementById("notifBalloon"),
+    balloonList: document.getElementById("balloonList"),
+    markAllReadBtn: document.getElementById("markAllReadBtn"),
     searchInput: document.getElementById("searchInput"),
     searchClear: document.getElementById("searchClear"),
     main: document.getElementById("mainContent"),
@@ -1005,21 +1019,47 @@
     };
   }
 
-  // --- Real Push Notifications (OneSignal Web SDK v16 + GitHub Pages subpath scope) ---
+  // --- Real Push Notifications (Unified OneSignalSDKWorker.js — no SW conflict!) ---
+  async function cleanupLegacySw() {
+    if (!("serviceWorker" in navigator)) return;
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const r of regs) {
+        const url = (r.active && r.active.scriptURL) || (r.installing && r.installing.scriptURL) || "";
+        if (url.endsWith("/sw.js")) {
+          await r.unregister();
+        }
+      }
+    } catch (_) {}
+  }
+
   function initOneSignal() {
     const appId = (state.oneSignalAppId || "").trim();
     if (!appId) return;
     const isGhPages = location.pathname.startsWith("/banpaphai-school-hub");
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    window.OneSignalDeferred.push(async function (OneSignal) {
-      try {
-        await OneSignal.init({
-          appId,
-          allowLocalhostAsSecureOrigin: true,
-          serviceWorkerPath: isGhPages ? "banpaphai-school-hub/OneSignalSDKWorker.js" : "OneSignalSDKWorker.js",
-          serviceWorkerParam: { scope: isGhPages ? "/banpaphai-school-hub/" : "/" }
-        });
-      } catch (_) {}
+    cleanupLegacySw().then(() => {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.OneSignalDeferred.push(async function (OneSignal) {
+        try {
+          await OneSignal.init({
+            appId,
+            allowLocalhostAsSecureOrigin: true,
+            serviceWorkerPath: isGhPages ? "/banpaphai-school-hub/OneSignalSDKWorker.js" : "/OneSignalSDKWorker.js",
+            serviceWorkerParam: { scope: isGhPages ? "/banpaphai-school-hub/" : "/" }
+          });
+          const sub = OneSignal.User && OneSignal.User.PushSubscription;
+          if (sub && sub.id && sub.optedIn) {
+            state.pushSubId = sub.id;
+            if (state.tab === "settings") render();
+          }
+          if (sub && sub.addEventListener) {
+            sub.addEventListener("change", (ev) => {
+              state.pushSubId = ev.current && ev.current.optedIn ? (ev.current.id || "active") : "";
+              if (state.tab === "settings") render();
+            });
+          }
+        } catch (_) {}
+      });
     });
   }
 
@@ -1032,16 +1072,20 @@
 
     const appId = (state.oneSignalAppId || "").trim();
     if (appId && window.OneSignalDeferred) {
+      notifyIsland("กำลังลงทะเบียนแจ้งเตือน...");
       window.OneSignalDeferred.push(async function (OneSignal) {
         try {
           await OneSignal.Notifications.requestPermission();
-          if (OneSignal.User && OneSignal.User.PushSubscription) {
-            await OneSignal.User.PushSubscription.optIn();
+          const sub = OneSignal.User && OneSignal.User.PushSubscription;
+          if (sub) {
+            await sub.optIn();
+            state.pushSubId = sub.id || (sub.optedIn ? "subscribed" : "");
           }
-          notifyIsland("ลงทะเบียนรับแจ้งเตือน Push สำเร็จ!");
+          playSound("success");
+          notifyIsland(state.pushSubId ? "ลงทะเบียน Push สำเร็จแล้ว!" : "อนุญาตแล้ว รอซิงก์สักครู่");
           render();
-        } catch (_) {
-          notifyIsland("กรุณาตั้งค่า Site URL ใน OneSignal ให้เรียบร้อยก่อน");
+        } catch (err) {
+          notifyIsland("ลงทะเบียนไม่สำเร็จ ลองปิดแอปแล้วเปิดใหม่");
         }
       });
       return;
@@ -1777,10 +1821,11 @@
         </div>`
       : "";
 
-    const notifStatus =
-      "Notification" in window
+    const notifStatus = state.pushSubId
+      ? "✅ เชื่อมต่อ OneSignal Push สำเร็จแล้ว"
+      : "Notification" in window
         ? Notification.permission === "granted"
-          ? "เปิดรับแจ้งเตือนแล้ว"
+          ? "อนุญาตในเครื่องแล้ว (กดปุ่มด้านล่างเพื่อซิงก์ OneSignal)"
           : Notification.permission === "denied"
             ? "ถูกปิดไว้ในการตั้งค่าเครื่อง"
             : "ยังไม่ได้เปิดรับแจ้งเตือน"
@@ -1853,6 +1898,73 @@
       </div>`;
   }
 
+  // --- Notification Balloon Popover & iPhone Home Screen Red Badge ---
+  function getUnreadAnnouncements() {
+    return state.announcements.filter((a) => !state.readNewsIds.has(a.id));
+  }
+
+  function syncNotificationBadges() {
+    const unreadCount = getUnreadAnnouncements().length;
+    if (els.bellBadge) {
+      if (unreadCount > 0) {
+        els.bellBadge.textContent = unreadCount > 9 ? "9+" : String(unreadCount);
+        els.bellBadge.classList.remove("hidden");
+      } else {
+        els.bellBadge.classList.add("hidden");
+      }
+    }
+    // Sync real red number badge on iPhone / Android Home Screen App Icon (iOS 16.4+)
+    try {
+      if (navigator.setAppBadge) {
+        if (unreadCount > 0) navigator.setAppBadge(unreadCount).catch(() => {});
+        else if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
+      }
+    } catch (_) {}
+  }
+
+  function renderNotifBalloon() {
+    if (!els.balloonList) return;
+    if (state.announcements.length === 0) {
+      els.balloonList.innerHTML = `<div style="text-align:center;padding:22px 10px;font-size:12.5px;color:var(--ios-secondary)">ไม่มีการแจ้งเตือนใหม่</div>`;
+      return;
+    }
+    els.balloonList.innerHTML = state.announcements
+      .slice(0, 8)
+      .map((a) => {
+        const isUnread = !state.readNewsIds.has(a.id);
+        return `
+          <button type="button" class="balloon-item ${isUnread ? "unread" : ""}" data-balloon-id="${a.id}">
+            ${isUnread ? '<span class="balloon-unread-dot"></span>' : '<span style="width:8px;flex-shrink:0"></span>'}
+            <div class="balloon-item-body">
+              <strong>${a.urgent ? "🚨 " : ""}${a.title}</strong>
+              <span>${a.date} • ${a.body}</span>
+            </div>
+          </button>`;
+      })
+      .join("");
+  }
+
+  function toggleNotifBalloon(forceClose = false) {
+    state.balloonOpen = forceClose ? false : !state.balloonOpen;
+    if (state.balloonOpen) {
+      renderNotifBalloon();
+      els.notifBalloon.classList.remove("hidden");
+    } else {
+      els.notifBalloon.classList.add("hidden");
+    }
+  }
+
+  function markAllAnnouncementsRead() {
+    haptic();
+    playSound("success");
+    state.announcements.forEach((a) => state.readNewsIds.add(a.id));
+    try { localStorage.setItem(STORAGE_READ_NEWS, JSON.stringify([...state.readNewsIds])); } catch (_) {}
+    syncNotificationBadges();
+    renderNotifBalloon();
+    notifyIsland("อ่านการแจ้งเตือนทั้งหมดแล้ว");
+    setTimeout(() => toggleNotifBalloon(true), 220);
+  }
+
   function render() {
     els.schoolName.textContent = config.schoolName;
     els.schoolSubtitle.textContent = config.schoolSubtitle;
@@ -1862,6 +1974,8 @@
     els.userChipLabel.textContent = u ? u.shortName : "เข้าสู่ระบบ";
     els.userChipBtn.classList.toggle("director", u && canAccessExecutive(u.role));
     els.searchClear.style.display = state.query ? "block" : "none";
+    syncNotificationBadges();
+    if (state.balloonOpen) renderNotifBalloon();
 
     els.tabItems.forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.tab === state.tab);
@@ -2114,10 +2228,39 @@
     render();
   });
 
-  els.bellBtn.addEventListener("click", () => {
+  els.bellBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
     haptic();
-    state.tab = "announcements";
-    render();
+    playSound("tap");
+    toggleNotifBalloon();
+  });
+
+  if (els.markAllReadBtn) {
+    els.markAllReadBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      markAllAnnouncementsRead();
+    });
+  }
+
+  if (els.balloonList) {
+    els.balloonList.addEventListener("click", (e) => {
+      const item = e.target.closest("[data-balloon-id]");
+      if (!item) return;
+      haptic();
+      playSound("tap");
+      state.readNewsIds.add(item.dataset.balloonId);
+      try { localStorage.setItem(STORAGE_READ_NEWS, JSON.stringify([...state.readNewsIds])); } catch (_) {}
+      toggleNotifBalloon(true);
+      state.tab = "announcements";
+      state.newsSubTab = "school";
+      render();
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (state.balloonOpen && !e.target.closest("#notifBalloon") && !e.target.closest("#bellBtn")) {
+      toggleNotifBalloon(true);
+    }
   });
 
   els.searchInput.addEventListener("input", (e) => {
@@ -2140,10 +2283,9 @@
     });
   });
 
+  // Use unified OneSignalSDKWorker.js (registered by OneSignal.init) to avoid SW scope collision
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js").then((reg) => {
-      state.swReg = reg;
-    }).catch(() => {});
+    navigator.serviceWorker.ready.then((reg) => { state.swReg = reg; }).catch(() => {});
   }
 
   initOneSignal();

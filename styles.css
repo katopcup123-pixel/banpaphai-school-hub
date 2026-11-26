@@ -650,7 +650,108 @@ input, textarea {
   transition: transform 0.22s var(--spring);
 }
 .ios-circle-btn:active { transform: scale(0.9); }
-.badge-dot { position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: #FF3B30; border: 1.5px solid #fff; }
+.badge-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #FF3B30;
+  color: #FFFFFF;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  border: 1.8px solid var(--ios-solid);
+  box-shadow: 0 2px 6px rgba(255, 59, 48, 0.35);
+}
+
+/* iOS Frosted-Glass Notification Balloon Popover */
+.notif-balloon {
+  position: absolute;
+  top: calc(56px + env(safe-area-inset-top));
+  right: 14px;
+  width: min(324px, calc(100% - 28px));
+  z-index: 70;
+  background: var(--ios-surface-strong);
+  backdrop-filter: saturate(180%) blur(24px);
+  border-radius: 20px;
+  border: 0.5px solid var(--ios-sep);
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.2);
+  transform-origin: top right;
+  animation: balloonPop 0.28s var(--spring) both;
+}
+.balloon-arrow {
+  position: absolute;
+  top: -7px;
+  right: 14px;
+  width: 14px;
+  height: 14px;
+  background: var(--ios-surface-strong);
+  border-left: 0.5px solid var(--ios-sep);
+  border-top: 0.5px solid var(--ios-sep);
+  transform: rotate(45deg);
+}
+.balloon-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 0.5px solid var(--ios-sep);
+  position: relative;
+}
+.balloon-head strong { font-size: 14px; color: var(--ios-text); }
+.balloon-read-all {
+  border: none;
+  background: var(--ios-blue-soft);
+  color: var(--ios-blue);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.balloon-read-all:active { transform: scale(0.94); }
+.balloon-list {
+  max-height: 290px;
+  overflow-y: auto;
+  padding: 6px;
+}
+.balloon-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--ios-text);
+  font-family: inherit;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.balloon-item:active { background: var(--ios-fill); }
+.balloon-item.unread { background: var(--ios-blue-soft); }
+.balloon-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FF3B30;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.balloon-item-body { flex: 1; min-width: 0; }
+.balloon-item-body strong { display: block; font-size: 13px; line-height: 1.3; }
+.balloon-item-body span { display: block; font-size: 11px; color: var(--ios-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@keyframes balloonPop {
+  from { opacity: 0; transform: scale(0.86) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
 
 /* iOS Spotlight Search Bar */
 .ios-search-wrap { margin-top: 11px; position: relative; }

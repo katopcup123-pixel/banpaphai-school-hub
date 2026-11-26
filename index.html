@@ -139,13 +139,23 @@
                   <span class="role-dot"></span>
                   <span id="userChipLabel">เข้าสู่ระบบ</span>
                 </button>
-                <button class="ios-circle-btn" id="bellBtn" aria-label="ประกาศ">
+                <button class="ios-circle-btn" id="bellBtn" aria-label="การแจ้งเตือน">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
                   </svg>
-                  <span class="badge-dot"></span>
+                  <span class="badge-count hidden" id="bellBadge">0</span>
                 </button>
               </div>
+            </div>
+
+            <!-- iOS Notification Balloon Popover -->
+            <div class="notif-balloon hidden" id="notifBalloon" role="dialog" aria-label="บอลลูนการแจ้งเตือน">
+              <div class="balloon-arrow"></div>
+              <div class="balloon-head">
+                <strong>การแจ้งเตือน</strong>
+                <button type="button" class="balloon-read-all" id="markAllReadBtn">อ่านทั้งหมดแล้ว</button>
+              </div>
+              <div class="balloon-list" id="balloonList"></div>
             </div>
 
             <div class="ios-search-wrap">

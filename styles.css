@@ -412,7 +412,14 @@ input, textarea {
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
+  overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .user-meta { flex: 1; min-width: 0; }
@@ -553,29 +560,40 @@ input, textarea {
 .unlock-card h3 { margin: 0; font-size: 18px; font-weight: 700; }
 .unlock-card p { margin: 4px 0 0; font-size: 12.5px; color: var(--ios-secondary); }
 
-/* 4. Main App Viewport */
-.app-scroll {
+/* 4. Main App Viewport — Locked Header + Independent Inner Scroll */
+.app-container {
   position: relative;
   z-index: 10;
   flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.app-container.app-reveal { animation: appReveal 0.52s var(--spring) both; }
+
+.app-scroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   scrollbar-width: none;
-  transition: opacity 0.4s ease, transform 0.45s var(--spring);
 }
 .app-scroll::-webkit-scrollbar { display: none; }
-.app-scroll.app-reveal { animation: appReveal 0.55s var(--spring) both; }
 
-/* Frosted Glass iOS Header */
+/* Frosted Glass iOS Header (Locked at top, never drags down) */
 .ios-header {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 20;
+  flex-shrink: 0;
   padding: calc(10px + env(safe-area-inset-top)) 16px 12px;
   background: var(--ios-header-bg);
   backdrop-filter: saturate(180%) blur(22px);
   border-bottom: 0.5px solid var(--ios-sep);
+  touch-action: none;
 }
 
 .header-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -1120,6 +1138,127 @@ input, textarea {
   white-space: pre-line;
   margin: 10px 0 14px;
 }
+
+/* Academic Calendar Widget (Google Calendar + iOS Style) */
+.cal-widget {
+  background: var(--ios-surface);
+  backdrop-filter: saturate(180%) blur(18px);
+  border-radius: 22px;
+  padding: 14px 13px 12px;
+  margin-bottom: 16px;
+  border: 0.5px solid var(--ios-border-light);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.045);
+}
+.cal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.cal-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cal-nav-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ios-fill);
+  color: var(--ios-text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-weight: 700;
+}
+.cal-month-label {
+  font-size: 14px;
+  font-weight: 700;
+  min-width: 106px;
+  text-align: center;
+}
+.cal-add-btn {
+  border: none;
+  background: var(--ios-blue);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ios-secondary);
+  margin-bottom: 6px;
+}
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.cal-day {
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--ios-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  position: relative;
+}
+.cal-day.empty { pointer-events: none; }
+.cal-day.today { color: var(--ios-blue); font-weight: 700; background: var(--ios-blue-soft); }
+.cal-day.selected { background: var(--ios-blue); color: #fff; font-weight: 700; }
+.cal-dots { display: flex; gap: 2px; height: 5px; align-items: center; }
+.cal-dot { width: 4.5px; height: 4.5px; border-radius: 50%; }
+.cal-day.selected .cal-dot { background: #fff !important; }
+.cal-agenda {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--ios-sep);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.cal-event-pill {
+  width: 100%;
+  border: none;
+  background: var(--ios-fill);
+  color: var(--ios-text);
+  border-radius: 12px;
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+.cal-event-pill:active { transform: scale(0.985); }
+.cal-event-bar {
+  width: 4px;
+  height: 28px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.cal-event-info { flex: 1; min-width: 0; }
+.cal-event-info strong { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-event-info span { display: block; font-size: 11px; color: var(--ios-secondary); margin-top: 1px; }
 
 /* In-App Native iOS Viewer for GAS Systems */
 .inapp-overlay {

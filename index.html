@@ -121,9 +121,9 @@
           </div>
         </section>
 
-        <!-- 4. Main App Viewport -->
-        <div class="app-scroll app-entering" id="appScroll">
-          <header class="ios-header">
+        <!-- 4. Main App Viewport (Header LOCKED outside scroll so pulling down never drags the header) -->
+        <div class="app-container hidden" id="appContainer">
+          <header class="ios-header" id="iosHeader">
             <div class="header-row">
               <div class="brand">
                 <div class="brand-crest">
@@ -157,7 +157,9 @@
             </div>
           </header>
 
-          <main id="mainContent" class="main-content"></main>
+          <div class="app-scroll" id="appScroll">
+            <main id="mainContent" class="main-content"></main>
+          </div>
         </div>
 
         <!-- iOS Frosted Glass Tab Bar -->

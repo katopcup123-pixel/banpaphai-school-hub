@@ -8,6 +8,11 @@
   const STORAGE_NEWS_API = "bpp_connect_news_api_v1";
   const STORAGE_ONESIGNAL = "bpp_connect_onesignal_id_v1";
   const STORAGE_LOCAL_NEWS = "bpp_connect_local_news_v1";
+  const STORAGE_USERS = "bpp_connect_users_v2";
+  const STORAGE_EVENTS = "bpp_connect_events_v1";
+
+  const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+  const EVENT_COLOR_HEX = { blue: "#007AFF", emerald: "#10B981", amber: "#F59E0B", rose: "#EF4444", purple: "#8B5CF6" };
 
   const ACCENTS = [
     { id: "blue", label: "ฟ้า iOS", hex: "#007AFF" },
@@ -91,6 +96,17 @@
     return clean.charAt(0) || "ค";
   }
 
+  function renderAvatarHtml(user) {
+    if (user && user.avatar) {
+      return `<div class="user-avatar c-${user.color || "blue"}"><img src="${user.avatar}" alt="" /></div>`;
+    }
+    return `<div class="user-avatar c-${user?.color || "blue"}">${getInitial(user || {})}</div>`;
+  }
+
+  function formatDateYmd(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
   if (typeof module !== "undefined" && module.exports) {
     module.exports = { filterSystems, authenticateUser, canAccessExecutive, isAdminUser, canManageNews };
     return;
@@ -117,10 +133,38 @@
     return new Set(config.systems.filter((s) => s.pinned).map((s) => s.id));
   })();
 
+  function loadUsers() {
+    try {
+      const raw = localStorage.getItem(STORAGE_USERS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (_) {}
+    return config.users.map((u) => ({ ...u }));
+  }
+
+  function loadEvents() {
+    try {
+      const raw = localStorage.getItem(STORAGE_EVENTS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (_) {}
+    return [...(config.calendarEvents || [])];
+  }
+
+  const nowDate = new Date();
   const state = {
     tab: "home",
     division: "all",
     query: "",
+    users: loadUsers(),
+    events: loadEvents(),
+    calYear: nowDate.getFullYear(),
+    calMonth: nowDate.getMonth(),
+    calSelectedDate: formatDateYmd(nowDate),
     currentUser: null,
     selectedUser: null,
     pinBuffer: "",
@@ -168,6 +212,7 @@
     unlock: document.getElementById("unlockOverlay"),
     unlockName: document.getElementById("unlockName"),
     unlockPosition: document.getElementById("unlockPosition"),
+    appContainer: document.getElementById("appContainer"),
     appScroll: document.getElementById("appScroll"),
     iosTabBar: document.getElementById("iosTabBar"),
     schoolLogo: document.getElementById("schoolLogo"),
@@ -284,11 +329,11 @@
 
   // --- Splash & Auth Flow ---
   function renderUserList() {
-    els.userList.innerHTML = config.users
+    els.userList.innerHTML = state.users
       .map(
         (u, i) => `
         <button type="button" class="user-row" style="animation-delay:${i * 40}ms" data-user="${u.id}">
-          <div class="user-avatar c-${u.color}">${getInitial(u)}</div>
+          ${renderAvatarHtml(u)}
           <div class="user-meta">
             <strong>${u.name}</strong>
             <span>${u.position}</span>
@@ -304,11 +349,11 @@
     state.selectedUser = user;
     state.pinBuffer = "";
     els.pinUserHead.innerHTML = `
-      <div class="user-avatar c-${user.color}">${getInitial(user)}</div>
+      ${renderAvatarHtml(user)}
       <h3>${user.name}</h3>
       <p>${user.position}</p>
     `;
-    els.pinHint.textContent = "กรอกรหัส PIN 4 หลัก (เริ่มต้น: 1234)";
+    els.pinHint.textContent = "กรอกรหัส PIN 4 หลัก";
     updatePinDots();
     els.loginViewList.classList.add("hidden");
     els.loginViewPin.classList.remove("hidden");
@@ -330,10 +375,10 @@
 
   function submitPin() {
     if (!state.selectedUser) return;
-    const res = authenticateUser(config.users, state.selectedUser.id, state.pinBuffer);
+    const res = authenticateUser(state.users, state.selectedUser.id, state.pinBuffer);
     if (!res.ok) {
       updatePinDots(true);
-      els.pinHint.textContent = "รหัส PIN ไม่ถูกต้อง ลองอีกครั้ง (เริ่มต้น: 1234)";
+      els.pinHint.textContent = "รหัส PIN ไม่ถูกต้อง (หากลืมรหัสติดต่อแอดมิน)";
       notifyIsland("รหัสผ่านไม่ถูกต้อง");
       setTimeout(() => {
         state.pinBuffer = "";
@@ -354,11 +399,11 @@
 
     setTimeout(() => {
       els.unlock.classList.add("hidden");
-      els.appScroll.classList.remove("hidden");
+      els.appContainer.classList.remove("hidden");
       els.iosTabBar.classList.remove("hidden");
-      els.appScroll.classList.remove("app-reveal");
-      void els.appScroll.offsetWidth;
-      els.appScroll.classList.add("app-reveal");
+      els.appContainer.classList.remove("app-reveal");
+      void els.appContainer.offsetWidth;
+      els.appContainer.classList.add("app-reveal");
     }, 1050);
   }
 
@@ -368,13 +413,13 @@
     state.pinBuffer = "";
     els.loginViewPin.classList.add("hidden");
     els.loginViewList.classList.remove("hidden");
-    els.appScroll.classList.add("hidden");
+    els.appContainer.classList.add("hidden");
     els.iosTabBar.classList.add("hidden");
     els.login.classList.remove("hidden");
   }
 
   function playSplashThenLogin() {
-    els.appScroll.classList.add("hidden");
+    els.appContainer.classList.add("hidden");
     els.iosTabBar.classList.add("hidden");
     els.login.classList.add("hidden");
     els.splash.classList.remove("hidden", "exit");
@@ -389,7 +434,7 @@
   els.userList.addEventListener("click", (e) => {
     const row = e.target.closest("[data-user]");
     if (!row) return;
-    const user = config.users.find((u) => u.id === row.dataset.user);
+    const user = state.users.find((u) => u.id === row.dataset.user);
     if (user) openPinPad(user);
   });
 
@@ -494,6 +539,8 @@
       newsBackendUrl: state.newsBackendUrl,
       oneSignalAppId: state.oneSignalAppId,
       remoteConfigUrl: state.remoteConfigUrl,
+      users: state.users,
+      calendarEvents: state.events,
       systems: state.systems,
       announcements: state.announcements
     };
@@ -504,6 +551,300 @@
         () => notifyIsland("คัดลอกไม่สำเร็จ")
       );
     }
+  }
+
+  function postToBackend(payload) {
+    const apiUrl = (state.newsBackendUrl || "").trim();
+    if (!apiUrl) return;
+    fetch(apiUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+  }
+
+  // --- Academic Calendar (Google Calendar Style on Home Screen) ---
+  function renderCalendarWidget() {
+    const year = state.calYear;
+    const month = state.calMonth;
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const todayStr = formatDateYmd(new Date());
+    const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+
+    let cells = "";
+    for (let i = 0; i < firstDay; i++) cells += `<div class="cal-day empty"></div>`;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ymd = `${monthPrefix}-${String(d).padStart(2, "0")}`;
+      const dayEvents = state.events.filter((ev) => ev.date === ymd);
+      const cls = [
+        "cal-day",
+        ymd === todayStr ? "today" : "",
+        ymd === state.calSelectedDate ? "selected" : ""
+      ].filter(Boolean).join(" ");
+      const dots = dayEvents.slice(0, 3)
+        .map((ev) => `<span class="cal-dot" style="background:${EVENT_COLOR_HEX[ev.color] || "#007AFF"}"></span>`)
+        .join("");
+      cells += `<button type="button" class="${cls}" data-cal-day="${ymd}"><span>${d}</span><span class="cal-dots">${dots}</span></button>`;
+    }
+
+    const selectedEvents = state.events.filter((ev) => ev.date === state.calSelectedDate);
+    const displayEvents = selectedEvents.length
+      ? selectedEvents
+      : state.events.filter((ev) => ev.date && ev.date.startsWith(monthPrefix)).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+    const agendaLabel = selectedEvents.length
+      ? `กิจกรรมวันที่ ${state.calSelectedDate.split("-").reverse().join("/")}`
+      : `กิจกรรมในเดือน ${THAI_MONTHS[month]} ${year + 543}`;
+
+    return `
+      <div class="section-header">
+        <h2 class="section-title">ปฏิทินวิชาการ</h2>
+        <span class="section-sub">${agendaLabel}</span>
+      </div>
+      <div class="cal-widget">
+        <div class="cal-top">
+          <div class="cal-month-nav">
+            <button type="button" class="cal-nav-btn" id="calPrevBtn" aria-label="เดือนก่อน">&lsaquo;</button>
+            <div class="cal-month-label">${THAI_MONTHS[month]} ${year + 543}</div>
+            <button type="button" class="cal-nav-btn" id="calNextBtn" aria-label="เดือนถัดไป">&rsaquo;</button>
+          </div>
+          <button type="button" class="cal-add-btn" id="calAddBtn">+ เพิ่มกิจกรรม</button>
+        </div>
+        <div class="cal-weekdays"><span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span></div>
+        <div class="cal-days">${cells}</div>
+        <div class="cal-agenda">
+          ${
+            displayEvents.length === 0
+              ? '<div style="text-align:center;font-size:12px;color:var(--ios-secondary);padding:6px 0">ยังไม่มีกิจกรรมในเดือนนี้ — กด "+ เพิ่มกิจกรรม" ได้เลย</div>'
+              : displayEvents
+                  .map(
+                    (ev) => `
+                    <button type="button" class="cal-event-pill" data-cal-evt="${ev.id}">
+                      <span class="cal-event-bar" style="background:${EVENT_COLOR_HEX[ev.color] || "#007AFF"}"></span>
+                      <div class="cal-event-info">
+                        <strong>${ev.title}</strong>
+                        <span>${ev.date.split("-").reverse().join("/")}${ev.time ? ` • ${ev.time} น.` : ""}${ev.location ? ` • ${ev.location}` : ""}</span>
+                      </div>
+                      ${chevronSvg()}
+                    </button>`
+                  )
+                  .join("")
+          }
+        </div>
+      </div>`;
+  }
+
+  function openCalendarEventDetail(id) {
+    const ev = state.events.find((e) => e.id === id);
+    if (!ev) return;
+    haptic();
+    const canEdit = canManageNews(state.currentUser, ev);
+    els.sheetBody.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="width:12px;height:12px;border-radius:50%;background:${EVENT_COLOR_HEX[ev.color] || "#007AFF"};flex-shrink:0"></span>
+        <h3 style="margin:0;font-size:17px">${ev.title}</h3>
+      </div>
+      <div class="sheet-note">
+        <div><strong>วันที่:</strong> ${ev.date.split("-").reverse().join("/")}${ev.time ? ` เวลา ${ev.time} น.` : ""}</div>
+        ${ev.location ? `<div><strong>สถานที่:</strong> ${ev.location}</div>` : ""}
+        ${ev.notes ? `<div style="margin-top:6px">${ev.notes}</div>` : ""}
+        ${ev.author ? `<div style="margin-top:6px;opacity:0.8">เพิ่มโดย: ${ev.author}</div>` : ""}
+      </div>
+      ${canEdit ? '<button class="btn-primary" id="calDetailEditBtn">แก้ไขกิจกรรม</button><button class="btn-danger" id="calDetailDelBtn">ลบกิจกรรม</button>' : ""}
+      <button class="btn-secondary" id="calDetailCloseBtn">ปิด</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+    document.getElementById("calDetailCloseBtn").onclick = closeSheet;
+    if (canEdit) {
+      document.getElementById("calDetailEditBtn").onclick = () => openCalendarEventSheet(ev);
+      document.getElementById("calDetailDelBtn").onclick = () => {
+        state.events = state.events.filter((x) => x.id !== ev.id);
+        try { localStorage.setItem(STORAGE_EVENTS, JSON.stringify(state.events)); } catch (_) {}
+        postToBackend({ action: "delete_event", id: ev.id });
+        closeSheet();
+        notifyIsland("ลบกิจกรรมแล้ว");
+        render();
+      };
+    }
+  }
+
+  function openCalendarEventSheet(existing = null) {
+    haptic();
+    const u = state.currentUser;
+    const esc = (v) => String(v || "").replace(/"/g, "&quot;");
+    const defaultDate = existing ? existing.date : state.calSelectedDate;
+    els.sheetBody.innerHTML = `
+      <h3 style="margin:0 0 8px">${existing ? "แก้ไขกิจกรรมปฏิทิน" : "เพิ่มกิจกรรมปฏิทินวิชาการ"}</h3>
+      <input class="admin-input" id="evTitle" placeholder="ชื่อกิจกรรม (เช่น ประชุมวิชาการ / สอบปลายภาค)" value="${esc(existing?.title)}" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <input class="admin-input" id="evDate" type="date" value="${esc(defaultDate)}" />
+        <input class="admin-input" id="evTime" type="time" value="${esc(existing?.time || "09:00")}" />
+      </div>
+      <input class="admin-input" id="evLocation" placeholder="สถานที่ (ถ้ามี)" value="${esc(existing?.location)}" />
+      <textarea class="admin-input" id="evNotes" rows="2" placeholder="รายละเอียดเพิ่มเติม...">${existing?.notes || ""}</textarea>
+      <select class="admin-select" id="evColor">
+        <option value="blue" ${(existing?.color || "blue") === "blue" ? "selected" : ""}>สีฟ้า (ทั่วไป/ประชุม)</option>
+        <option value="emerald" ${existing?.color === "emerald" ? "selected" : ""}>สีเขียว (วิชาการ)</option>
+        <option value="amber" ${existing?.color === "amber" ? "selected" : ""}>สีส้ม (งบประมาณ/กิจกรรม)</option>
+        <option value="rose" ${existing?.color === "rose" ? "selected" : ""}>สีแดง (สำคัญ/กำหนดส่ง)</option>
+        <option value="purple" ${existing?.color === "purple" ? "selected" : ""}>สีม่วง (อบรม/นิเทศ)</option>
+      </select>
+      <button class="btn-primary" id="evSaveBtn">บันทึกกิจกรรม</button>
+      <button class="btn-secondary" id="evCancelBtn">ยกเลิก</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+    document.getElementById("evCancelBtn").onclick = closeSheet;
+    document.getElementById("evSaveBtn").onclick = () => {
+      const title = document.getElementById("evTitle").value.trim();
+      const date = document.getElementById("evDate").value;
+      if (!title || !date) { notifyIsland("กรุณากรอกชื่อกิจกรรมและวันที่"); return; }
+      const saved = {
+        id: existing ? existing.id : "evt-" + Date.now(),
+        title,
+        date,
+        time: document.getElementById("evTime").value,
+        location: document.getElementById("evLocation").value.trim(),
+        notes: document.getElementById("evNotes").value.trim(),
+        color: document.getElementById("evColor").value,
+        authorId: existing ? existing.authorId : (u ? u.id : ""),
+        author: existing ? existing.author : (u ? u.name : "")
+      };
+      if (existing) {
+        state.events = state.events.map((x) => (x.id === existing.id ? saved : x));
+      } else {
+        state.events = [...state.events, saved];
+      }
+      state.calSelectedDate = date;
+      const parts = date.split("-");
+      state.calYear = Number(parts[0]);
+      state.calMonth = Number(parts[1]) - 1;
+      try { localStorage.setItem(STORAGE_EVENTS, JSON.stringify(state.events)); } catch (_) {}
+      postToBackend({ action: "save_event", event: saved });
+      closeSheet();
+      notifyIsland(existing ? "อัปเดตกิจกรรมแล้ว" : "เพิ่มกิจกรรมลงปฏิทินแล้ว");
+      render();
+    };
+  }
+
+  // --- Self Profile / Photo / PIN Editor + Admin User Manager ---
+  function openSelfProfileSheet() {
+    const u = state.currentUser;
+    if (!u) return;
+    haptic();
+    let avatarData = u.avatar || "";
+    const esc = (v) => String(v || "").replace(/"/g, "&quot;");
+    els.sheetBody.innerHTML = `
+      <h3 style="margin:0 0 8px">แก้ไขโปรไฟล์และรหัสผ่าน</h3>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <div id="selfAvatarWrap">${renderAvatarHtml({ ...u, avatar: avatarData })}</div>
+        <div>
+          <label class="admin-mini-btn" style="display:inline-flex;align-items:center;gap:5px;cursor:pointer">
+            <span>📷 เปลี่ยนรูปโปรไฟล์</span>
+            <input type="file" id="selfAvatarFile" accept="image/*" style="display:none" />
+          </label>
+          <button type="button" class="admin-mini-btn del ${avatarData ? "" : "hidden"}" id="selfClearAvatar" style="margin-left:4px">ลบรูป</button>
+        </div>
+      </div>
+      <input class="admin-input" id="selfName" placeholder="ชื่อ-นามสกุล" value="${esc(u.name)}" />
+      <input class="admin-input" id="selfShort" placeholder="ชื่อเรียกสั้นๆ (เช่น ครูน้ำเพชร)" value="${esc(u.shortName)}" />
+      <input class="admin-input" id="selfPin" type="tel" maxlength="4" placeholder="รหัส PIN 4 หลักใหม่ (เว้นว่างหากไม่เปลี่ยน)" />
+      <button class="btn-primary" id="selfSaveBtn">บันทึกข้อมูลส่วนตัว</button>
+      <button class="btn-secondary" id="selfCancelBtn">ยกเลิก</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+
+    const fileIn = document.getElementById("selfAvatarFile");
+    const clearBtn = document.getElementById("selfClearAvatar");
+    const wrap = document.getElementById("selfAvatarWrap");
+    fileIn.onchange = async () => {
+      const f = fileIn.files && fileIn.files[0];
+      if (!f) return;
+      try {
+        avatarData = await compressImageFile(f);
+        wrap.innerHTML = renderAvatarHtml({ ...u, avatar: avatarData });
+        clearBtn.classList.remove("hidden");
+      } catch (_) { notifyIsland("ไม่สามารถอ่านรูปภาพได้"); }
+    };
+    clearBtn.onclick = () => {
+      avatarData = "";
+      wrap.innerHTML = renderAvatarHtml({ ...u, avatar: "" });
+      clearBtn.classList.add("hidden");
+    };
+
+    document.getElementById("selfCancelBtn").onclick = closeSheet;
+    document.getElementById("selfSaveBtn").onclick = () => {
+      const name = document.getElementById("selfName").value.trim();
+      const shortName = document.getElementById("selfShort").value.trim();
+      const newPin = document.getElementById("selfPin").value.trim();
+      if (!name) { notifyIsland("กรุณากรอกชื่อ-นามสกุล"); return; }
+      if (newPin && !/^\d{4}$/.test(newPin)) { notifyIsland("รหัส PIN ต้องเป็นตัวเลข 4 หลัก"); return; }
+
+      const updated = {
+        ...u,
+        name,
+        shortName: shortName || u.shortName,
+        pin: newPin || u.pin,
+        avatar: avatarData
+      };
+      state.users = state.users.map((x) => (x.id === u.id ? updated : x));
+      state.currentUser = updated;
+      try { localStorage.setItem(STORAGE_USERS, JSON.stringify(state.users)); } catch (_) {}
+      postToBackend({ action: "save_user", user: updated });
+      closeSheet();
+      notifyIsland("บันทึกโปรไฟล์เรียบร้อยแล้ว");
+      render();
+    };
+  }
+
+  function openAdminUserSheet(existing = null) {
+    if (!isAdminUser(state.currentUser)) return;
+    haptic();
+    const esc = (v) => String(v || "").replace(/"/g, "&quot;");
+    els.sheetBody.innerHTML = `
+      <h3 style="margin:0 0 8px">${existing ? "แก้ไขผู้ใช้ / รีเซ็ตรหัสผ่าน" : "เพิ่มผู้ใช้งานใหม่"}</h3>
+      <input class="admin-input" id="admUsrName" placeholder="ชื่อ-นามสกุล" value="${esc(existing?.name)}" />
+      <input class="admin-input" id="admUsrShort" placeholder="ชื่อย่อ (เช่น ครูสมชาย)" value="${esc(existing?.shortName)}" />
+      <input class="admin-input" id="admUsrPos" placeholder="ตำแหน่ง (เช่น ครู / เจ้าหน้าที่)" value="${esc(existing?.position)}" />
+      <select class="admin-select" id="admUsrRole">
+        <option value="teacher" ${(existing?.role || "teacher") === "teacher" ? "selected" : ""}>บทบาท: ครู</option>
+        <option value="head" ${existing?.role === "head" ? "selected" : ""}>บทบาท: หัวหน้ากลุ่มงาน</option>
+        <option value="director" ${existing?.role === "director" ? "selected" : ""}>บทบาท: ผู้อำนวยการ</option>
+        <option value="admin" ${existing?.role === "admin" ? "selected" : ""}>บทบาท: แอดมิน</option>
+      </select>
+      <input class="admin-input" id="admUsrPin" type="tel" maxlength="4" placeholder="ตั้งรหัส PIN 4 หลัก" value="${esc(existing?.pin || "1234")}" />
+      <button class="btn-primary" id="admUsrSaveBtn">บันทึกผู้ใช้งาน</button>
+      <button class="btn-secondary" id="admUsrCancelBtn">ยกเลิก</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+    document.getElementById("admUsrCancelBtn").onclick = closeSheet;
+    document.getElementById("admUsrSaveBtn").onclick = () => {
+      const name = document.getElementById("admUsrName").value.trim();
+      const pin = document.getElementById("admUsrPin").value.trim();
+      if (!name) { notifyIsland("กรุณากรอกชื่อ-นามสกุล"); return; }
+      if (!/^\d{4}$/.test(pin)) { notifyIsland("รหัส PIN ต้องเป็นตัวเลข 4 หลัก"); return; }
+      const saved = {
+        id: existing ? existing.id : "usr-" + Date.now(),
+        name,
+        shortName: document.getElementById("admUsrShort").value.trim() || name.split(" ")[0],
+        position: document.getElementById("admUsrPos").value.trim() || "ครู",
+        role: document.getElementById("admUsrRole").value,
+        pin,
+        color: existing ? existing.color : ["blue", "emerald", "amber", "teal", "purple", "sky"][state.users.length % 6],
+        avatar: existing ? (existing.avatar || "") : ""
+      };
+      if (existing) {
+        state.users = state.users.map((x) => (x.id === existing.id ? saved : x));
+        if (state.currentUser && state.currentUser.id === saved.id) state.currentUser = saved;
+      } else {
+        state.users = [...state.users, saved];
+      }
+      try { localStorage.setItem(STORAGE_USERS, JSON.stringify(state.users)); } catch (_) {}
+      postToBackend({ action: "save_user", user: saved });
+      closeSheet();
+      notifyIsland(existing ? "อัปเดตข้อมูล/รหัสผ่านแล้ว" : "เพิ่มผู้ใช้งานใหม่แล้ว");
+      render();
+    };
   }
 
   // --- Real Push Notifications (OneSignal Web SDK v16 + Browser Notification API) ---
@@ -583,9 +924,23 @@
             state.announcements = data.schoolNews;
             try { localStorage.setItem(STORAGE_LOCAL_NEWS, JSON.stringify(data.schoolNews)); } catch (_) {}
           }
+          if (Array.isArray(data.calendarEvents) && data.calendarEvents.length) {
+            state.events = data.calendarEvents;
+            try { localStorage.setItem(STORAGE_EVENTS, JSON.stringify(data.calendarEvents)); } catch (_) {}
+          }
+          if (Array.isArray(data.users) && data.users.length) {
+            const byId = new Map(state.users.map((u) => [u.id, u]));
+            data.users.forEach((u) => byId.set(u.id, { ...(byId.get(u.id) || {}), ...u }));
+            state.users = [...byId.values()];
+            try { localStorage.setItem(STORAGE_USERS, JSON.stringify(state.users)); } catch (_) {}
+            if (state.currentUser) {
+              state.currentUser = state.users.find((u) => u.id === state.currentUser.id) || state.currentUser;
+            }
+            if (!els.login.classList.contains("hidden")) renderUserList();
+          }
           if (Array.isArray(data.obecNews)) state.obecNews = data.obecNews;
           state.obecLoading = false;
-          if (state.tab === "announcements") render();
+          render();
           return;
         }
       } catch (_) {}
@@ -1058,12 +1413,15 @@
         </div>`;
     }
 
+    const calendarHtml = state.division === "all" && !state.query.trim() ? renderCalendarWidget() : "";
+
     els.main.innerHTML = `
       ${pinnedHtml}
+      ${calendarHtml}
       ${filtersHtml}
       ${bodyHtml}
       <div class="gas-badge">
-        <span>BPP Connect v${config.appVersion || "1.1.0"} • Google Workspace</span>
+        <span>BPP Connect v${config.appVersion || "1.5.0"} • Google Workspace</span>
       </div>`;
   }
 
@@ -1179,6 +1537,26 @@
     const adminHtml = isAdmin
       ? `
         <div class="info-card">
+          <h3>จัดการผู้ใช้งาน <span class="admin-badge">เฉพาะแอดมิน</span></h3>
+          <div class="info-meta">เพิ่มผู้ใช้ หรือรีเซ็ตรหัสผ่านให้ครูที่ลืมรหัสได้ทันที</div>
+          <button class="btn-primary" id="adminAddUserBtn">+ เพิ่มผู้ใช้งานใหม่</button>
+          <div style="margin-top:12px">
+            ${state.users
+              .map(
+                (usr) => `
+                <div class="admin-sys-row">
+                  <div style="min-width:0;flex:1">
+                    <strong style="font-size:13px">${usr.name}</strong>
+                    <div class="info-meta" style="margin:0">${usr.position} • PIN: ${usr.pin}</div>
+                  </div>
+                  <button class="admin-mini-btn" data-adm-usr-edit="${usr.id}">แก้/รหัส</button>
+                  ${usr.id !== "thanakarin" ? `<button class="admin-mini-btn del" data-adm-usr-del="${usr.id}">ลบ</button>` : ""}
+                </div>`
+              )
+              .join("")}
+          </div>
+        </div>
+        <div class="info-card">
           <h3>จัดการระบบงาน <span class="admin-badge">เฉพาะแอดมิน</span></h3>
           <div class="info-meta">สิทธิ์เฉพาะ นายธานครินทร์ สุเมธาลังการ</div>
           <button class="btn-primary" id="adminAddSysBtn">+ เพิ่มระบบงาน GAS ใหม่</button>
@@ -1223,12 +1601,15 @@
       </div>
       ${
         u
-          ? `<div class="info-card profile-card">
-              <div class="user-avatar c-${u.color}">${getInitial(u)}</div>
-              <div>
-                <h3>${u.name}</h3>
-                <div class="info-meta" style="margin:0">${u.position}</div>
+          ? `<div class="info-card">
+              <div class="profile-card">
+                ${renderAvatarHtml(u)}
+                <div style="flex:1;min-width:0">
+                  <h3>${u.name}</h3>
+                  <div class="info-meta" style="margin:0">${u.position}</div>
+                </div>
               </div>
+              <button class="btn-secondary" id="editSelfProfileBtn" style="margin-top:12px">แก้ไขชื่อ / รูปโปรไฟล์ / เปลี่ยนรหัส PIN</button>
             </div>`
           : ""
       }
@@ -1323,6 +1704,52 @@
       state.accent = accentBtn.dataset.accent;
       applyTheme();
       notifyIsland("เปลี่ยนสีหลักของแอปแล้ว");
+      render();
+      return;
+    }
+
+    if (e.target.id === "calPrevBtn") {
+      haptic();
+      state.calMonth -= 1;
+      if (state.calMonth < 0) { state.calMonth = 11; state.calYear -= 1; }
+      render();
+      return;
+    }
+    if (e.target.id === "calNextBtn") {
+      haptic();
+      state.calMonth += 1;
+      if (state.calMonth > 11) { state.calMonth = 0; state.calYear += 1; }
+      render();
+      return;
+    }
+    if (e.target.id === "calAddBtn") { openCalendarEventSheet(null); return; }
+    const calDayBtn = e.target.closest("[data-cal-day]");
+    if (calDayBtn) {
+      haptic();
+      state.calSelectedDate = calDayBtn.dataset.calDay;
+      render();
+      return;
+    }
+    const calEvtBtn = e.target.closest("[data-cal-evt]");
+    if (calEvtBtn) { openCalendarEventDetail(calEvtBtn.dataset.calEvt); return; }
+
+    if (e.target.id === "editSelfProfileBtn") { openSelfProfileSheet(); return; }
+    if (e.target.id === "adminAddUserBtn") { openAdminUserSheet(null); return; }
+
+    const admUsrEdit = e.target.closest("[data-adm-usr-edit]");
+    if (admUsrEdit && isAdminUser(state.currentUser)) {
+      const target = state.users.find((x) => x.id === admUsrEdit.dataset.admUsrEdit);
+      if (target) openAdminUserSheet(target);
+      return;
+    }
+    const admUsrDel = e.target.closest("[data-adm-usr-del]");
+    if (admUsrDel && isAdminUser(state.currentUser)) {
+      const id = admUsrDel.dataset.admUsrDel;
+      if (id === "thanakarin") return;
+      state.users = state.users.filter((x) => x.id !== id);
+      try { localStorage.setItem(STORAGE_USERS, JSON.stringify(state.users)); } catch (_) {}
+      postToBackend({ action: "delete_user", id });
+      notifyIsland("ลบผู้ใช้งานแล้ว");
       render();
       return;
     }

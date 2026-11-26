@@ -1,6 +1,6 @@
 // ตั้งค่าแอป BPP Connect — โรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)
 window.SCHOOL_CONFIG = {
-  appVersion: "1.4.0",
+  appVersion: "1.5.0",
   schoolName: "BPP Connect",
   schoolSubtitle: "โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4",
   logoUrl: "./icons/school-logo.png",
@@ -37,7 +37,7 @@ window.SCHOOL_CONFIG = {
       shortName: "ครูธานครินทร์",
       position: "ครู/แอดมิน",
       role: "admin",
-      pin: "1234",
+      pin: "8301",
       color: "indigo"
     },
     {
@@ -88,9 +88,34 @@ window.SCHOOL_CONFIG = {
     {
       id: "ann-2",
       title: "อัปเดตแอปอัตโนมัติโดยไม่ต้องติดตั้งใหม่",
-      date: "วันนี้ • BPP Connect v1.1",
-      body: "เมื่อแอดมินเพิ่มหรือแก้ไขระบบใหม่ สามารถกดปุ่มตรวจหาอัปเดตในหน้าตั้งค่าเพื่อรับข้อมูลล่าสุดได้ทันที",
+      date: "วันนี้ • BPP Connect v1.5",
+      body: "เพิ่มปฏิทินวิชาการบนหน้าหลัก ระบบแก้ไขโปรไฟล์/รหัสผ่าน และแผงจัดการผู้ใช้งานสำหรับแอดมิน",
       urgent: false
+    }
+  ],
+
+  calendarEvents: [
+    {
+      id: "evt-1",
+      title: "ประชุมประจำเดือนคณะครูและบุคลากร",
+      date: "2026-11-27",
+      time: "15:30",
+      location: "ห้องประชุมโรงเรียนบ้านป่าไผ่",
+      notes: "ติดตามแผนการนิเทศภายในและสรุปงบประมาณประจำเดือน",
+      color: "blue",
+      authorId: "napaporn",
+      author: "นางสาวนภาพร คงแสนคำ"
+    },
+    {
+      id: "evt-2",
+      title: "ส่งแผนการจัดการเรียนรู้ ภาคเรียนที่ 2",
+      date: "2026-11-30",
+      time: "16:00",
+      location: "กลุ่มงานวิชาการ",
+      notes: "ส่งผ่านระบบนิเทศภายในโรงเรียนในแอป BPP Connect",
+      color: "emerald",
+      authorId: "pacharasaran",
+      author: "นายพชรศรัณย์ ทับชม"
     }
   ],
 

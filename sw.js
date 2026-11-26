@@ -1,4 +1,4 @@
-const CACHE_NAME = "bpp-connect-v9";
+const CACHE_NAME = "bpp-connect-v10";
 const ASSETS = [
   "./",
   "./index.html",

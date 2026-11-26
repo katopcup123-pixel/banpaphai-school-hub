@@ -292,6 +292,8 @@
           </div>
           <label class="lbl">วันที่เฝ้าระวัง</label>
           <div class="day-chips" id="geoDayChips"></div>
+          <label class="lbl">สิทธิ์การตรวจจับพิกัด 100 ม. (ติ๊กเลือกผู้ที่ต้องการให้แจ้งเตือน)</label>
+          <div id="geoMonitorUsersWrap" style="margin-bottom:12px"></div>
           <button type="button" class="btn-green" id="saveGeoBtn" style="width:100%">💾 บันทึกการตั้งค่า GPS</button>
         </div>
 
@@ -387,7 +389,8 @@
       radiusMeters: 100,
       startTime: "08:00",
       endTime: "16:00",
-      activeDays: [1, 2, 3, 4, 5]
+      activeDays: [1, 2, 3, 4, 5],
+      exemptUserIds: ["napaporn"]
     };
 
     const state = {
@@ -470,6 +473,11 @@
       }).catch(() => {});
     }
 
+    function isUserExemptFromGeo(userId) {
+      const list = Array.isArray(state.geofence.exemptUserIds) ? state.geofence.exemptUserIds : ["napaporn"];
+      return list.includes(userId);
+    }
+
     function updateGeoBanner() {
       const g = state.geofence;
       const hasPin = g.lat !== "" && g.lng !== "" && !Number.isNaN(Number(g.lat));
@@ -479,6 +487,14 @@
       const detail = $("geoDetailText");
 
       badge.className = "geo-badge";
+      if (isUserExemptFromGeo(teacher.id)) {
+        badge.classList.add("perm");
+        badgeTxt.textContent = "ได้รับการยกเว้นแจ้งเตือน";
+        detail.textContent = "บัญชีนี้ได้รับการยกเว้นการแจ้งเตือนออกนอกโรงเรียนโดยแอดมิน";
+        $("toggleGpsBtn").classList.add("hidden");
+        return;
+      }
+      $("toggleGpsBtn").classList.remove("hidden");
       if (!hasPin) {
         badgeTxt.textContent = "ยังไม่ปักหมุดโรงเรียน";
         detail.textContent = isAdmin
@@ -516,7 +532,7 @@
 
     function handleGpsPosition(pos) {
       const g = state.geofence;
-      if (!g.lat || !g.lng) return;
+      if (!g.lat || !g.lng || isUserExemptFromGeo(teacher.id)) return;
       const dist = haversineMeters(Number(g.lat), Number(g.lng), pos.coords.latitude, pos.coords.longitude);
       state.lastDistance = dist;
       const radius = Number(g.radiusMeters) || 100;
@@ -728,12 +744,26 @@
       ).join("");
 
       const users = getAllUsers();
+      const exemptSet = new Set(Array.isArray(g.exemptUserIds) ? g.exemptUserIds : ["napaporn"]);
+      $("geoMonitorUsersWrap").innerHTML = users.map((u) => {
+        const monitored = !exemptSet.has(u.id);
+        return `
+          <label class="webhook-row" style="cursor:pointer">
+            <span><strong>${u.shortName}</strong> <span style="color:var(--secondary);font-size:11.5px">(${u.position || "ครู"})</span></span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:${monitored ? "var(--accent)" : "var(--secondary)"}">
+              <input type="checkbox" data-geo-mon="${u.id}" ${monitored ? "checked" : ""} />
+              ${monitored ? "แจ้งเตือน" : "ยกเว้น"}
+            </span>
+          </label>`;
+      }).join("");
+
       $("shortcutLinksWrap").innerHTML = users.map((u) => {
+        const isExempt = exemptSet.has(u.id);
         const url = backendUrl ? `${backendUrl}?action=geofence_exit&userId=${encodeURIComponent(u.id)}` : "(ยังไม่ได้ตั้งค่า newsBackendUrl)";
         return `
           <div class="webhook-row">
             <div style="min-width:0;flex:1">
-              <strong>${u.shortName}</strong>
+              <strong>${u.shortName}</strong> ${isExempt ? `<span style="font-size:11px;color:var(--purple);font-weight:600">(ยกเว้น)</span>` : ""}
               <div style="font-size:11px;color:var(--secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${url}</div>
             </div>
             <button type="button" class="mini-btn" data-copy-url="${url}">คัดลอกลิงก์</button>
@@ -816,6 +846,17 @@
       );
     };
 
+    $("geoMonitorUsersWrap").addEventListener("change", (e) => {
+      const cb = e.target.closest("[data-geo-mon]");
+      if (!cb) return;
+      const uid = cb.dataset.geoMon;
+      const set = new Set(Array.isArray(state.geofence.exemptUserIds) ? state.geofence.exemptUserIds : ["napaporn"]);
+      if (cb.checked) set.delete(uid);
+      else set.add(uid);
+      state.geofence.exemptUserIds = [...set];
+      renderGeofenceAdmin();
+    });
+
     $("saveGeoBtn").onclick = () => {
       state.geofence = {
         enabled: $("geoEnabled").checked,
@@ -824,7 +865,8 @@
         radiusMeters: Number($("geoRadius").value) || 100,
         startTime: $("geoStart").value || "08:00",
         endTime: $("geoEnd").value || "16:00",
-        activeDays: state.geofence.activeDays || [1, 2, 3, 4, 5]
+        activeDays: state.geofence.activeDays || [1, 2, 3, 4, 5],
+        exemptUserIds: Array.isArray(state.geofence.exemptUserIds) ? state.geofence.exemptUserIds : ["napaporn"]
       };
       saveLocal();
       postBackend({ action: "save_geofence", geofence: state.geofence });

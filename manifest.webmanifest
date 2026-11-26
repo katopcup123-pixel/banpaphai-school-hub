@@ -1,0 +1,26 @@
+{
+  "name": "โรงเรียนบ้านป่าไผ่ — ศูนย์รวมระบบงาน",
+  "short_name": "ร.ร.บ้านป่าไผ่",
+  "description": "แอปเนวิเกเตอร์รวมทางลัดเข้าสู่ระบบงานบริหารโรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F2F7",
+  "theme_color": "#007AFF",
+  "lang": "th",
+  "icons": [
+    {
+      "src": "./icons/school-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

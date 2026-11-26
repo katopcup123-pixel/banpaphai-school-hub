@@ -573,6 +573,10 @@
       return (localStorage.getItem("bpp_docs_api_url") || (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.docsApiUrl) || "").trim();
     }
 
+    function fixThaiYear(str) {
+      return String(str || "").replace(/\b(3\d{3})\b/g, (_, y) => String(Number(y) - 543));
+    }
+
     function detectFileBadge(url) {
       const u = String(url || "").toLowerCase();
       if (u.includes("/spreadsheets/") || u.endsWith(".xlsx") || u.endsWith(".xls")) return { cls: "t-sheet", label: "XLS" };
@@ -683,7 +687,7 @@
               <div class="doc-meta">
                 <span>${d.author || "-"}</span>
                 <span>•</span>
-                <span>${d.date || ""}</span>
+                <span>${fixThaiYear(d.date)}</span>
               </div>
             </div>
           </article>`;
@@ -698,7 +702,7 @@
           <div><strong>ฉบับที่:</strong> ${doc.docNo || "-"}</div>
           <div><strong>หมวดหมู่:</strong> ${doc.group} • ${doc.category || "-"}</div>
           <div><strong>ผู้บันทึก:</strong> ${doc.author || "-"}</div>
-          <div><strong>วันที่เพิ่ม:</strong> ${doc.date || "-"}</div>
+          <div><strong>วันที่เพิ่ม:</strong> ${fixThaiYear(doc.date) || "-"}</div>
         </div>
         <div class="sheet-actions">
           ${doc.fileUrl ? `<a class="btn-primary" href="${doc.fileUrl}" target="_blank" rel="noopener">เปิดดู / ดาวน์โหลดเอกสาร ↗</a>` : ""}
@@ -813,7 +817,7 @@
           closeSheet();
           showToast(existing ? "แก้ไขข้อมูลเอกสารแล้ว" : `บันทึกเอกสารฉบับที่ ${json.doc.docNo} สำเร็จ!`);
           if (!existing && window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: "BPP_ALBUM_UPLOADED", albumName: title, count: 1 }, location.origin);
+            window.parent.postMessage({ type: "BPP_DOC_UPLOADED", title }, location.origin);
           }
           loadDocs();
         } catch (err) {

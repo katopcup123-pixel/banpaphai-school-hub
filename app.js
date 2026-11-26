@@ -8,7 +8,7 @@
   const STORAGE_NEWS_API = "bpp_connect_news_api_v1";
   const STORAGE_ONESIGNAL = "bpp_connect_onesignal_id_v1";
   const STORAGE_LOCAL_NEWS = "bpp_connect_local_news_v1";
-  const STORAGE_USERS = "bpp_connect_users_v2";
+  const STORAGE_USERS = "bpp_connect_users_v3";
   const STORAGE_EVENTS = "bpp_connect_events_v1";
 
   const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -849,17 +849,19 @@
     };
   }
 
-  // --- Real Push Notifications (OneSignal Web SDK v16 + Browser Notification API) ---
+  // --- Real Push Notifications (OneSignal Web SDK v16 + GitHub Pages subpath scope) ---
   function initOneSignal() {
     const appId = (state.oneSignalAppId || "").trim();
     if (!appId) return;
+    const isGhPages = location.pathname.startsWith("/banpaphai-school-hub");
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async function (OneSignal) {
       try {
         await OneSignal.init({
           appId,
           allowLocalhostAsSecureOrigin: true,
-          serviceWorkerPath: "./OneSignalSDKWorker.js"
+          serviceWorkerPath: isGhPages ? "banpaphai-school-hub/OneSignalSDKWorker.js" : "OneSignalSDKWorker.js",
+          serviceWorkerParam: { scope: isGhPages ? "/banpaphai-school-hub/" : "/" }
         });
       } catch (_) {}
     });
@@ -877,10 +879,13 @@
       window.OneSignalDeferred.push(async function (OneSignal) {
         try {
           await OneSignal.Notifications.requestPermission();
-          notifyIsland("เปิดรับแจ้งเตือน Push เรียบร้อยแล้ว");
+          if (OneSignal.User && OneSignal.User.PushSubscription) {
+            await OneSignal.User.PushSubscription.optIn();
+          }
+          notifyIsland("ลงทะเบียนรับแจ้งเตือน Push สำเร็จ!");
           render();
         } catch (_) {
-          notifyIsland("ไม่สามารถเปิดแจ้งเตือนได้");
+          notifyIsland("กรุณาตั้งค่า Site URL ใน OneSignal ให้เรียบร้อยก่อน");
         }
       });
       return;

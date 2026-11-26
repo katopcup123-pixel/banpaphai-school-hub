@@ -1,6 +1,6 @@
 // ตั้งค่าแอป BPP Connect — โรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)
 window.SCHOOL_CONFIG = {
-  appVersion: "1.6.1",
+  appVersion: "1.6.2",
   schoolName: "BPP Connect",
   schoolSubtitle: "โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4",
   logoUrl: "./icons/school-logo.png",
@@ -20,7 +20,8 @@ window.SCHOOL_CONFIG = {
       position: "ผู้อำนวยการโรงเรียนบ้านป่าไผ่",
       role: "director",
       pin: "1234",
-      color: "amber"
+      color: "amber",
+      avatar: "./icons/avatar-napaporn.png"
     },
     {
       id: "pacharasaran",
@@ -29,7 +30,8 @@ window.SCHOOL_CONFIG = {
       position: "หัวหน้ากลุ่มงานวิชาการ",
       role: "head",
       pin: "1234",
-      color: "blue"
+      color: "blue",
+      avatar: "./icons/avatar-pacharasaran.png"
     },
     {
       id: "thanakarin",
@@ -38,7 +40,8 @@ window.SCHOOL_CONFIG = {
       position: "ครู/แอดมิน",
       role: "admin",
       pin: "8301",
-      color: "indigo"
+      color: "indigo",
+      avatar: "./icons/avatar-thanakarin.png"
     },
     {
       id: "namphet",
@@ -47,7 +50,8 @@ window.SCHOOL_CONFIG = {
       position: "ครู",
       role: "teacher",
       pin: "1234",
-      color: "emerald"
+      color: "emerald",
+      avatar: "./icons/avatar-namphet.png"
     },
     {
       id: "narisara",
@@ -56,7 +60,8 @@ window.SCHOOL_CONFIG = {
       position: "ครูผู้ช่วย",
       role: "teacher",
       pin: "1234",
-      color: "teal"
+      color: "teal",
+      avatar: "./icons/avatar-narisara.png"
     },
     {
       id: "nantaphat",
@@ -65,7 +70,8 @@ window.SCHOOL_CONFIG = {
       position: "ครูอัตราจ้าง",
       role: "teacher",
       pin: "1234",
-      color: "sky"
+      color: "sky",
+      avatar: "./icons/avatar-nantaphat.png"
     }
   ],
 

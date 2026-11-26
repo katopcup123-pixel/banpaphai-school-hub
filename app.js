@@ -1,9 +1,9 @@
 (() => {
-  const STORAGE_FAVS = "bpp_connect_favorites_v1";
+  const STORAGE_FAVS = "bpp_connect_favorites_v2";
   const STORAGE_USER = "bpp_connect_user_v1";
   const STORAGE_THEME = "bpp_connect_theme_v1";
   const STORAGE_ACCENT = "bpp_connect_accent_v1";
-  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v1";
+  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v2";
   const STORAGE_REMOTE = "bpp_connect_remote_url_v1";
   const STORAGE_NEWS_API = "bpp_connect_news_api_v1";
   const STORAGE_ONESIGNAL = "bpp_connect_onesignal_id_v1";
@@ -34,7 +34,9 @@
     barChart: '<path d="M3 3v18h18"/><rect width="4" height="7" x="7" y="10" rx="1"/><rect width="4" height="12" x="15" y="5" rx="1"/>',
     users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
     wrench: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
-    graduationCap: '<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>'
+    graduationCap: '<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',
+    award: '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>',
+    utensils: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>'
   };
 
   function iconSvg(name, size = 26) {

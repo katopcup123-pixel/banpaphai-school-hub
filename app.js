@@ -6,7 +6,7 @@
   const STORAGE_OVERRIDE = "bpp_connect_systems_override_v4";
   const STORAGE_REMOTE = "bpp_connect_remote_url_v1";
   const STORAGE_NEWS_API = "bpp_connect_news_api_v1";
-  const STORAGE_ONESIGNAL = "bpp_connect_onesignal_id_v1";
+  const STORAGE_NTFY = "bpp_connect_ntfy_topic_v1";
   const STORAGE_LOCAL_NEWS = "bpp_connect_local_news_v1";
   const STORAGE_USERS = "bpp_connect_users_v3";
   const STORAGE_EVENTS = "bpp_connect_events_v1";
@@ -211,7 +211,7 @@
     pushSubId: "",
     remoteConfigUrl: localStorage.getItem(STORAGE_REMOTE) || config.remoteConfigUrl || "",
     newsBackendUrl: localStorage.getItem(STORAGE_NEWS_API) || config.newsBackendUrl || "",
-    oneSignalAppId: localStorage.getItem(STORAGE_ONESIGNAL) || config.oneSignalAppId || "",
+    ntfyTopic: localStorage.getItem(STORAGE_NTFY) || config.ntfyTopic || "bpp-connect-korat4-2569",
     deferredInstallPrompt: null,
     swReg: null
   };
@@ -1020,99 +1020,26 @@
     };
   }
 
-  // --- Real Push Notifications (Unified OneSignalSDKWorker.js — no SW conflict!) ---
-  async function cleanupLegacySw() {
-    if (!("serviceWorker" in navigator)) return;
+  // --- ntfy.sh Instant Push Notifications (Zero API Key, 100% Free, iPhone & Android) ---
+  async function sendNtfyNotification(title, message, urgent = false) {
+    const topic = (state.ntfyTopic || "").trim();
+    if (!topic) return false;
     try {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      for (const r of regs) {
-        const url = (r.active && r.active.scriptURL) || (r.installing && r.installing.scriptURL) || "";
-        if (url.endsWith("/sw.js")) {
-          await r.unregister();
-        }
-      }
-    } catch (_) {}
-  }
-
-  function initOneSignal() {
-    const appId = (state.oneSignalAppId || "").trim();
-    if (!appId) return;
-    const isGhPages = location.pathname.startsWith("/banpaphai-school-hub");
-    cleanupLegacySw().then(() => {
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      window.OneSignalDeferred.push(async function (OneSignal) {
-        try {
-          await OneSignal.init({
-            appId,
-            allowLocalhostAsSecureOrigin: true,
-            serviceWorkerPath: isGhPages ? "/banpaphai-school-hub/OneSignalSDKWorker.js" : "/OneSignalSDKWorker.js",
-            serviceWorkerParam: { scope: isGhPages ? "/banpaphai-school-hub/" : "/" }
-          });
-          const sub = OneSignal.User && OneSignal.User.PushSubscription;
-          if (sub && sub.id && sub.optedIn) {
-            state.pushSubId = sub.id;
-            if (state.tab === "settings") render();
-          }
-          if (sub && sub.addEventListener) {
-            sub.addEventListener("change", (ev) => {
-              state.pushSubId = ev.current && ev.current.optedIn ? (ev.current.id || "active") : "";
-              if (state.tab === "settings") render();
-            });
-          }
-        } catch (_) {}
+      const res = await fetch("https://ntfy.sh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic,
+          title,
+          message,
+          priority: urgent ? 5 : 3,
+          tags: urgent ? ["rotating_light"] : ["loudspeaker"],
+          click: "https://katopcup123-pixel.github.io/banpaphai-school-hub/"
+        })
       });
-    });
-  }
-
-  async function enablePushNotifications() {
-    haptic();
-    if (!("Notification" in window)) {
-      notifyIsland("บน iPhone ต้องเปิดจากไอคอนหน้าจอโฮม (iOS 16.4+)");
-      return;
-    }
-
-    const appId = (state.oneSignalAppId || "").trim();
-    if (appId && window.OneSignalDeferred) {
-      notifyIsland("กำลังลงทะเบียนแจ้งเตือน...");
-      window.OneSignalDeferred.push(async function (OneSignal) {
-        try {
-          await OneSignal.Notifications.requestPermission();
-          const sub = OneSignal.User && OneSignal.User.PushSubscription;
-          if (sub) {
-            await sub.optIn();
-            state.pushSubId = sub.id || (sub.optedIn ? "subscribed" : "");
-          }
-          playSound("success");
-          notifyIsland(state.pushSubId ? "ลงทะเบียน Push สำเร็จแล้ว!" : "อนุญาตแล้ว รอซิงก์สักครู่");
-          render();
-        } catch (err) {
-          notifyIsland("ลงทะเบียนไม่สำเร็จ ลองปิดแอปแล้วเปิดใหม่");
-        }
-      });
-      return;
-    }
-
-    try {
-      const perm = await Notification.requestPermission();
-      if (perm === "granted") {
-        notifyIsland("อนุญาตแจ้งเตือนบนเครื่องนี้แล้ว");
-        if (state.swReg && state.swReg.showNotification) {
-          state.swReg.showNotification("BPP Connect", {
-            body: "เปิดรับการแจ้งเตือนข่าวสารโรงเรียนบ้านป่าไผ่เรียบร้อยแล้ว",
-            icon: "./icons/school-logo.png"
-          });
-        } else {
-          new Notification("BPP Connect", {
-            body: "เปิดรับการแจ้งเตือนข่าวสารโรงเรียนบ้านป่าไผ่เรียบร้อยแล้ว",
-            icon: "./icons/school-logo.png"
-          });
-        }
-      } else {
-        notifyIsland("ยังไม่ได้อนุญาตการแจ้งเตือน");
-      }
-      render();
+      return res.ok;
     } catch (_) {
-      notifyIsland("บน iPhone ต้องเพิ่มลงหน้าจอโฮมก่อนเปิดแจ้งเตือน");
+      return false;
     }
   }
 
@@ -1831,25 +1758,15 @@
               .join("")}
           </div>
           <div style="margin-top:12px;padding-top:10px;border-top:0.5px solid var(--ios-sep)">
-            <strong style="font-size:13px">เชื่อมต่อแจ้งเตือน Push จริง & ข่าวคลาวด์</strong>
+            <strong style="font-size:13px">เชื่อมต่อแจ้งเตือน ntfy & ข่าวคลาวด์</strong>
             <input class="admin-input" id="newsApiInput" placeholder="ลิงก์ GAS หลังบ้านข่าว (จาก gas-backend.gs)" value="${state.newsBackendUrl}" />
-            <input class="admin-input" id="oneSignalInput" placeholder="OneSignal App ID (สำหรับแจ้งเตือนข้ามเครื่อง)" value="${state.oneSignalAppId}" />
+            <input class="admin-input" id="ntfyTopicInput" placeholder="ชื่อช่อง ntfy.sh ของโรงเรียน" value="${state.ntfyTopic}" />
             <input class="admin-input" id="remoteUrlInput" placeholder="ลิงก์ซิงก์รายการระบบ GAS JSON (ถ้ามี)" value="${state.remoteConfigUrl}" />
             <button class="btn-secondary" id="saveRemoteUrlBtn">บันทึกการเชื่อมต่อคลาวด์</button>
             <button class="btn-secondary" id="exportConfigBtn">คัดลอก apps-config.js (สำหรับอัปเดตผ่าน GitHub)</button>
           </div>
         </div>`
       : "";
-
-    const notifStatus = state.pushSubId
-      ? "✅ เชื่อมต่อ OneSignal Push สำเร็จแล้ว"
-      : "Notification" in window
-        ? Notification.permission === "granted"
-          ? "อนุญาตในเครื่องแล้ว (กดปุ่มด้านล่างเพื่อซิงก์ OneSignal)"
-          : Notification.permission === "denied"
-            ? "ถูกปิดไว้ในการตั้งค่าเครื่อง"
-            : "ยังไม่ได้เปิดรับแจ้งเตือน"
-        : "บน iPhone ต้องเพิ่มลงหน้าจอโฮมก่อน";
 
     els.main.innerHTML = `
       <div class="section-header">
@@ -1872,11 +1789,15 @@
       <div class="info-card">
         <div class="settings-row">
           <div>
-            <strong>แจ้งเตือนข่าวบนมือถือ (Push)</strong>
-            <div class="info-meta" style="margin:0">สถานะ: ${notifStatus}</div>
+            <strong>แจ้งเตือนผ่านแอป ntfy (ฟรีไม่จำกัด)</strong>
+            <div class="info-meta" style="margin:2px 0 0">โหลดแอป <strong>ntfy</strong> แล้วกดติดตามช่อง: <strong>${state.ntfyTopic}</strong></div>
           </div>
         </div>
-        <button class="btn-primary" id="enablePushBtn">เปิดรับการแจ้งเตือนจริง (iPhone / Android)</button>
+        <button class="btn-primary" id="testNtfyBtn">ทดสอบยิงแจ้งเตือนเข้า ntfy ทันที</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn-secondary" id="copyNtfyBtn">คัดลอกชื่อช่อง</button>
+          <a class="btn-secondary" href="ntfy://ntfy.sh/${encodeURIComponent(state.ntfyTopic)}" style="text-align:center;text-decoration:none;display:block">เปิดในแอป ntfy</a>
+        </div>
       </div>
       <div class="info-card">
         <div class="settings-row">
@@ -2129,7 +2050,27 @@
       return;
     }
 
-    if (e.target.id === "enablePushBtn") { enablePushNotifications(); return; }
+    if (e.target.id === "testNtfyBtn") {
+      haptic();
+      notifyIsland("กำลังส่งแจ้งเตือนทดสอบ...");
+      sendNtfyNotification(
+        "ทดสอบแจ้งเตือน BPP Connect",
+        `ส่งทดสอบโดย ${state.currentUser ? state.currentUser.name : "คุณครู"} สำเร็จแล้ว!`,
+        false
+      ).then((ok) => {
+        playSound(ok ? "success" : "error");
+        notifyIsland(ok ? "ส่งเข้า ntfy สำเร็จ! ดูที่แถบแจ้งเตือนได้เลย" : "ส่งไม่สำเร็จ ตรวจอินเทอร์เน็ต");
+      });
+      return;
+    }
+
+    if (e.target.id === "copyNtfyBtn") {
+      haptic();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(state.ntfyTopic).then(() => notifyIsland(`คัดลอก "${state.ntfyTopic}" แล้ว`));
+      }
+      return;
+    }
     if (e.target.id === "openBroadcastBtn") { openBroadcastNewsSheet(); return; }
     if (e.target.id === "refreshNewsBtn") { loadLiveNews(true); notifyIsland("กำลังดึงข่าวล่าสุด..."); return; }
 
@@ -2189,14 +2130,13 @@
     if (e.target.id === "saveRemoteUrlBtn" && isAdminUser(state.currentUser)) {
       const input = document.getElementById("remoteUrlInput");
       const newsIn = document.getElementById("newsApiInput");
-      const osIn = document.getElementById("oneSignalInput");
+      const ntfyIn = document.getElementById("ntfyTopicInput");
       state.remoteConfigUrl = input ? input.value.trim() : "";
       state.newsBackendUrl = newsIn ? newsIn.value.trim() : "";
-      state.oneSignalAppId = osIn ? osIn.value.trim() : "";
+      state.ntfyTopic = (ntfyIn ? ntfyIn.value.trim() : "") || "bpp-connect-korat4-2569";
       localStorage.setItem(STORAGE_REMOTE, state.remoteConfigUrl);
       localStorage.setItem(STORAGE_NEWS_API, state.newsBackendUrl);
-      localStorage.setItem(STORAGE_ONESIGNAL, state.oneSignalAppId);
-      initOneSignal();
+      localStorage.setItem(STORAGE_NTFY, state.ntfyTopic);
       if (state.newsBackendUrl) loadLiveNews(true);
       if (state.remoteConfigUrl) syncRemoteConfig(false);
       else notifyIsland("บันทึกการเชื่อมต่อคลาวด์แล้ว");
@@ -2303,12 +2243,10 @@
     });
   });
 
-  // Use unified OneSignalSDKWorker.js (registered by OneSignal.init) to avoid SW scope collision
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.ready.then((reg) => { state.swReg = reg; }).catch(() => {});
+    navigator.serviceWorker.register("./OneSignalSDKWorker.js").then((reg) => { state.swReg = reg; }).catch(() => {});
   }
 
-  initOneSignal();
   syncRemoteConfig(true);
   loadLiveNews(false);
   playSplashThenLogin();

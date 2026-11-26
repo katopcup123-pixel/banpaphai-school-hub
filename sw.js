@@ -1,4 +1,4 @@
-const CACHE_NAME = "school-navigator-v4";
+const CACHE_NAME = "bpp-connect-v5";
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,10 +25,14 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") self.skipWaiting();
+});
+
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-cache" })
       .then((res) => {
         if (res.ok && event.request.url.startsWith(self.location.origin)) {
           const copy = res.clone();

@@ -1,12 +1,12 @@
 {
-  "name": "โรงเรียนบ้านป่าไผ่ — ศูนย์รวมระบบงาน",
-  "short_name": "ร.ร.บ้านป่าไผ่",
-  "description": "แอปเนวิเกเตอร์รวมทางลัดเข้าสู่ระบบงานบริหารโรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)",
+  "name": "BPP Connect — โรงเรียนบ้านป่าไผ่",
+  "short_name": "BPP Connect",
+  "description": "ศูนย์รวมระบบงานบริหารโรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F2F2F7",
+  "background_color": "#F7F9FC",
   "theme_color": "#007AFF",
   "lang": "th",
   "icons": [

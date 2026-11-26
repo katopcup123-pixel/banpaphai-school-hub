@@ -1,9 +1,11 @@
-// ตั้งค่าโรงเรียน บุคลากร และรายการระบบ Google Apps Script (GAS) ที่นี่
+// ตั้งค่าแอป BPP Connect — โรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)
 window.SCHOOL_CONFIG = {
-  schoolName: "โรงเรียนบ้านป่าไผ่",
-  schoolSubtitle: "สพป.นครราชสีมา เขต 4",
+  appVersion: "1.1.0",
+  schoolName: "BPP Connect",
+  schoolSubtitle: "โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4",
   logoUrl: "./icons/school-logo.png",
-  googleSheetCsvUrl: "",
+  // วางลิงก์ GAS Web App (JSON) หรือลิงก์ JSON สาธารณะ เพื่อให้ทุกเครื่องซิงก์รายการระบบล่าสุดอัตโนมัติ
+  remoteConfigUrl: "",
 
   // รายชื่อผู้ใช้งาน (รหัสผ่านเริ่มต้น 1234 — แก้ pin ของแต่ละคนได้ที่นี่)
   // shortcut: client-side PIN check for school portal demo, move auth to Google OAuth/GAS backend when protecting sensitive data
@@ -75,38 +77,42 @@ window.SCHOOL_CONFIG = {
   announcements: [
     {
       id: "ann-1",
-      title: "เปิดระบบ e-Budget ประจำปีงบประมาณใหม่แล้ว",
-      date: "วันนี้ • ฝ่ายงบประมาณ",
-      body: "คุณครูและหัวหน้ากลุ่มสาระสามารถส่งคำขออนุมัติโครงการและเบิกจ่ายผ่านระบบ e-Budget ได้ตั้งแต่วันนี้เป็นต้นไป",
+      title: "เปิดใช้งานระบบ e-Budget และระบบนิเทศภายในแล้ว",
+      date: "วันนี้ • แอดมินระบบ",
+      body: "คุณครูและผู้บริหารสามารถกดเข้าใช้งานระบบ e-Budget และระบบนิเทศภายในโรงเรียนได้โดยตรงจากหน้าหลัก BPP Connect",
       urgent: true
     },
     {
       id: "ann-2",
-      title: "กำหนดการนิเทศภายในภาคเรียนที่ 2",
-      date: "เมื่อวาน • ฝ่ายวิชาการ",
-      body: "กรุณาบันทึกแผนการสอนและตารางนิเทศภายในผ่านระบบนิเทศภายในก่อนวันศุกร์นี้",
-      urgent: false
-    },
-    {
-      id: "ann-3",
-      title: "แจ้งแนวทางการขออนุญาตออกนอกสถานที่",
-      date: "3 วันที่แล้ว • ฝ่ายบุคคล",
-      body: "การไปราชการหรือออกนอกสถานศึกษาระหว่างวัน ให้ยื่นผ่านระบบ GAS ล่วงหน้าเพื่อให้ ผอ. พิจารณาอนุมัติ",
+      title: "อัปเดตแอปอัตโนมัติโดยไม่ต้องติดตั้งใหม่",
+      date: "วันนี้ • BPP Connect v1.1",
+      body: "เมื่อแอดมินเพิ่มหรือแก้ไขระบบใหม่ สามารถกดปุ่มตรวจหาอัปเดตในหน้าตั้งค่าเพื่อรับข้อมูลล่าสุดได้ทันที",
       urgent: false
     }
   ],
 
-  // เปลี่ยน url เป็นลิงก์ Google Apps Script จริงของโรงเรียน เช่น https://script.google.com/macros/s/XXXX/exec
   systems: [
     {
       id: "e-budget",
       name: "e-Budget",
       shortName: "e-Budget",
-      description: "ระบบบริหารงบประมาณและเบิกจ่าย",
+      description: "ระบบบริหารงบประมาณและเบิกจ่ายโรงเรียนบ้านป่าไผ่",
       division: "budget",
-      url: "https://script.google.com/macros/s/REPLACE_WITH_EBUDGET_ID/exec",
+      url: "https://script.google.com/macros/s/AKfycbwAhQYrjj4eM61SDwX4rUY0XByIYDlFmlKz0RDpu0KGjtMgISSYoxgv91r7tHcWraYeBw/exec",
       icon: "wallet",
       color: "emerald",
+      pinned: true,
+      directorOnly: false
+    },
+    {
+      id: "supervision",
+      name: "นิเทศภายในโรงเรียน",
+      shortName: "นิเทศภายใน",
+      description: "บันทึกผลและติดตามการนิเทศการจัดการเรียนรู้",
+      division: "academic",
+      url: "https://script.google.com/macros/s/AKfycbzgvl8UDp89H8V1npxXe7EvpuEiNRTe1FWyDyMTz7p_dsg4XuE-w1qZUL0jZHRwTyi1/exec",
+      icon: "clipboardCheck",
+      color: "blue",
       pinned: true,
       directorOnly: false
     },
@@ -119,18 +125,6 @@ window.SCHOOL_CONFIG = {
       url: "https://script.google.com/macros/s/REPLACE_WITH_OFFCAMPUS_ID/exec",
       icon: "mapPin",
       color: "amber",
-      pinned: true,
-      directorOnly: false
-    },
-    {
-      id: "supervision",
-      name: "นิเทศภายในโรงเรียน",
-      shortName: "นิเทศภายใน",
-      description: "บันทึกผลและติดตามการนิเทศการจัดการเรียนรู้",
-      division: "academic",
-      url: "https://script.google.com/macros/s/REPLACE_WITH_SUPERVISION_ID/exec",
-      icon: "clipboardCheck",
-      color: "blue",
       pinned: true,
       directorOnly: false
     },

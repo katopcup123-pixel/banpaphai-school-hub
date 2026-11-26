@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#F7F9FC" />
+  <meta name="theme-color" content="#F7F9FC" id="metaThemeColor" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="ร.ร.บ้านป่าไผ่" />
-  <title>โรงเรียนบ้านป่าไผ่ — ศูนย์รวมระบบงาน</title>
+  <meta name="apple-mobile-web-app-title" content="BPP Connect" />
+  <title>BPP Connect — โรงเรียนบ้านป่าไผ่</title>
   <link rel="icon" type="image/png" href="./icons/school-logo.png" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="apple-touch-icon" href="./icons/school-logo.png" />
@@ -28,7 +28,7 @@
         <!-- Live Clean-White WebGPU Shader Background -->
         <div id="shaderBgHost" class="shader-bg-host" aria-hidden="true"></div>
 
-        <!-- iOS Status Bar + Interactive Dynamic Island -->
+        <!-- iOS Status Bar + Interactive Dynamic Island (Desktop Preview Only) -->
         <div class="ios-status-bar">
           <span class="ios-time" id="iosClock">09:41</span>
           <div class="dynamic-island" id="dynamicIsland" role="status" aria-live="polite">
@@ -58,22 +58,22 @@
               <div class="splash-ring"></div>
               <img class="splash-logo" src="./icons/school-logo.png" alt="ตราโรงเรียนบ้านป่าไผ่" />
             </div>
-            <h1 class="splash-title">โรงเรียนบ้านป่าไผ่</h1>
-            <p class="splash-sub">สพป.นครราชสีมา เขต 4</p>
-            <div class="splash-pill">School Navigator</div>
+            <h1 class="splash-title">BPP Connect</h1>
+            <p class="splash-sub">โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4</p>
+            <div class="splash-pill">ศูนย์รวมระบบงานบริหาร</div>
             <div class="splash-loader"><span></span></div>
           </div>
         </section>
 
-        <!-- 2. iOS Login Screen (User Picker + iOS PIN Keypad) -->
+        <!-- 2. iOS Login Screen (User Picker + Instant iOS PIN Keypad) -->
         <section class="login-overlay hidden" id="loginOverlay" aria-label="เข้าสู่ระบบ">
           <div class="login-scroll" id="loginViewList">
             <div class="login-hero">
               <div class="login-crest">
                 <img src="./icons/school-logo.png" alt="ตราโรงเรียนบ้านป่าไผ่" />
               </div>
-              <h2>เข้าสู่ระบบ</h2>
-              <p>เลือกชื่อบุคลากรโรงเรียนบ้านป่าไผ่</p>
+              <h2>BPP Connect</h2>
+              <p>เลือกชื่อบุคลากรเพื่อเข้าสู่ระบบ</p>
             </div>
             <div class="user-list" id="userList"></div>
           </div>
@@ -98,7 +98,7 @@
               <button type="button" class="key-btn" data-key="7">7</button>
               <button type="button" class="key-btn" data-key="8">8</button>
               <button type="button" class="key-btn" data-key="9">9</button>
-              <button type="button" class="key-btn key-ghost" id="quickDemoPin" title="กรอกรหัสอัตโนมัติ">Face ID</button>
+              <button type="button" class="key-btn key-ghost" data-key="clear">ล้าง</button>
               <button type="button" class="key-btn" data-key="0">0</button>
               <button type="button" class="key-btn key-ghost" data-key="del" aria-label="ลบ">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
@@ -130,8 +130,8 @@
                   <img id="schoolLogo" src="./icons/school-logo.png" alt="ตราโรงเรียนบ้านป่าไผ่" />
                 </div>
                 <div class="brand-text">
-                  <h1 id="schoolName">โรงเรียนบ้านป่าไผ่</h1>
-                  <p id="schoolSubtitle">สพป.นครราชสีมา เขต 4</p>
+                  <h1 id="schoolName">BPP Connect</h1>
+                  <p id="schoolSubtitle">โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4</p>
                 </div>
               </div>
               <div class="header-actions">
@@ -180,13 +180,13 @@
           </button>
         </nav>
 
-        <!-- Floating Native-Style Pill for Real Phones (hidden when idle) -->
+        <!-- Floating Native-Style Pill for Real Phones -->
         <div class="mobile-pill" id="mobilePill" role="status" aria-live="polite">
           <span class="island-dot"></span>
           <span id="mobilePillText"></span>
         </div>
 
-        <!-- iOS Home Indicator -->
+        <!-- iOS Home Indicator (Desktop Preview Only) -->
         <div class="ios-home-indicator" aria-hidden="true"><span></span></div>
 
         <!-- iOS Spring Bottom Sheet Modal -->

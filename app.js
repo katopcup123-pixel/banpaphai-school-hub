@@ -1,6 +1,19 @@
 (() => {
-  const STORAGE_FAVS = "school_nav_favorites_v1";
-  const STORAGE_USER = "school_nav_user_v1";
+  const STORAGE_FAVS = "bpp_connect_favorites_v1";
+  const STORAGE_USER = "bpp_connect_user_v1";
+  const STORAGE_THEME = "bpp_connect_theme_v1";
+  const STORAGE_ACCENT = "bpp_connect_accent_v1";
+  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v1";
+  const STORAGE_REMOTE = "bpp_connect_remote_url_v1";
+
+  const ACCENTS = [
+    { id: "blue", label: "ฟ้า iOS", hex: "#007AFF" },
+    { id: "gold", label: "ทองป่าไผ่", hex: "#C69214" },
+    { id: "emerald", label: "เขียวมรกต", hex: "#10B981" },
+    { id: "purple", label: "ม่วง", hex: "#7C3AED" },
+    { id: "orange", label: "ส้ม", hex: "#EA580C" },
+    { id: "rose", label: "ชมพู", hex: "#E11D48" }
+  ];
 
   const ICONS = {
     wallet: '<path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5"/><circle cx="16.5" cy="13" r="1.2"/>',
@@ -33,6 +46,11 @@
     return role === "director" || role === "admin";
   }
 
+  // เฉพาะ นายธานครินทร์ สุเมธาลังการ (แอดมิน) เท่านั้นที่ปรับปรุงระบบได้
+  function isAdminUser(user) {
+    return Boolean(user && user.id === "thanakarin" && user.role === "admin");
+  }
+
   function filterSystems(systems, { division, query, role, favoritesOnly, favoritesSet }) {
     const q = (query || "").trim().toLowerCase();
     return systems.filter((s) => {
@@ -61,11 +79,23 @@
   }
 
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { filterSystems, authenticateUser, canAccessExecutive };
+    module.exports = { filterSystems, authenticateUser, canAccessExecutive, isAdminUser };
     return;
   }
 
   const config = window.SCHOOL_CONFIG;
+
+  function loadSystems() {
+    try {
+      const raw = localStorage.getItem(STORAGE_OVERRIDE);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (_) {}
+    return [...config.systems];
+  }
+
   const savedFavs = (() => {
     try {
       const raw = localStorage.getItem(STORAGE_FAVS);
@@ -82,11 +112,17 @@
     selectedUser: null,
     pinBuffer: "",
     favorites: savedFavs,
-    systems: [...config.systems],
-    deferredInstallPrompt: null
+    systems: loadSystems(),
+    announcements: [...config.announcements],
+    theme: localStorage.getItem(STORAGE_THEME) || "light",
+    accent: localStorage.getItem(STORAGE_ACCENT) || "#007AFF",
+    remoteConfigUrl: localStorage.getItem(STORAGE_REMOTE) || config.remoteConfigUrl || "",
+    deferredInstallPrompt: null,
+    swReg: null
   };
 
   const els = {
+    metaThemeColor: document.getElementById("metaThemeColor"),
     clock: document.getElementById("iosClock"),
     island: document.getElementById("dynamicIsland"),
     islandText: document.getElementById("islandText"),
@@ -102,7 +138,6 @@
     pinDots: document.getElementById("pinDots"),
     pinHint: document.getElementById("pinHint"),
     iosKeypad: document.getElementById("iosKeypad"),
-    quickDemoPin: document.getElementById("quickDemoPin"),
     unlock: document.getElementById("unlockOverlay"),
     unlockName: document.getElementById("unlockName"),
     unlockPosition: document.getElementById("unlockPosition"),
@@ -122,8 +157,21 @@
     sheetBody: document.getElementById("sheetBody")
   };
 
+  function applyTheme() {
+    document.documentElement.dataset.theme = state.theme;
+    document.documentElement.style.setProperty("--ios-blue", state.accent);
+    if (els.metaThemeColor) {
+      els.metaThemeColor.content = state.theme === "dark" ? "#0B0D12" : "#F7F9FC";
+    }
+    try {
+      localStorage.setItem(STORAGE_THEME, state.theme);
+      localStorage.setItem(STORAGE_ACCENT, state.accent);
+    } catch (_) {}
+  }
+  applyTheme();
+
   function haptic() {
-    if (navigator.vibrate) navigator.vibrate(10);
+    if (navigator.vibrate) navigator.vibrate(8);
   }
 
   function updateClock() {
@@ -152,21 +200,60 @@
     }, 2400);
   }
 
-  // Prevent iOS Safari pinch-zoom and double-tap zoom for native app feel
+  // Prevent pinch-zoom only (touch-action: manipulation handles double-tap cleanly without blocking fast taps)
   document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
-  let lastTouchEnd = 0;
-  document.addEventListener("touchend", (e) => {
-    const now = Date.now();
-    if (now - lastTouchEnd <= 300) e.preventDefault();
-    lastTouchEnd = now;
-  }, { passive: false });
+
+  // --- Cloud / OTA Sync ---
+  async function syncRemoteConfig(silent = true) {
+    const url = (state.remoteConfigUrl || "").trim();
+    if (!url) return false;
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error("fetch_failed");
+      const data = await res.json();
+      if (Array.isArray(data.systems) && data.systems.length > 0) {
+        state.systems = data.systems;
+        localStorage.setItem(STORAGE_OVERRIDE, JSON.stringify(data.systems));
+      }
+      if (Array.isArray(data.announcements)) {
+        state.announcements = data.announcements;
+      }
+      render();
+      if (!silent) notifyIsland("ซิงก์ข้อมูลล่าสุดสำเร็จ");
+      return true;
+    } catch (_) {
+      if (!silent) notifyIsland("ไม่สามารถดึงข้อมูลจากลิงก์คลาวด์ได้");
+      return false;
+    }
+  }
+
+  async function checkForAppUpdate() {
+    notifyIsland("กำลังตรวจหาอัปเดต...");
+    await syncRemoteConfig(true);
+    try {
+      if (state.swReg) {
+        await state.swReg.update();
+        if (state.swReg.waiting) {
+          state.swReg.waiting.postMessage("SKIP_WAITING");
+        }
+      }
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      notifyIsland("อัปเดตเป็นเวอร์ชันล่าสุดแล้ว");
+      setTimeout(() => window.location.reload(), 700);
+    } catch (_) {
+      window.location.reload();
+    }
+  }
 
   // --- Splash & Auth Flow ---
   function renderUserList() {
     els.userList.innerHTML = config.users
       .map(
         (u, i) => `
-        <button type="button" class="user-row" style="animation-delay:${i * 45}ms" data-user="${u.id}">
+        <button type="button" class="user-row" style="animation-delay:${i * 40}ms" data-user="${u.id}">
           <div class="user-avatar c-${u.color}">${getInitial(u)}</div>
           <div class="user-meta">
             <strong>${u.name}</strong>
@@ -217,11 +304,10 @@
       setTimeout(() => {
         state.pinBuffer = "";
         updatePinDots(false);
-      }, 460);
+      }, 420);
       return;
     }
 
-    // Success: Play iOS Face ID / Unlock Checkmark Animation
     state.currentUser = res.user;
     try { localStorage.setItem(STORAGE_USER, res.user.id); } catch (_) {}
 
@@ -239,7 +325,7 @@
       els.appScroll.classList.remove("app-reveal");
       void els.appScroll.offsetWidth;
       els.appScroll.classList.add("app-reveal");
-    }, 1150);
+    }, 1050);
   }
 
   function showLoginScreen() {
@@ -262,8 +348,8 @@
     setTimeout(() => {
       els.splash.classList.add("exit");
       showLoginScreen();
-      setTimeout(() => els.splash.classList.add("hidden"), 560);
-    }, 1900);
+      setTimeout(() => els.splash.classList.add("hidden"), 520);
+    }, 1750);
   }
 
   els.userList.addEventListener("click", (e) => {
@@ -275,11 +361,18 @@
 
   els.pinBackBtn.addEventListener("click", backToUserList);
 
-  els.iosKeypad.addEventListener("click", (e) => {
+  // Instant 0ms keypad response on pointerdown (no 300ms iOS click lag or missed taps)
+  els.iosKeypad.addEventListener("pointerdown", (e) => {
     const btn = e.target.closest("[data-key]");
     if (!btn) return;
+    e.preventDefault();
     haptic();
     const key = btn.dataset.key;
+    if (key === "clear") {
+      state.pinBuffer = "";
+      updatePinDots(false);
+      return;
+    }
     if (key === "del") {
       state.pinBuffer = state.pinBuffer.slice(0, -1);
       updatePinDots(false);
@@ -289,17 +382,93 @@
     state.pinBuffer += key;
     updatePinDots(false);
     if (state.pinBuffer.length === 4) {
-      setTimeout(submitPin, 140);
+      setTimeout(submitPin, 110);
     }
   });
 
-  els.quickDemoPin.addEventListener("click", () => {
-    if (!state.selectedUser) return;
-    haptic();
-    state.pinBuffer = String(state.selectedUser.pin || "1234");
-    updatePinDots(false);
-    setTimeout(submitPin, 160);
-  });
+  // --- Admin System Editor Sheet (Only for ครูธานครินทร์) ---
+  function openAdminSystemSheet(existingSys = null) {
+    if (!isAdminUser(state.currentUser)) return;
+    const s = existingSys || {
+      id: "sys-" + Date.now(),
+      name: "",
+      shortName: "",
+      description: "",
+      division: "academic",
+      url: "https://script.google.com/macros/s/",
+      icon: "folder",
+      color: "blue",
+      pinned: false,
+      directorOnly: false
+    };
+
+    els.sheetBody.innerHTML = `
+      <h3 style="margin:0 0 10px">${existingSys ? "แก้ไขระบบงาน" : "เพิ่มระบบงาน GAS ใหม่"}</h3>
+      <input class="admin-input" id="admName" placeholder="ชื่อระบบเต็ม (เช่น ระบบพัสดุ)" value="${s.name}" />
+      <input class="admin-input" id="admShort" placeholder="ชื่อย่อใต้ไอคอน (เช่น พัสดุ)" value="${s.shortName}" />
+      <input class="admin-input" id="admDesc" placeholder="คำอธิบายสั้นๆ" value="${s.description}" />
+      <input class="admin-input" id="admUrl" placeholder="ลิงก์ GAS (https://script.google.com/...)" value="${s.url}" />
+      <select class="admin-select" id="admDiv">
+        <option value="academic" ${s.division === "academic" ? "selected" : ""}>ฝ่ายวิชาการ</option>
+        <option value="budget" ${s.division === "budget" ? "selected" : ""}>ฝ่ายงบประมาณ</option>
+        <option value="personnel" ${s.division === "personnel" ? "selected" : ""}>ฝ่ายบุคคล</option>
+        <option value="general" ${s.division === "general" ? "selected" : ""}>ฝ่ายทั่วไป</option>
+      </select>
+      <select class="admin-select" id="admColor">
+        ${["blue", "emerald", "amber", "purple", "rose", "indigo", "teal", "sky", "slate"]
+          .map((c) => `<option value="${c}" ${s.color === c ? "selected" : ""}>สีไอคอน: ${c}</option>`)
+          .join("")}
+      </select>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px">
+        <input type="checkbox" id="admDirector" ${s.directorOnly ? "checked" : ""} /> แสดงเฉพาะผู้บริหาร / แอดมิน
+      </label>
+      <button class="btn-primary" id="admSaveBtn">บันทึกการเปลี่ยนแปลง</button>
+      <button class="btn-secondary" id="admCancelBtn">ยกเลิก</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+
+    document.getElementById("admCancelBtn").onclick = closeSheet;
+    document.getElementById("admSaveBtn").onclick = () => {
+      const name = document.getElementById("admName").value.trim();
+      const url = document.getElementById("admUrl").value.trim();
+      if (!name) { notifyIsland("กรุณากรอกชื่อระบบ"); return; }
+      const updated = {
+        ...s,
+        name,
+        shortName: document.getElementById("admShort").value.trim() || name.slice(0, 12),
+        description: document.getElementById("admDesc").value.trim() || "ระบบงาน Google Apps Script",
+        url,
+        division: document.getElementById("admDiv").value,
+        color: document.getElementById("admColor").value,
+        directorOnly: document.getElementById("admDirector").checked
+      };
+      if (existingSys) {
+        state.systems = state.systems.map((item) => (item.id === s.id ? updated : item));
+      } else {
+        state.systems = [updated, ...state.systems];
+      }
+      localStorage.setItem(STORAGE_OVERRIDE, JSON.stringify(state.systems));
+      closeSheet();
+      notifyIsland("บันทึกระบบงานแล้ว");
+      render();
+    };
+  }
+
+  function exportConfigForGithub() {
+    const updatedConfig = {
+      ...config,
+      remoteConfigUrl: state.remoteConfigUrl,
+      systems: state.systems,
+      announcements: state.announcements
+    };
+    const code = `window.SCHOOL_CONFIG = ${JSON.stringify(updatedConfig, null, 2)};\n`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(
+        () => notifyIsland("คัดลอก apps-config.js แล้ว นำไปวางบน GitHub ได้เลย"),
+        () => notifyIsland("คัดลอกไม่สำเร็จ")
+      );
+    }
+  }
 
   // --- Main App Functions ---
   function openSheet(sys) {
@@ -317,11 +486,11 @@
       <div class="sheet-note">
         ${
           isDemo
-            ? "ตอนนี้เป็นลิงก์ตัวอย่าง — นำลิงก์ Google Apps Script จริงของโรงเรียนไปวางในไฟล์ <strong>apps-config.js</strong> เพื่อเปิดใช้งานทันที"
-            : `พร้อมเปิดระบบ Google Apps Script ปลายทาง:<br>${sys.url}`
+            ? "ตอนนี้เป็นลิงก์ตัวอย่าง — ครูธานครินทร์ (แอดมิน) สามารถใส่ลิงก์ GAS จริงได้จากหน้าตั้งค่า"
+            : `พร้อมเปิดระบบ Google Apps Script ปลายทาง`
         }
       </div>
-      <button class="btn-primary" id="sheetLaunchBtn">${isDemo ? "ทดลองเปิด (รอใส่ลิงก์ GAS จริง)" : "เปิดระบบงานทันที"}</button>
+      <button class="btn-primary" id="sheetLaunchBtn">${isDemo ? "รอใส่ลิงก์ GAS จริง" : "เปิดระบบงานทันที"}</button>
       <button class="btn-secondary" id="sheetFavBtn">${isFav ? "นำออกจากรายการโปรด" : "เพิ่มในรายการโปรด"}</button>
     `;
     els.sheetBackdrop.classList.add("open");
@@ -452,7 +621,7 @@
           ${visible
             .map(
               (s, i) => `
-              <div class="grid-card" style="animation-delay:${i * 28}ms" data-open="${s.id}" role="button" tabindex="0">
+              <div class="grid-card" style="animation-delay:${i * 24}ms" data-open="${s.id}" role="button" tabindex="0">
                 ${s.directorOnly ? '<span class="director-tag">ผู้บริหาร</span>' : ""}
                 <div class="squircle squircle-lg c-${s.color}">
                   ${iconSvg(s.icon, 27)}
@@ -473,7 +642,7 @@
             .map((s, i) => {
               const isFav = state.favorites.has(s.id);
               return `
-                <div class="list-card" style="animation-delay:${i * 30}ms" data-open="${s.id}" role="button" tabindex="0">
+                <div class="list-card" style="animation-delay:${i * 26}ms" data-open="${s.id}" role="button" tabindex="0">
                   <div class="squircle squircle-sm c-${s.color}">
                     ${iconSvg(s.icon, 22)}
                   </div>
@@ -498,7 +667,7 @@
       ${filtersHtml}
       ${bodyHtml}
       <div class="gas-badge">
-        <span>เชื่อมต่อ Google Workspace / Apps Script</span>
+        <span>BPP Connect v${config.appVersion || "1.1.0"} • Google Workspace</span>
       </div>`;
   }
 
@@ -523,7 +692,7 @@
               ${favs
                 .map(
                   (s, i) => `
-                  <div class="list-card" style="animation-delay:${i * 30}ms" data-open="${s.id}">
+                  <div class="list-card" style="animation-delay:${i * 26}ms" data-open="${s.id}">
                     <div class="squircle squircle-sm c-${s.color}">${iconSvg(s.icon, 22)}</div>
                     <div class="list-info">
                       <h3>${s.name}</h3>
@@ -544,12 +713,12 @@
     els.main.innerHTML = `
       <div class="section-header">
         <h2 class="section-title">ประกาศจากโรงเรียน</h2>
-        <span class="section-sub">${config.announcements.length} รายการ</span>
+        <span class="section-sub">${state.announcements.length} รายการ</span>
       </div>
-      ${config.announcements
+      ${state.announcements
         .map(
           (a, i) => `
-          <div class="info-card ${a.urgent ? "urgent" : ""}" style="animation-delay:${i * 35}ms">
+          <div class="info-card ${a.urgent ? "urgent" : ""}" style="animation-delay:${i * 30}ms">
             <h3>${a.title}</h3>
             <div class="info-meta">${a.date}</div>
             <p>${a.body}</p>
@@ -560,9 +729,42 @@
 
   function renderSettings() {
     const u = state.currentUser;
+    const isAdmin = isAdminUser(u);
+    const isDark = state.theme === "dark";
+
+    const adminHtml = isAdmin
+      ? `
+        <div class="info-card">
+          <h3>จัดการระบบงาน <span class="admin-badge">เฉพาะแอดมิน</span></h3>
+          <div class="info-meta">สิทธิ์เฉพาะ นายธานครินทร์ สุเมธาลังการ</div>
+          <button class="btn-primary" id="adminAddSysBtn">+ เพิ่มระบบงาน GAS ใหม่</button>
+          <div style="margin-top:12px">
+            ${state.systems
+              .map(
+                (s) => `
+                <div class="admin-sys-row">
+                  <div style="min-width:0;flex:1">
+                    <strong style="font-size:13px">${s.shortName}</strong>
+                    <div class="info-meta" style="margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.url.includes("REPLACE_WITH_") ? "ยังเป็นลิงก์ตัวอย่าง" : "เชื่อม GAS จริงแล้ว"}</div>
+                  </div>
+                  <button class="admin-mini-btn" data-adm-edit="${s.id}">แก้ไข</button>
+                  <button class="admin-mini-btn del" data-adm-del="${s.id}">ลบ</button>
+                </div>`
+              )
+              .join("")}
+          </div>
+          <div style="margin-top:12px;padding-top:10px;border-top:0.5px solid var(--ios-sep)">
+            <strong style="font-size:13px">ลิงก์ซิงก์คลาวด์ (อัปเดตทุกเครื่องอัตโนมัติ)</strong>
+            <input class="admin-input" id="remoteUrlInput" placeholder="วางลิงก์ GAS JSON URL (ถ้ามี)" value="${state.remoteConfigUrl}" />
+            <button class="btn-secondary" id="saveRemoteUrlBtn">บันทึกลิงก์ซิงก์คลาวด์</button>
+            <button class="btn-secondary" id="exportConfigBtn">คัดลอก apps-config.js (สำหรับอัปเดตผ่าน GitHub)</button>
+          </div>
+        </div>`
+      : "";
+
     els.main.innerHTML = `
       <div class="section-header">
-        <h2 class="section-title">บัญชีผู้ใช้งานและการตั้งค่า</h2>
+        <h2 class="section-title">บัญชีและการตั้งค่า</h2>
       </div>
       ${
         u
@@ -578,21 +780,31 @@
       <div class="info-card">
         <div class="settings-row">
           <div>
-            <strong>ติดตั้งบน iPhone (iOS)</strong>
-            <div class="info-meta">เปิดใน Safari → แตะแชร์ → "เพิ่มไปยังหน้าจอโฮม" หรือใช้ไฟล์ .mobileconfig</div>
+            <strong>โหมดมืด (Dark Mode)</strong>
+            <div class="info-meta" style="margin:0">สลับธีมสว่าง / มืดแบบ iOS</div>
+          </div>
+          <button class="ios-switch ${isDark ? "on" : ""}" id="darkModeToggle" role="switch" aria-checked="${isDark}" aria-label="สลับโหมดมืด"></button>
+        </div>
+        <div class="settings-row" style="display:block">
+          <strong>สีหลักของแอป</strong>
+          <div class="swatch-row">
+            ${ACCENTS.map(
+              (a) => `<button class="swatch-btn ${state.accent === a.hex ? "active" : ""}" data-accent="${a.hex}" style="background:${a.hex}" title="${a.label}" aria-label="${a.label}"></button>`
+            ).join("")}
           </div>
         </div>
+      </div>
+
+      ${adminHtml}
+
+      <div class="info-card">
         <div class="settings-row">
           <div>
-            <strong>ติดตั้งบน Android (.apk)</strong>
-            <div class="info-meta">กดติดตั้งจาก Chrome หรือแพ็กเป็นไฟล์ .apk ผ่าน PWABuilder</div>
+            <strong>อัปเดตแอป (OTA)</strong>
+            <div class="info-meta" style="margin:0">เวอร์ชันปัจจุบัน v${config.appVersion || "1.1.0"} • อัปเดตได้ทันทีโดยไม่ต้องลบลงใหม่</div>
           </div>
         </div>
-        ${
-          state.deferredInstallPrompt
-            ? '<button class="btn-primary" id="installPwaBtn">ติดตั้งแอปลงเครื่องนี้</button>'
-            : ""
-        }
+        <button class="btn-primary" id="checkUpdateBtn">ตรวจหาอัปเดตล่าสุด</button>
         <button class="btn-secondary" id="replaySplashBtn">เล่นแอนิเมชันเปิดแอปอีกครั้ง</button>
         <button class="btn-danger" id="logoutBtn">ออกจากระบบ / เปลี่ยนผู้ใช้งาน</button>
       </div>`;
@@ -621,14 +833,69 @@
   els.main.addEventListener("click", (e) => {
     const favBtn = e.target.closest("[data-fav]");
     if (favBtn) { toggleFavorite(favBtn.dataset.fav, e); return; }
+
     const divBtn = e.target.closest("[data-div]");
     if (divBtn) { haptic(); state.division = divBtn.dataset.div; render(); return; }
+
     const openEl = e.target.closest("[data-open]");
     if (openEl) {
       const sys = state.systems.find((s) => s.id === openEl.dataset.open);
       if (sys) openSystem(sys);
       return;
     }
+
+    if (e.target.id === "darkModeToggle") {
+      haptic();
+      state.theme = state.theme === "dark" ? "light" : "dark";
+      applyTheme();
+      notifyIsland(state.theme === "dark" ? "เปิดโหมดมืดแล้ว" : "เปิดโหมดสว่างแล้ว");
+      render();
+      return;
+    }
+
+    const accentBtn = e.target.closest("[data-accent]");
+    if (accentBtn) {
+      haptic();
+      state.accent = accentBtn.dataset.accent;
+      applyTheme();
+      notifyIsland("เปลี่ยนสีหลักของแอปแล้ว");
+      render();
+      return;
+    }
+
+    if (e.target.id === "checkUpdateBtn") { checkForAppUpdate(); return; }
+    if (e.target.id === "adminAddSysBtn") { openAdminSystemSheet(null); return; }
+
+    const editBtn = e.target.closest("[data-adm-edit]");
+    if (editBtn && isAdminUser(state.currentUser)) {
+      const target = state.systems.find((s) => s.id === editBtn.dataset.admEdit);
+      if (target) openAdminSystemSheet(target);
+      return;
+    }
+
+    const delBtn = e.target.closest("[data-adm-del]");
+    if (delBtn && isAdminUser(state.currentUser)) {
+      state.systems = state.systems.filter((s) => s.id !== delBtn.dataset.admDel);
+      localStorage.setItem(STORAGE_OVERRIDE, JSON.stringify(state.systems));
+      notifyIsland("ลบระบบงานแล้ว");
+      render();
+      return;
+    }
+
+    if (e.target.id === "saveRemoteUrlBtn" && isAdminUser(state.currentUser)) {
+      const input = document.getElementById("remoteUrlInput");
+      state.remoteConfigUrl = input ? input.value.trim() : "";
+      localStorage.setItem(STORAGE_REMOTE, state.remoteConfigUrl);
+      if (state.remoteConfigUrl) syncRemoteConfig(false);
+      else notifyIsland("บันทึกลิงก์ซิงก์แล้ว");
+      return;
+    }
+
+    if (e.target.id === "exportConfigBtn" && isAdminUser(state.currentUser)) {
+      exportConfigForGithub();
+      return;
+    }
+
     if (e.target.id === "logoutBtn") {
       haptic();
       state.currentUser = null;
@@ -642,11 +909,6 @@
       haptic();
       playSplashThenLogin();
       return;
-    }
-    if (e.target.id === "installPwaBtn" && state.deferredInstallPrompt) {
-      state.deferredInstallPrompt.prompt();
-      state.deferredInstallPrompt = null;
-      render();
     }
   });
 
@@ -682,16 +944,12 @@
     });
   });
 
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    state.deferredInstallPrompt = e;
-    if (state.tab === "settings") render();
-  });
-
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
+    navigator.serviceWorker.register("./sw.js").then((reg) => {
+      state.swReg = reg;
+    }).catch(() => {});
   }
 
-  // Always start with the animated Splash -> iOS Login flow
+  syncRemoteConfig(true);
   playSplashThenLogin();
 })();

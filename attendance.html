@@ -282,6 +282,7 @@
       <!-- 1. Homeroom Check-in View -->
       <section id="viewCheckin">
         <div class="homeroom-banner" id="homeroomBanner"></div>
+        <div class="homeroom-banner hidden" id="windowLockBanner" style="background:rgba(217,119,6,0.12);border-color:rgba(217,119,6,0.3);color:var(--amber)"></div>
 
         <div class="kpi-grid">
           <div class="kpi-card"><div class="kpi-label">มาเรียน</div><div class="kpi-val c-green" id="kpiPresent">0</div></div>
@@ -336,6 +337,14 @@
         </div>
         <div class="period-controls" id="statsSubControls"></div>
 
+        <div class="card-box" id="submissionStatusCard">
+          <h2>
+            <span>สถานะการส่งเช็คชื่อวันนี้</span>
+            <button type="button" class="btn-primary hidden" id="remindMissingBtn" style="padding:6px 10px;font-size:11.5px">🔔 เตือนครูที่ยังไม่กรอก</button>
+          </h2>
+          <div id="submissionStatusWrap"></div>
+        </div>
+
         <div class="card-box">
           <h2>สัดส่วนการมาเรียนภาพรวม</h2>
           <div class="chart-grid" id="donutChartWrap"></div>
@@ -385,6 +394,7 @@
     document.documentElement.style.setProperty("--accent", localStorage.getItem("bpp_connect_accent_v1") || "#007AFF");
 
     const STORAGE_ATT = "bpp_connect_attendance_v1";
+    const STORAGE_ATT_SUB = "bpp_connect_att_submitted_v1";
     const STORAGE_DUTY = "bpp_connect_duty_reports_v1";
     const THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
     const THAI_DAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
@@ -463,15 +473,25 @@
     const state = {
       students: window.BPP_STUDENTS_HELPER.loadStudents(),
       records: (() => { try { return JSON.parse(localStorage.getItem(STORAGE_ATT) || "{}"); } catch (_) { return {}; } })(),
+      submittedGrades: (() => { try { return JSON.parse(localStorage.getItem(STORAGE_ATT_SUB) || "{}"); } catch (_) { return {}; } })(),
       dutyReports: (() => { try { return JSON.parse(localStorage.getItem(STORAGE_DUTY) || "{}"); } catch (_) { return {}; } })(),
       date: initDate,
       grade: myGrades[0] || "all",
       adminShowAllGrades: false,
+      adminUnlockTime: false,
       view: isDirector ? "stats" : "checkin",
       period: "day", // day | month | term | year
       term: getDefaultTerm(initDate),
       acadYearBE: getAcademicYearBE(initDate)
     };
+
+    // เปิดให้กรอกเช็คชื่อเฉพาะ จันทร์-ศุกร์ เวลา 06:00 - 16:30 น.
+    function isAttendanceWindowOpen(now = new Date()) {
+      const day = now.getDay(); // 1=Mon .. 5=Fri
+      if (day === 0 || day === 6) return false;
+      const mins = now.getHours() * 60 + now.getMinutes();
+      return mins >= 360 && mins <= 990; // 06:00 (360) .. 16:30 (990)
+    }
 
     function showToast(msg) {
       const el = $("toast");
@@ -493,6 +513,7 @@
     function saveLocal() {
       try {
         localStorage.setItem(STORAGE_ATT, JSON.stringify(state.records));
+        localStorage.setItem(STORAGE_ATT_SUB, JSON.stringify(state.submittedGrades));
         localStorage.setItem(STORAGE_DUTY, JSON.stringify(state.dutyReports));
       } catch (_) {}
     }
@@ -516,6 +537,12 @@
           if (json.records && typeof json.records === "object") {
             Object.keys(json.records).forEach((d) => {
               state.records[d] = { ...(state.records[d] || {}), ...(json.records[d] || {}) };
+            });
+          }
+          if (json.submittedGrades && typeof json.submittedGrades === "object") {
+            Object.keys(json.submittedGrades).forEach((d) => {
+              const merged = new Set([...(state.submittedGrades[d] || []), ...(json.submittedGrades[d] || [])]);
+              state.submittedGrades[d] = [...merged];
             });
           }
           if (json.dutyReports && typeof json.dutyReports === "object") {
@@ -632,6 +659,22 @@
           renderCheckin();
         };
       }
+
+      const winOpen = isAttendanceWindowOpen();
+      const canSaveNow = winOpen || (isAdmin && state.adminUnlockTime);
+      const lockEl = $("windowLockBanner");
+      if (!winOpen) {
+        lockEl.classList.remove("hidden");
+        lockEl.innerHTML = `
+          <div><strong>🔒 นอกเวลากรอกเช็คชื่อ</strong> (เปิดให้กรอก จ.–ศ. เวลา 06:00–16:30 น.)</div>
+          ${isAdmin ? `<button type="button" class="btn-soft" id="unlockTimeBtn" style="padding:5px 10px;font-size:11.5px">${state.adminUnlockTime ? "ล็อกกลับตามเวลา" : "ปลดล็อก (แอดมิน)"}</button>` : ""}`;
+        const uBtn = document.getElementById("unlockTimeBtn");
+        if (uBtn) uBtn.onclick = () => { state.adminUnlockTime = !state.adminUnlockTime; renderCheckin(); };
+      } else {
+        lockEl.classList.add("hidden");
+      }
+      $("saveAttBtn").disabled = !canSaveNow;
+      $("saveAttBtn").style.opacity = canSaveNow ? "1" : "0.45";
 
       const sum = computeSummary([state.date], allowedGrades);
       $("kpiPresent").textContent = sum.totals.present;
@@ -774,6 +817,28 @@
       const days = getDaysForPeriod();
       const data = computeSummary(days);
       renderCharts(data);
+
+      // แสดงสถานะการส่งเช็คชื่อรายครูประจำชั้น (สำหรับรายวัน)
+      const subCard = $("submissionStatusCard");
+      if (state.period === "day") {
+        subCard.classList.remove("hidden");
+        const submitted = new Set(state.submittedGrades[state.date] || []);
+        const users = getAllUsers();
+        const rowsHtml = Object.entries(HOMEROOM_MAP).map(([uid, gList]) => {
+          const usr = users.find((u) => u.id === uid);
+          const done = gList.every((g) => submitted.has(g));
+          return `
+            <div class="absent-item">
+              <div><strong>${usr ? usr.shortName : uid}</strong> <span style="color:var(--secondary);font-size:12px">(ชั้น ${gList.join(", ")})</span></div>
+              <span class="tag-st" style="background:${done ? "var(--green)" : "var(--amber)"}">${done ? "✓ ส่งแล้ว" : "⏳ ยังไม่ส่ง"}</span>
+            </div>`;
+        }).join("");
+        $("submissionStatusWrap").innerHTML = rowsHtml;
+        const rBtn = $("remindMissingBtn");
+        rBtn.classList.toggle("hidden", !(isDirector || isAdmin));
+      } else {
+        subCard.classList.add("hidden");
+      }
 
       $("statsHeading").textContent = `สถิติ${getPeriodTitle(data.daysCount)}`;
       $("statsTableWrap").innerHTML = `
@@ -945,6 +1010,11 @@
     };
 
     $("saveAttBtn").onclick = () => {
+      const winOpen = isAttendanceWindowOpen();
+      if (!winOpen && !(isAdmin && state.adminUnlockTime)) {
+        showToast("เปิดให้บันทึกเช็คชื่อเฉพาะ จ.–ศ. เวลา 06:00–16:30 น.");
+        return;
+      }
       const map = getDayMap(state.date);
       const allowed = getCheckinAllowedGrades();
       const partial = {};
@@ -952,9 +1022,24 @@
         if (!map[s.id]) map[s.id] = "present";
         partial[s.id] = map[s.id];
       });
+      const subSet = new Set([...(state.submittedGrades[state.date] || []), ...allowed]);
+      state.submittedGrades[state.date] = [...subSet];
       saveLocal();
-      postBackend({ action: "save_attendance", date: state.date, entries: partial, teacher: teacher.name });
+      postBackend({
+        action: "save_attendance",
+        date: state.date,
+        entries: partial,
+        grades: allowed,
+        teacher: teacher.name,
+        adminOverride: isAdmin && state.adminUnlockTime
+      });
       showToast(`บันทึกเช็คชื่อชั้น ${allowed.join(", ")} เรียบร้อย!`);
+    };
+
+    $("remindMissingBtn").onclick = () => {
+      if (!backendUrl) { showToast("ยังไม่ได้เชื่อมหลังบ้าน GAS"); return; }
+      postBackend({ action: "remind_missing_attendance", date: state.date, force: true });
+      showToast("ส่งแจ้งเตือนรายบุคคลถึงครูที่ยังไม่เช็คชื่อแล้ว!");
     };
 
     $("saveDutyBtn").onclick = () => {

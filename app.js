@@ -485,6 +485,7 @@
     playSound("unlock");
     state.currentUser = res.user;
     try { localStorage.setItem(STORAGE_USER, res.user.id); } catch (_) {}
+    syncOneSignalUser(res.user.id);
 
     els.unlockName.textContent = res.user.name;
     els.unlockPosition.textContent = res.user.position;
@@ -1060,6 +1061,16 @@
     } catch (_) {}
   }
 
+  function syncOneSignalUser(userId) {
+    if (!window.OneSignalDeferred) return;
+    window.OneSignalDeferred.push(async function (OneSignal) {
+      try {
+        if (userId) await OneSignal.login(String(userId));
+        else await OneSignal.logout();
+      } catch (_) {}
+    });
+  }
+
   function initOneSignal() {
     const appId = (state.oneSignalAppId || "").trim();
     if (!appId) return;
@@ -1076,6 +1087,9 @@
             serviceWorkerParam: { scope: isGhPages ? "/banpaphai-school-hub/" : "/" }
           });
           const sub = OneSignal.User && OneSignal.User.PushSubscription;
+          if (state.currentUser && state.currentUser.id) {
+            try { await OneSignal.login(String(state.currentUser.id)); } catch (_) {}
+          }
           state.pushDebug = `SDK พร้อม (perm=${Notification?.permission || "?"}, optedIn=${Boolean(sub?.optedIn)})`;
           if (sub && sub.id && sub.optedIn) {
             state.pushSubId = sub.id;
@@ -1109,6 +1123,9 @@
       window.OneSignalDeferred.push(async function (OneSignal) {
         try {
           await OneSignal.Notifications.requestPermission();
+          if (state.currentUser && state.currentUser.id) {
+            try { await OneSignal.login(String(state.currentUser.id)); } catch (_) {}
+          }
           const sub = OneSignal.User && OneSignal.User.PushSubscription;
           if (sub) {
             await sub.optIn();
@@ -2440,6 +2457,7 @@
       state.currentUser = null;
       state.tab = "home";
       try { localStorage.removeItem(STORAGE_USER); } catch (_) {}
+      syncOneSignalUser(null);
       notifyIsland("ออกจากระบบแล้ว");
       showLoginScreen();
       return;

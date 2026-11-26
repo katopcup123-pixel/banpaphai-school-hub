@@ -1042,6 +1042,46 @@ input, textarea {
 }
 .admin-mini-btn.del { color: #FF3B30; background: rgba(255, 59, 48, 0.12); }
 
+/* iOS Segmented Control & OBEC News Cards */
+.ios-segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--ios-fill);
+  margin-bottom: 14px;
+}
+.seg-btn {
+  border: none;
+  background: transparent;
+  color: var(--ios-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.seg-btn.active {
+  background: var(--ios-solid);
+  color: var(--ios-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.obec-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ios-blue);
+  background: var(--ios-blue-soft);
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-right: 6px;
+}
+.obec-card { cursor: pointer; }
+.obec-card:active { transform: scale(0.985); }
+
 /* In-App Native iOS Viewer for GAS Systems */
 .inapp-overlay {
   position: absolute;

@@ -5,6 +5,9 @@
   const STORAGE_ACCENT = "bpp_connect_accent_v1";
   const STORAGE_OVERRIDE = "bpp_connect_systems_override_v1";
   const STORAGE_REMOTE = "bpp_connect_remote_url_v1";
+  const STORAGE_NEWS_API = "bpp_connect_news_api_v1";
+  const STORAGE_ONESIGNAL = "bpp_connect_onesignal_id_v1";
+  const STORAGE_LOCAL_NEWS = "bpp_connect_local_news_v1";
 
   const ACCENTS = [
     { id: "blue", label: "ฟ้า iOS", hex: "#007AFF" },
@@ -113,10 +116,24 @@
     pinBuffer: "",
     favorites: savedFavs,
     systems: loadSystems(),
-    announcements: [...config.announcements],
+    announcements: (() => {
+      try {
+        const raw = localStorage.getItem(STORAGE_LOCAL_NEWS);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) return parsed;
+        }
+      } catch (_) {}
+      return [...config.announcements];
+    })(),
+    obecNews: [],
+    obecLoading: false,
+    newsSubTab: "school",
     theme: localStorage.getItem(STORAGE_THEME) || "light",
     accent: localStorage.getItem(STORAGE_ACCENT) || "#007AFF",
     remoteConfigUrl: localStorage.getItem(STORAGE_REMOTE) || config.remoteConfigUrl || "",
+    newsBackendUrl: localStorage.getItem(STORAGE_NEWS_API) || config.newsBackendUrl || "",
+    oneSignalAppId: localStorage.getItem(STORAGE_ONESIGNAL) || config.oneSignalAppId || "",
     deferredInstallPrompt: null,
     swReg: null
   };
@@ -464,6 +481,8 @@
   function exportConfigForGithub() {
     const updatedConfig = {
       ...config,
+      newsBackendUrl: state.newsBackendUrl,
+      oneSignalAppId: state.oneSignalAppId,
       remoteConfigUrl: state.remoteConfigUrl,
       systems: state.systems,
       announcements: state.announcements
@@ -475,6 +494,181 @@
         () => notifyIsland("คัดลอกไม่สำเร็จ")
       );
     }
+  }
+
+  // --- Real Push Notifications (OneSignal Web SDK v16 + Browser Notification API) ---
+  function initOneSignal() {
+    const appId = (state.oneSignalAppId || "").trim();
+    if (!appId) return;
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function (OneSignal) {
+      try {
+        await OneSignal.init({
+          appId,
+          allowLocalhostAsSecureOrigin: true,
+          serviceWorkerPath: "./OneSignalSDKWorker.js"
+        });
+      } catch (_) {}
+    });
+  }
+
+  async function enablePushNotifications() {
+    haptic();
+    if (!("Notification" in window)) {
+      notifyIsland("บน iPhone ต้องเปิดจากไอคอนหน้าจอโฮม (iOS 16.4+)");
+      return;
+    }
+
+    const appId = (state.oneSignalAppId || "").trim();
+    if (appId && window.OneSignalDeferred) {
+      window.OneSignalDeferred.push(async function (OneSignal) {
+        try {
+          await OneSignal.Notifications.requestPermission();
+          notifyIsland("เปิดรับแจ้งเตือน Push เรียบร้อยแล้ว");
+          render();
+        } catch (_) {
+          notifyIsland("ไม่สามารถเปิดแจ้งเตือนได้");
+        }
+      });
+      return;
+    }
+
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") {
+        notifyIsland("อนุญาตแจ้งเตือนบนเครื่องนี้แล้ว");
+        if (state.swReg && state.swReg.showNotification) {
+          state.swReg.showNotification("BPP Connect", {
+            body: "เปิดรับการแจ้งเตือนข่าวสารโรงเรียนบ้านป่าไผ่เรียบร้อยแล้ว",
+            icon: "./icons/school-logo.png"
+          });
+        } else {
+          new Notification("BPP Connect", {
+            body: "เปิดรับการแจ้งเตือนข่าวสารโรงเรียนบ้านป่าไผ่เรียบร้อยแล้ว",
+            icon: "./icons/school-logo.png"
+          });
+        }
+      } else {
+        notifyIsland("ยังไม่ได้อนุญาตการแจ้งเตือน");
+      }
+      render();
+    } catch (_) {
+      notifyIsland("บน iPhone ต้องเพิ่มลงหน้าจอโฮมก่อนเปิดแจ้งเตือน");
+    }
+  }
+
+  // --- Live OBEC News + School Broadcast News ---
+  async function loadLiveNews(force = false) {
+    if (state.obecLoading && !force) return;
+    state.obecLoading = true;
+    if (state.tab === "announcements") render();
+
+    const apiUrl = (state.newsBackendUrl || "").trim();
+    if (apiUrl) {
+      try {
+        const res = await fetch(`${apiUrl}${apiUrl.includes("?") ? "&" : "?"}action=news`, { cache: "no-store" });
+        const data = await res.json();
+        if (data && data.ok) {
+          if (Array.isArray(data.schoolNews) && data.schoolNews.length) {
+            state.announcements = data.schoolNews;
+            try { localStorage.setItem(STORAGE_LOCAL_NEWS, JSON.stringify(data.schoolNews)); } catch (_) {}
+          }
+          if (Array.isArray(data.obecNews)) state.obecNews = data.obecNews;
+          state.obecLoading = false;
+          if (state.tab === "announcements") render();
+          return;
+        }
+      } catch (_) {}
+    }
+
+    // Fallback: pull live official OBEC RSS feed directly via rss2json so OBEC news works immediately
+    try {
+      const rssApi = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://www.obec.go.th/feed/");
+      const res = await fetch(rssApi);
+      const data = await res.json();
+      if (data && Array.isArray(data.items)) {
+        state.obecNews = data.items.slice(0, 12).map((it) => ({
+          title: it.title || "",
+          link: it.link || "https://www.obec.go.th",
+          pubDate: (it.pubDate || "").split(" ")[0],
+          summary: String(it.description || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 140)
+        }));
+      }
+    } catch (_) {}
+
+    state.obecLoading = false;
+    if (state.tab === "announcements") render();
+  }
+
+  function openBroadcastNewsSheet() {
+    haptic();
+    const u = state.currentUser;
+    els.sheetBody.innerHTML = `
+      <h3 style="margin:0 0 6px">แจ้งข่าวถึงครูและ ผอ. ทุกคน</h3>
+      <div class="info-meta">ผู้แจ้ง: ${u ? `${u.name} (${u.position})` : "บุคลากรโรงเรียน"}</div>
+      <input class="admin-input" id="bcTitle" placeholder="หัวข้อข่าว / ประกาศด่วน" />
+      <textarea class="admin-input" id="bcBody" rows="3" placeholder="รายละเอียดข่าวที่ต้องการแจ้งทุกคน..."></textarea>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px">
+        <input type="checkbox" id="bcUrgent" /> ระบุเป็นข่าวด่วน (แถบสีแดง)
+      </label>
+      <button class="btn-primary" id="bcSendBtn">ส่งข่าวและแจ้งเตือนทุกเครื่อง</button>
+      <button class="btn-secondary" id="bcCancelBtn">ยกเลิก</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+
+    document.getElementById("bcCancelBtn").onclick = closeSheet;
+    document.getElementById("bcSendBtn").onclick = async () => {
+      const title = document.getElementById("bcTitle").value.trim();
+      const body = document.getElementById("bcBody").value.trim();
+      const urgent = document.getElementById("bcUrgent").checked;
+      if (!title || !body) { notifyIsland("กรุณากรอกหัวข้อและรายละเอียด"); return; }
+
+      const nowStr = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+      const newItem = {
+        id: "news-" + Date.now(),
+        title,
+        body,
+        date: `วันนี้ ${nowStr} • ${u ? u.shortName : "ครู"}`,
+        author: u ? u.name : "",
+        position: u ? u.position : "",
+        urgent
+      };
+
+      state.announcements = [newItem, ...state.announcements];
+      try { localStorage.setItem(STORAGE_LOCAL_NEWS, JSON.stringify(state.announcements)); } catch (_) {}
+      closeSheet();
+      render();
+
+      const apiUrl = (state.newsBackendUrl || "").trim();
+      if (apiUrl) {
+        notifyIsland("กำลังส่งแจ้งเตือนไปทุกเครื่อง...");
+        try {
+          await fetch(apiUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+              title,
+              body,
+              author: u ? u.name : "บุคลากรโรงเรียนบ้านป่าไผ่",
+              position: u ? u.position : "",
+              urgent
+            })
+          });
+          notifyIsland("ส่งข่าวและแจ้งเตือนทุกเครื่องแล้ว!");
+        } catch (_) {
+          notifyIsland("บันทึกในเครื่องแล้ว (ส่งคลาวด์ไม่สำเร็จ)");
+        }
+      } else {
+        notifyIsland("โพสต์ข่าวแล้ว (เชื่อม GAS+OneSignal เพื่อเด้งทุกเครื่อง)");
+        if ("Notification" in window && Notification.permission === "granted" && state.swReg && state.swReg.showNotification) {
+          state.swReg.showNotification((urgent ? "🚨 " : "📢 ") + title, {
+            body: `${body} — โดย ${u ? u.shortName : "ครู"}`,
+            icon: "./icons/school-logo.png"
+          });
+        }
+      }
+    };
   }
 
   // --- Main App Functions ---
@@ -752,21 +946,59 @@
   }
 
   function renderAnnouncements() {
-    els.main.innerHTML = `
-      <div class="section-header">
-        <h2 class="section-title">ประกาศจากโรงเรียน</h2>
-        <span class="section-sub">${state.announcements.length} รายการ</span>
-      </div>
-      ${state.announcements
-        .map(
-          (a, i) => `
-          <div class="info-card ${a.urgent ? "urgent" : ""}" style="animation-delay:${i * 30}ms">
-            <h3>${a.title}</h3>
-            <div class="info-meta">${a.date}</div>
-            <p>${a.body}</p>
-          </div>`
-        )
-        .join("")}`;
+    const isObec = state.newsSubTab === "obec";
+    if (isObec && state.obecNews.length === 0 && !state.obecLoading) {
+      loadLiveNews(false);
+    }
+
+    const segHtml = `
+      <div class="ios-segmented" role="tablist">
+        <button class="seg-btn ${!isObec ? "active" : ""}" data-newstab="school">ข่าวโรงเรียน</button>
+        <button class="seg-btn ${isObec ? "active" : ""}" data-newstab="obec">ข่าว สพฐ. สด</button>
+      </div>`;
+
+    if (!isObec) {
+      els.main.innerHTML = `
+        <div class="section-header">
+          <h2 class="section-title">ข่าวสารและประกาศ</h2>
+          <button class="admin-mini-btn" id="refreshNewsBtn">รีเฟรช</button>
+        </div>
+        ${segHtml}
+        <button class="btn-primary" id="openBroadcastBtn" style="margin:0 0 14px">+ แจ้งข่าวถึงครูและ ผอ. ทุกคน</button>
+        ${state.announcements
+          .map(
+            (a, i) => `
+            <div class="info-card ${a.urgent ? "urgent" : ""}" style="animation-delay:${i * 28}ms">
+              <h3>${a.title}</h3>
+              <div class="info-meta">${a.date}</div>
+              <p>${a.body}</p>
+            </div>`
+          )
+          .join("")}`;
+    } else {
+      els.main.innerHTML = `
+        <div class="section-header">
+          <h2 class="section-title">ข่าวการศึกษา สพฐ.</h2>
+          <button class="admin-mini-btn" id="refreshNewsBtn">โหลดใหม่</button>
+        </div>
+        ${segHtml}
+        ${
+          state.obecLoading
+            ? '<div class="empty-state">กำลังดึงข่าวล่าสุดจากเว็บไซต์ สพฐ. (obec.go.th)...</div>'
+            : state.obecNews.length === 0
+              ? '<div class="empty-state">ไม่สามารถดึงข่าว สพฐ. ได้ชั่วคราว กดปุ่มโหลดใหม่หรือเปิดเว็บ สพฐ. โดยตรง</div>'
+              : state.obecNews
+                  .map(
+                    (n, i) => `
+                    <div class="info-card obec-card" style="animation-delay:${i * 25}ms" data-obec-url="${n.link}" data-obec-title="${n.title.replace(/"/g, "&quot;")}">
+                      <div class="info-meta"><span class="obec-badge">สพฐ.</span>${n.pubDate || "ข่าวล่าสุด"}</div>
+                      <h3>${n.title}</h3>
+                      ${n.summary ? `<p>${n.summary}...</p>` : ""}
+                    </div>`
+                  )
+                  .join("")
+        }`;
+    }
   }
 
   function renderSettings() {
@@ -796,13 +1028,24 @@
               .join("")}
           </div>
           <div style="margin-top:12px;padding-top:10px;border-top:0.5px solid var(--ios-sep)">
-            <strong style="font-size:13px">ลิงก์ซิงก์คลาวด์ (อัปเดตทุกเครื่องอัตโนมัติ)</strong>
-            <input class="admin-input" id="remoteUrlInput" placeholder="วางลิงก์ GAS JSON URL (ถ้ามี)" value="${state.remoteConfigUrl}" />
-            <button class="btn-secondary" id="saveRemoteUrlBtn">บันทึกลิงก์ซิงก์คลาวด์</button>
+            <strong style="font-size:13px">เชื่อมต่อแจ้งเตือน Push จริง & ข่าวคลาวด์</strong>
+            <input class="admin-input" id="newsApiInput" placeholder="ลิงก์ GAS หลังบ้านข่าว (จาก gas-backend.gs)" value="${state.newsBackendUrl}" />
+            <input class="admin-input" id="oneSignalInput" placeholder="OneSignal App ID (สำหรับแจ้งเตือนข้ามเครื่อง)" value="${state.oneSignalAppId}" />
+            <input class="admin-input" id="remoteUrlInput" placeholder="ลิงก์ซิงก์รายการระบบ GAS JSON (ถ้ามี)" value="${state.remoteConfigUrl}" />
+            <button class="btn-secondary" id="saveRemoteUrlBtn">บันทึกการเชื่อมต่อคลาวด์</button>
             <button class="btn-secondary" id="exportConfigBtn">คัดลอก apps-config.js (สำหรับอัปเดตผ่าน GitHub)</button>
           </div>
         </div>`
       : "";
+
+    const notifStatus =
+      "Notification" in window
+        ? Notification.permission === "granted"
+          ? "เปิดรับแจ้งเตือนแล้ว"
+          : Notification.permission === "denied"
+            ? "ถูกปิดไว้ในการตั้งค่าเครื่อง"
+            : "ยังไม่ได้เปิดรับแจ้งเตือน"
+        : "บน iPhone ต้องเพิ่มลงหน้าจอโฮมก่อน";
 
     els.main.innerHTML = `
       <div class="section-header">
@@ -819,6 +1062,15 @@
             </div>`
           : ""
       }
+      <div class="info-card">
+        <div class="settings-row">
+          <div>
+            <strong>แจ้งเตือนข่าวบนมือถือ (Push)</strong>
+            <div class="info-meta" style="margin:0">สถานะ: ${notifStatus}</div>
+          </div>
+        </div>
+        <button class="btn-primary" id="enablePushBtn">เปิดรับการแจ้งเตือนจริง (iPhone / Android)</button>
+      </div>
       <div class="info-card">
         <div class="settings-row">
           <div>
@@ -905,6 +1157,28 @@
       return;
     }
 
+    if (e.target.id === "enablePushBtn") { enablePushNotifications(); return; }
+    if (e.target.id === "openBroadcastBtn") { openBroadcastNewsSheet(); return; }
+    if (e.target.id === "refreshNewsBtn") { loadLiveNews(true); notifyIsland("กำลังดึงข่าวล่าสุด..."); return; }
+
+    const newsTabBtn = e.target.closest("[data-newstab]");
+    if (newsTabBtn) {
+      haptic();
+      state.newsSubTab = newsTabBtn.dataset.newstab;
+      render();
+      return;
+    }
+
+    const obecCard = e.target.closest("[data-obec-url]");
+    if (obecCard) {
+      openInAppViewer({
+        name: obecCard.dataset.obecTitle || "ข่าวการศึกษา สพฐ.",
+        shortName: "ข่าว สพฐ.",
+        url: obecCard.dataset.obecUrl
+      });
+      return;
+    }
+
     if (e.target.id === "checkUpdateBtn") { checkForAppUpdate(); return; }
     if (e.target.id === "adminAddSysBtn") { openAdminSystemSheet(null); return; }
 
@@ -926,10 +1200,18 @@
 
     if (e.target.id === "saveRemoteUrlBtn" && isAdminUser(state.currentUser)) {
       const input = document.getElementById("remoteUrlInput");
+      const newsIn = document.getElementById("newsApiInput");
+      const osIn = document.getElementById("oneSignalInput");
       state.remoteConfigUrl = input ? input.value.trim() : "";
+      state.newsBackendUrl = newsIn ? newsIn.value.trim() : "";
+      state.oneSignalAppId = osIn ? osIn.value.trim() : "";
       localStorage.setItem(STORAGE_REMOTE, state.remoteConfigUrl);
+      localStorage.setItem(STORAGE_NEWS_API, state.newsBackendUrl);
+      localStorage.setItem(STORAGE_ONESIGNAL, state.oneSignalAppId);
+      initOneSignal();
+      if (state.newsBackendUrl) loadLiveNews(true);
       if (state.remoteConfigUrl) syncRemoteConfig(false);
-      else notifyIsland("บันทึกลิงก์ซิงก์แล้ว");
+      else notifyIsland("บันทึกการเชื่อมต่อคลาวด์แล้ว");
       return;
     }
 
@@ -992,6 +1274,8 @@
     }).catch(() => {});
   }
 
+  initOneSignal();
   syncRemoteConfig(true);
+  loadLiveNews(false);
   playSplashThenLogin();
 })();

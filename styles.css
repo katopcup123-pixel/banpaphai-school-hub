@@ -1139,6 +1139,165 @@ input, textarea {
   margin: 10px 0 14px;
 }
 
+/* Smart Greeting Card, Live Staff Status Strip & Jiggle Mode */
+.greeting-card {
+  background: var(--ios-surface);
+  backdrop-filter: saturate(180%) blur(18px);
+  border-radius: 22px;
+  padding: 14px 15px;
+  margin-bottom: 14px;
+  border: 0.5px solid var(--ios-border-light);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.045);
+}
+.greeting-top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.greeting-top .user-avatar {
+  width: 46px;
+  height: 46px;
+}
+.greeting-text { flex: 1; min-width: 0; }
+.greeting-text h2 {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.greeting-text p {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--ios-secondary);
+}
+.greeting-chips {
+  display: flex;
+  gap: 8px;
+  margin-top: 11px;
+}
+.greet-chip {
+  flex: 1;
+  border: none;
+  background: var(--ios-fill);
+  color: var(--ios-text);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s var(--spring);
+}
+.greet-chip:active { transform: scale(0.96); }
+
+/* Who's In Today — Staff Status & Quick Contact Strip */
+.staff-strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 2px 14px;
+  scrollbar-width: none;
+}
+.staff-strip::-webkit-scrollbar { display: none; }
+.staff-pill {
+  flex-shrink: 0;
+  width: 64px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--ios-text);
+}
+.staff-avatar-ring {
+  position: relative;
+  padding: 2.5px;
+  border-radius: 50%;
+  border: 2.2px solid #34C759;
+  transition: transform 0.22s var(--spring);
+}
+.staff-pill:active .staff-avatar-ring { transform: scale(0.9); }
+.staff-avatar-ring.st-duty   { border-color: #F59E0B; }
+.staff-avatar-ring.st-leave  { border-color: #EF4444; }
+.staff-avatar-ring.st-remote { border-color: #007AFF; }
+.staff-avatar-ring .user-avatar { width: 46px; height: 46px; box-shadow: none; }
+.staff-status-ico {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ios-solid);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.16);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+}
+.staff-name {
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* iOS Jiggle Mode (Long-press icons to pin/unpin) */
+.jiggle-active .grid-card {
+  animation: iosJiggle 0.28s ease-in-out infinite alternate !important;
+}
+.jiggle-active .grid-card:nth-child(2n) { animation-delay: -0.14s !important; }
+.jiggle-pin-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ios-solid);
+  color: #C7C7CC;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  z-index: 5;
+}
+.jiggle-pin-badge.pinned { background: #FF9500; color: #fff; }
+@keyframes iosJiggle {
+  0%   { transform: rotate(-1.6deg); }
+  100% { transform: rotate(1.6deg); }
+}
+
+.status-option-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+}
+.status-opt-btn {
+  border: 1.5px solid var(--ios-sep);
+  background: var(--ios-fill);
+  color: var(--ios-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 8px;
+  border-radius: 13px;
+  cursor: pointer;
+}
+.status-opt-btn.active {
+  border-color: var(--ios-blue);
+  background: var(--ios-blue-soft);
+  color: var(--ios-blue);
+}
+
 /* Academic Calendar Widget (Google Calendar + iOS Style) */
 .cal-widget {
   background: var(--ios-surface);

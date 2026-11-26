@@ -10,6 +10,15 @@
   const STORAGE_LOCAL_NEWS = "bpp_connect_local_news_v1";
   const STORAGE_USERS = "bpp_connect_users_v3";
   const STORAGE_EVENTS = "bpp_connect_events_v1";
+  const STORAGE_SOUND = "bpp_connect_sound_v1";
+
+  const STAFF_STATUSES = [
+    { id: "school", label: "อยู่โรงเรียน", icon: "🏫", cls: "st-school" },
+    { id: "duty", label: "ไปราชการ", icon: "🚗", cls: "st-duty" },
+    { id: "leave", label: "ลาป่วย/ลากิจ", icon: "🩺", cls: "st-leave" },
+    { id: "remote", label: "ทำงานนอกสถานที่", icon: "💻", cls: "st-remote" }
+  ];
+  const THAI_DAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
 
   const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
   const EVENT_COLOR_HEX = { blue: "#007AFF", emerald: "#10B981", amber: "#F59E0B", rose: "#EF4444", purple: "#8B5CF6" };
@@ -187,6 +196,8 @@
     newsSubTab: "school",
     theme: localStorage.getItem(STORAGE_THEME) || "light",
     accent: localStorage.getItem(STORAGE_ACCENT) || "#007AFF",
+    soundEnabled: localStorage.getItem(STORAGE_SOUND) !== "off",
+    jiggleMode: false,
     remoteConfigUrl: localStorage.getItem(STORAGE_REMOTE) || config.remoteConfigUrl || "",
     newsBackendUrl: localStorage.getItem(STORAGE_NEWS_API) || config.newsBackendUrl || "",
     oneSignalAppId: localStorage.getItem(STORAGE_ONESIGNAL) || config.oneSignalAppId || "",
@@ -250,6 +261,46 @@
     } catch (_) {}
   }
   applyTheme();
+
+  let audioCtx = null;
+  function playSound(kind = "tap") {
+    if (!state.soundEnabled) return;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      if (kind === "unlock" || kind === "success") {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.3, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.14);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (kind === "error") {
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(210, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.16);
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.start(now);
+        osc.stop(now + 0.19);
+      } else {
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(kind === "pin" ? 680 : 520, now);
+        gain.gain.setValueAtTime(0.035, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      }
+    } catch (_) {}
+  }
 
   function haptic() {
     if (navigator.vibrate) navigator.vibrate(8);
@@ -379,6 +430,7 @@
     if (!state.selectedUser) return;
     const res = authenticateUser(state.users, state.selectedUser.id, state.pinBuffer);
     if (!res.ok) {
+      playSound("error");
       updatePinDots(true);
       els.pinHint.textContent = "รหัส PIN ไม่ถูกต้อง (หากลืมรหัสติดต่อแอดมิน)";
       notifyIsland("รหัสผ่านไม่ถูกต้อง");
@@ -389,6 +441,7 @@
       return;
     }
 
+    playSound("unlock");
     state.currentUser = res.user;
     try { localStorage.setItem(STORAGE_USER, res.user.id); } catch (_) {}
 
@@ -448,6 +501,7 @@
     if (!btn) return;
     e.preventDefault();
     haptic();
+    playSound("pin");
     const key = btn.dataset.key;
     if (key === "clear") {
       state.pinBuffer = "";
@@ -564,6 +618,105 @@
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify(payload)
     }).catch(() => {});
+  }
+
+  // --- Smart Greeting Card + Staff Live Status & Quick Contact ---
+  function renderGreetingAndStaff() {
+    const u = state.currentUser;
+    const now = new Date();
+    const hr = now.getHours();
+    const greet = hr < 12 ? "อรุณสวัสดิ์" : hr < 17 ? "สวัสดีตอนบ่าย" : "สวัสดีตอนเย็น";
+    const emoji = hr < 12 ? "☀️" : hr < 17 ? "🌤️" : "🌙";
+    const thaiDate = `วัน${THAI_DAYS[now.getDay()]}ที่ ${now.getDate()} ${THAI_MONTHS[now.getMonth()]} ${now.getFullYear() + 543}`;
+    const todayStr = formatDateYmd(now);
+    const todayCount = state.events.filter((ev) => ev.date === todayStr).length;
+    const urgentCount = state.announcements.filter((a) => a.urgent).length;
+
+    const staffHtml = state.users
+      .map((usr) => {
+        const st = STAFF_STATUSES.find((x) => x.id === (usr.status || "school")) || STAFF_STATUSES[0];
+        const isMe = u && usr.id === u.id;
+        return `
+          <button type="button" class="staff-pill" data-staff-id="${usr.id}">
+            <div class="staff-avatar-ring ${st.cls}">
+              ${renderAvatarHtml(usr)}
+              <span class="staff-status-ico">${st.icon}</span>
+            </div>
+            <span class="staff-name">${isMe ? "ฉัน" : usr.shortName}</span>
+          </button>`;
+      })
+      .join("");
+
+    return `
+      <div class="greeting-card">
+        <div class="greeting-top">
+          ${renderAvatarHtml(u || {})}
+          <div class="greeting-text">
+            <h2>${greet} ${u ? u.shortName : ""} ${emoji}</h2>
+            <p>${thaiDate}</p>
+          </div>
+        </div>
+        <div class="greeting-chips">
+          <button type="button" class="greet-chip" id="jumpCalBtn">📅 กิจกรรมวันนี้ ${todayCount} รายการ</button>
+          <button type="button" class="greet-chip" id="jumpUrgentBtn">🔔 ประกาศด่วน ${urgentCount} เรื่อง</button>
+        </div>
+      </div>
+      <div class="section-header">
+        <h2 class="section-title">สถานะบุคลากรวันนี้</h2>
+        <span class="section-sub">แตะที่รูปเพื่อเปลี่ยนสถานะ / โทรด่วน</span>
+      </div>
+      <div class="staff-strip">${staffHtml}</div>`;
+  }
+
+  function openStaffSheet(userId) {
+    const target = state.users.find((x) => x.id === userId);
+    if (!target) return;
+    haptic();
+    playSound("tap");
+    const isMe = state.currentUser && state.currentUser.id === target.id;
+    const st = STAFF_STATUSES.find((x) => x.id === (target.status || "school")) || STAFF_STATUSES[0];
+
+    els.sheetBody.innerHTML = `
+      <div class="sheet-head">
+        ${renderAvatarHtml(target)}
+        <div>
+          <h3>${target.name}</h3>
+          <p>${target.position} • ${st.icon} ${st.label}</p>
+        </div>
+      </div>
+      ${
+        isMe
+          ? `<div style="font-size:13px;font-weight:600;margin-bottom:4px">เปลี่ยนสถานะของฉันวันนี้</div>
+             <div class="status-option-grid">
+               ${STAFF_STATUSES.map(
+                 (opt) => `<button type="button" class="status-opt-btn ${(target.status || "school") === opt.id ? "active" : ""}" data-set-status="${opt.id}">${opt.icon} ${opt.label}</button>`
+               ).join("")}
+             </div>`
+          : `<div class="sheet-note">
+               <div><strong>สถานะวันนี้:</strong> ${st.icon} ${st.label}</div>
+               <div><strong>เบอร์ติดต่อ:</strong> ${target.phone || "ยังไม่ได้เพิ่มเบอร์ในโปรไฟล์"}</div>
+             </div>
+             ${target.phone ? `<a href="tel:${target.phone.replace(/[^0-9+]/g, "")}" class="btn-primary" style="display:block;text-align:center;text-decoration:none">📞 โทรออก (${target.phone})</a>` : ""}`
+      }
+      <button type="button" class="btn-secondary" id="staffCloseBtn">ปิด</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+    document.getElementById("staffCloseBtn").onclick = closeSheet;
+    els.sheetBody.querySelectorAll("[data-set-status]").forEach((btn) => {
+      btn.onclick = () => {
+        const newSt = btn.dataset.setStatus;
+        const updated = { ...target, status: newSt };
+        state.users = state.users.map((x) => (x.id === target.id ? updated : x));
+        state.currentUser = updated;
+        try { localStorage.setItem(STORAGE_USERS, JSON.stringify(state.users)); } catch (_) {}
+        postToBackend({ action: "save_user", user: updated });
+        playSound("success");
+        const chosen = STAFF_STATUSES.find((x) => x.id === newSt);
+        notifyIsland(`อัปเดตสถานะ: ${chosen ? chosen.label : newSt}`);
+        closeSheet();
+        render();
+      };
+    });
   }
 
   // --- Academic Calendar (Google Calendar Style on Home Screen) ---
@@ -750,6 +903,7 @@
       </div>
       <input class="admin-input" id="selfName" placeholder="ชื่อ-นามสกุล" value="${esc(u.name)}" />
       <input class="admin-input" id="selfShort" placeholder="ชื่อเรียกสั้นๆ (เช่น ครูน้ำเพชร)" value="${esc(u.shortName)}" />
+      <input class="admin-input" id="selfPhone" type="tel" placeholder="เบอร์โทรศัพท์ (สำหรับโทรด่วนในแอป)" value="${esc(u.phone)}" />
       <input class="admin-input" id="selfPin" type="tel" maxlength="4" placeholder="รหัส PIN 4 หลักใหม่ (เว้นว่างหากไม่เปลี่ยน)" />
       <button class="btn-primary" id="selfSaveBtn">บันทึกข้อมูลส่วนตัว</button>
       <button class="btn-secondary" id="selfCancelBtn">ยกเลิก</button>
@@ -778,6 +932,7 @@
     document.getElementById("selfSaveBtn").onclick = () => {
       const name = document.getElementById("selfName").value.trim();
       const shortName = document.getElementById("selfShort").value.trim();
+      const phone = document.getElementById("selfPhone").value.trim();
       const newPin = document.getElementById("selfPin").value.trim();
       if (!name) { notifyIsland("กรุณากรอกชื่อ-นามสกุล"); return; }
       if (newPin && !/^\d{4}$/.test(newPin)) { notifyIsland("รหัส PIN ต้องเป็นตัวเลข 4 หลัก"); return; }
@@ -786,6 +941,7 @@
         ...u,
         name,
         shortName: shortName || u.shortName,
+        phone,
         pin: newPin || u.pin,
         avatar: avatarData
       };
@@ -1397,20 +1553,22 @@
       bodyHtml = `
         <div class="section-header">
           <h2 class="section-title">${sectionHeading}</h2>
-          <span class="section-sub">${visible.length} ระบบ</span>
+          <button type="button" class="admin-mini-btn" id="toggleJiggleBtn">${state.jiggleMode ? "เสร็จสิ้น ✓" : "จัดหมุด"}</button>
         </div>
-        <div class="apps-grid">
+        <div class="apps-grid ${state.jiggleMode ? "jiggle-active" : ""}">
           ${visible
-            .map(
-              (s, i) => `
-              <div class="grid-card" style="animation-delay:${i * 24}ms" data-open="${s.id}" role="button" tabindex="0">
-                ${s.directorOnly ? '<span class="director-tag">ผู้บริหาร</span>' : ""}
-                <div class="squircle squircle-lg c-${s.color}">
-                  ${iconSvg(s.icon, 27)}
-                </div>
-                <span class="icon-label">${s.shortName}</span>
-              </div>`
-            )
+            .map((s, i) => {
+              const isFav = state.favorites.has(s.id);
+              return `
+                <div class="grid-card" style="animation-delay:${i * 24}ms" data-open="${s.id}" role="button" tabindex="0">
+                  ${s.directorOnly ? '<span class="director-tag">ผู้บริหาร</span>' : ""}
+                  ${state.jiggleMode ? `<span class="jiggle-pin-badge ${isFav ? "pinned" : ""}">${isFav ? "★" : "+"}</span>` : ""}
+                  <div class="squircle squircle-lg c-${s.color}">
+                    ${iconSvg(s.icon, 27)}
+                  </div>
+                  <span class="icon-label">${s.shortName}</span>
+                </div>`;
+            })
             .join("")}
         </div>`;
     } else {
@@ -1444,15 +1602,17 @@
         </div>`;
     }
 
-    const calendarHtml = state.division === "all" && !state.query.trim() ? renderCalendarWidget() : "";
+    const greetingHtml = state.division === "all" && !state.query.trim() ? renderGreetingAndStaff() : "";
+    const calendarHtml = state.division === "all" && !state.query.trim() ? `<div id="calAnchor">${renderCalendarWidget()}</div>` : "";
 
     els.main.innerHTML = `
+      ${greetingHtml}
       ${pinnedHtml}
       ${calendarHtml}
       ${filtersHtml}
       ${bodyHtml}
       <div class="gas-badge">
-        <span>BPP Connect v${config.appVersion || "1.5.0"} • Google Workspace</span>
+        <span>BPP Connect v${config.appVersion || "1.7.0"} • Google Workspace</span>
       </div>`;
   }
 
@@ -1661,6 +1821,13 @@
           </div>
           <button class="ios-switch ${isDark ? "on" : ""}" id="darkModeToggle" role="switch" aria-checked="${isDark}" aria-label="สลับโหมดมืด"></button>
         </div>
+        <div class="settings-row">
+          <div>
+            <strong>เสียงเอฟเฟค iOS</strong>
+            <div class="info-meta" style="margin:0">เสียงแตะปุ่มและเสียงปลดล็อกเบาๆ</div>
+          </div>
+          <button class="ios-switch ${state.soundEnabled ? "on" : ""}" id="soundToggle" role="switch" aria-checked="${state.soundEnabled}" aria-label="เปิดปิดเสียงเอฟเฟค"></button>
+        </div>
         <div class="settings-row" style="display:block">
           <strong>สีหลักของแอป</strong>
           <div class="swatch-row">
@@ -1715,8 +1882,51 @@
 
     const openEl = e.target.closest("[data-open]");
     if (openEl) {
+      if (state.jiggleMode) {
+        toggleFavorite(openEl.dataset.open, e);
+        playSound("tap");
+        return;
+      }
       const sys = state.systems.find((s) => s.id === openEl.dataset.open);
-      if (sys) openSystem(sys);
+      if (sys) { playSound("tap"); openSystem(sys); }
+      return;
+    }
+
+    if (e.target.id === "toggleJiggleBtn") {
+      haptic();
+      playSound("tap");
+      state.jiggleMode = !state.jiggleMode;
+      if (state.jiggleMode) notifyIsland("แตะไอคอนเพื่อปักหมุด / ถอดหมุดใช้บ่อย");
+      render();
+      return;
+    }
+
+    const staffBtn = e.target.closest("[data-staff-id]");
+    if (staffBtn) { openStaffSheet(staffBtn.dataset.staffId); return; }
+
+    if (e.target.id === "jumpCalBtn") {
+      haptic();
+      playSound("tap");
+      const anchor = document.getElementById("calAnchor");
+      if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (e.target.id === "jumpUrgentBtn") {
+      haptic();
+      playSound("tap");
+      state.tab = "announcements";
+      state.newsSubTab = "school";
+      render();
+      return;
+    }
+
+    if (e.target.id === "soundToggle") {
+      haptic();
+      state.soundEnabled = !state.soundEnabled;
+      try { localStorage.setItem(STORAGE_SOUND, state.soundEnabled ? "on" : "off"); } catch (_) {}
+      if (state.soundEnabled) playSound("success");
+      notifyIsland(state.soundEnabled ? "เปิดเสียงเอฟเฟคแล้ว" : "ปิดเสียงเอฟเฟคแล้ว");
+      render();
       return;
     }
 
@@ -1878,6 +2088,24 @@
       playSplashThenLogin();
       return;
     }
+  });
+
+  // Long-press any icon card for 450ms to enter iOS Jiggle Mode
+  let longPressTimer = null;
+  els.main.addEventListener("pointerdown", (e) => {
+    const card = e.target.closest(".grid-card");
+    if (!card || state.jiggleMode) return;
+    clearTimeout(longPressTimer);
+    longPressTimer = setTimeout(() => {
+      haptic();
+      playSound("tap");
+      state.jiggleMode = true;
+      notifyIsland("โหมดจัดหมุด: แตะไอคอนเพื่อปักหมุด/ถอดหมุด");
+      render();
+    }, 450);
+  });
+  ["pointerup", "pointercancel", "pointermove"].forEach((evt) => {
+    els.main.addEventListener(evt, () => clearTimeout(longPressTimer));
   });
 
   els.userChipBtn.addEventListener("click", () => {

@@ -3,7 +3,7 @@
   const STORAGE_USER = "bpp_connect_user_v1";
   const STORAGE_THEME = "bpp_connect_theme_v1";
   const STORAGE_ACCENT = "bpp_connect_accent_v1";
-  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v2";
+  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v3";
   const STORAGE_REMOTE = "bpp_connect_remote_url_v1";
   const STORAGE_NEWS_API = "bpp_connect_news_api_v1";
   const STORAGE_ONESIGNAL = "bpp_connect_onesignal_id_v1";
@@ -1253,19 +1253,36 @@
   }
 
   let activeInAppUrl = "";
+  let inAppFallbackTimer = null;
   function openInAppViewer(sys) {
     haptic();
     activeInAppUrl = sys.url;
     els.inAppTitle.textContent = sys.name;
+    els.inAppLoading.innerHTML = `<div class="ios-spinner"></div><span>กำลังเชื่อมต่อระบบ...</span>`;
     els.inAppLoading.classList.remove("done");
     els.inAppFrame.src = sys.url;
     els.inAppOverlay.classList.remove("hidden");
     requestAnimationFrame(() => els.inAppOverlay.classList.add("open"));
     notifyIsland(`เปิด ${sys.shortName} ในแอป`);
+
+    clearTimeout(inAppFallbackTimer);
+    inAppFallbackTimer = setTimeout(() => {
+      if (!els.inAppLoading.classList.contains("done") && activeInAppUrl) {
+        els.inAppLoading.innerHTML = `
+          <div style="text-align:center;padding:20px;max-width:280px">
+            <div style="font-size:14px;font-weight:600;color:var(--ios-text);margin-bottom:6px">เว็บปลายทางไม่อนุญาตให้ฝังในแอป</div>
+            <div style="font-size:12px;margin-bottom:12px">กดปุ่มด้านล่างเพื่อเปิดใช้งานเต็มจอทันที</div>
+            <button type="button" class="btn-primary" id="inAppForceOpenBtn">เปิดในเบราว์เซอร์ ↗</button>
+          </div>`;
+        const b = document.getElementById("inAppForceOpenBtn");
+        if (b) b.onclick = () => window.open(activeInAppUrl, "_blank", "noopener,noreferrer");
+      }
+    }, 4500);
   }
 
   function closeInAppViewer() {
     haptic();
+    clearTimeout(inAppFallbackTimer);
     els.inAppOverlay.classList.remove("open");
     setTimeout(() => {
       els.inAppOverlay.classList.add("hidden");
@@ -1275,12 +1292,14 @@
   }
 
   els.inAppFrame.addEventListener("load", () => {
+    clearTimeout(inAppFallbackTimer);
     if (activeInAppUrl) els.inAppLoading.classList.add("done");
   });
   els.inAppBackBtn.addEventListener("click", closeInAppViewer);
   els.inAppReloadBtn.addEventListener("click", () => {
     if (!activeInAppUrl) return;
     haptic();
+    els.inAppLoading.innerHTML = `<div class="ios-spinner"></div><span>กำลังเชื่อมต่อระบบ...</span>`;
     els.inAppLoading.classList.remove("done");
     els.inAppFrame.src = activeInAppUrl;
   });
@@ -1292,6 +1311,11 @@
     const isDemo = !sys.url || sys.url.includes("REPLACE_WITH_");
     if (isDemo) {
       openSheet(sys);
+      return;
+    }
+    if (sys.openExternal) {
+      notifyIsland(`กำลังเปิด ${sys.shortName}`);
+      window.open(sys.url, "_blank", "noopener,noreferrer");
       return;
     }
     openInAppViewer(sys);

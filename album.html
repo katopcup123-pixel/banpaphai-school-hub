@@ -6,22 +6,34 @@
   <title>BPP Album — คลังภาพกิจกรรมโรงเรียนบ้านป่าไผ่</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      /* Unslopped warm archival neutral ramp + single friendly blue accent (no green, no glows) */
-      --bg: #FAF9F6;
+      --bg: #F5F6FA;
       --surface: #FFFFFF;
-      --surface-subtle: #F3F2EE;
-      --border: rgba(28, 25, 23, 0.09);
-      --text-primary: #1C1917;
-      --text-secondary: #57534E;
-      --text-muted: #78716C;
-      --accent: #1D4ED8;
-      --accent-soft: rgba(29, 78, 216, 0.09);
-      --danger: #B91C1C;
-      --danger-soft: rgba(185, 28, 28, 0.09);
+      --glass: rgba(255, 255, 255, 0.82);
+      --fill: rgba(118, 118, 128, 0.11);
+      --border: rgba(28, 28, 30, 0.08);
+      --text: #1C1C1E;
+      --secondary: #6C6C70;
+      --muted: #8E8E93;
+      --accent: #007AFF;
+      --accent-soft: rgba(0, 122, 255, 0.11);
+      --danger: #FF3B30;
+      --danger-soft: rgba(255, 59, 48, 0.11);
+      --spring: cubic-bezier(0.32, 1.18, 0.56, 1);
       --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0B0D12;
+      --surface: #1C1C1E;
+      --glass: rgba(24, 24, 28, 0.84);
+      --fill: rgba(118, 118, 128, 0.24);
+      --border: rgba(255, 255, 255, 0.09);
+      --text: #F2F2F7;
+      --secondary: #AEAEB2;
+      --muted: #8E8E93;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -31,12 +43,12 @@
       padding: 0;
       height: 100%;
       background: var(--bg);
-      color: var(--text-primary);
-      font-family: "Noto Sans Thai", -apple-system, BlinkMacSystemFont, sans-serif;
-      font-weight: 400;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
       -webkit-font-smoothing: antialiased;
       touch-action: manipulation;
-      overscroll-behavior-y: none;
+      overscroll-behavior: none;
+      overflow: hidden;
     }
 
     .app {
@@ -46,81 +58,98 @@
       display: flex;
       flex-direction: column;
       background: var(--bg);
+      position: relative;
     }
 
-    /* Quiet Top Bar (4px grid) */
+    /* Frosted Glass Apple-style Header (Locked at top) */
     .topbar {
       flex-shrink: 0;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+      background: var(--glass);
+      backdrop-filter: saturate(180%) blur(24px);
+      border-bottom: 0.5px solid var(--border);
+      padding: calc(10px + env(safe-area-inset-top)) 16px 12px;
+      z-index: 20;
+    }
+    .topbar-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
-
     .topbar-left {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       min-width: 0;
     }
-
     .topbar-title {
       margin: 0;
       font-size: 18px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
+      font-weight: 700;
+      letter-spacing: -0.02em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
-    .topbar-meta {
-      font-size: 12px;
-      color: var(--text-muted);
+    .topbar-sub {
+      font-size: 11.5px;
+      color: var(--secondary);
       font-variant-numeric: tabular-nums;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 1px;
+    }
+    .mini-avatar {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--accent-soft);
     }
 
+    /* Buttons */
     .btn-primary {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       border: none;
       background: var(--accent);
       color: #FFFFFF;
       font-family: inherit;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 13.5px;
+      font-weight: 600;
       height: 36px;
       padding: 0 14px;
-      border-radius: 10px;
+      border-radius: 999px;
       cursor: pointer;
-      transition: opacity 0.15s var(--ease), transform 0.12s var(--ease);
+      transition: transform 0.2s var(--spring), opacity 0.15s;
       flex-shrink: 0;
     }
-    .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+    .btn-primary:active { transform: scale(0.94); opacity: 0.9; }
     .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
 
-    .btn-quiet {
+    .btn-soft {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text-primary);
+      border: none;
+      background: var(--fill);
+      color: var(--text);
       font-family: inherit;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 13px;
+      font-weight: 600;
       height: 36px;
-      padding: 0 12px;
-      border-radius: 10px;
+      padding: 0 13px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: background 0.15s var(--ease);
+      transition: transform 0.18s var(--spring), background 0.15s;
       flex-shrink: 0;
+      text-decoration: none;
     }
-    .btn-quiet:active { background: var(--surface-subtle); }
+    .btn-soft:active { transform: scale(0.95); }
 
     .btn-danger {
       display: inline-flex;
@@ -131,100 +160,139 @@
       background: var(--danger-soft);
       color: var(--danger);
       font-family: inherit;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 13px;
+      font-weight: 600;
       height: 36px;
-      padding: 0 14px;
-      border-radius: 10px;
+      padding: 0 13px;
+      border-radius: 12px;
       cursor: pointer;
+      transition: transform 0.18s var(--spring);
     }
+    .btn-danger:active { transform: scale(0.95); }
 
     .icon-btn {
-      width: 36px;
-      height: 36px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text-secondary);
-      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      border: none;
+      background: var(--fill);
+      color: var(--text);
+      border-radius: 50%;
       display: grid;
       place-items: center;
       cursor: pointer;
       flex-shrink: 0;
+      transition: transform 0.2s var(--spring);
     }
-    .icon-btn:active { background: var(--surface-subtle); }
+    .icon-btn:active { transform: scale(0.9); }
+
+    /* Segmented Tabs (อัลบั้ม | ถังขยะ) */
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      padding: 3px;
+      border-radius: 11px;
+      background: var(--fill);
+      margin-top: 10px;
+    }
+    .seg-btn {
+      border: none;
+      background: transparent;
+      color: var(--secondary);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s var(--ease), color 0.2s, box-shadow 0.2s;
+    }
+    .seg-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
 
     /* Scrollable Body */
     .body-scroll {
       flex: 1;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 16px 16px calc(28px + env(safe-area-inset-bottom));
+      overscroll-behavior-y: contain;
+      padding: 14px 16px calc(32px + env(safe-area-inset-bottom));
+      scrollbar-width: none;
     }
+    .body-scroll::-webkit-scrollbar { display: none; }
 
     /* Search */
     .search-box {
       position: relative;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .search-box svg {
       position: absolute;
       left: 12px;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--text-muted);
+      color: var(--muted);
       pointer-events: none;
     }
     .search-input {
       width: 100%;
-      height: 40px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text-primary);
-      border-radius: 10px;
-      padding: 0 12px 0 38px;
+      height: 38px;
+      border: none;
+      background: var(--fill);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 0 12px 0 36px;
       font-family: inherit;
       font-size: 16px;
       outline: none;
+      transition: background 0.2s, box-shadow 0.2s;
     }
-    .search-input:focus { border-color: var(--accent); }
+    .search-input:focus {
+      background: var(--surface);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
 
-    /* Album Cards (LINE-Album 3-Photo Collage) */
+    /* Shimmer Skeleton */
+    .skeleton-card {
+      height: 224px;
+      border-radius: 20px;
+      background: linear-gradient(90deg, var(--fill) 25%, rgba(255,255,255,0.45) 50%, var(--fill) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s ease-in-out infinite;
+      margin-bottom: 14px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* Album Cards (Apple Photos / LINE Album Collage) */
     .album-list {
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
-
     .album-card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+      border: 0.5px solid var(--border);
+      border-radius: 22px;
       overflow: hidden;
       cursor: pointer;
-      transition: border-color 0.15s var(--ease);
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+      transition: transform 0.22s var(--spring), box-shadow 0.2s;
+      animation: fadeUp 0.34s var(--ease) both;
     }
-    .album-card:active { border-color: rgba(28, 25, 23, 0.22); }
+    .album-card:active { transform: scale(0.98); }
 
     .collage {
       display: grid;
       grid-template-columns: 2fr 1fr;
-      grid-template-rows: 92px 92px;
+      grid-template-rows: 94px 94px;
       gap: 2px;
-      background: var(--surface-subtle);
+      background: var(--fill);
     }
-    .collage-main {
-      grid-row: 1 / 3;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .collage-sub {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+    .collage-main { grid-row: 1 / 3; width: 100%; height: 100%; object-fit: cover; display: block; }
+    .collage-sub { width: 100%; height: 100%; object-fit: cover; display: block; }
     .collage-empty {
       grid-column: 1 / 3;
       grid-row: 1 / 3;
@@ -233,23 +301,23 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      color: var(--text-muted);
+      color: var(--muted);
       font-size: 13px;
     }
 
     .album-foot {
-      padding: 12px 16px;
+      padding: 13px 15px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
     .album-info { min-width: 0; }
     .album-name {
       margin: 0;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-primary);
+      font-size: 15.5px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -257,205 +325,191 @@
     .album-sub {
       margin-top: 2px;
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--secondary);
       font-variant-numeric: tabular-nums;
     }
 
-    /* Inside Album: Controls + 3-Col Photo Grid */
-    .album-toolbar {
+    /* Inside Album: Smooth Action Bar + 3-Col Photo Grid */
+    .album-actions-bar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 8px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      scrollbar-width: none;
     }
+    .album-actions-bar::-webkit-scrollbar { display: none; }
 
     .quality-toggle {
       display: inline-flex;
-      background: var(--surface-subtle);
-      border-radius: 8px;
+      background: var(--fill);
+      border-radius: 10px;
       padding: 2px;
-      border: 1px solid var(--border);
+      flex-shrink: 0;
     }
     .q-btn {
       border: none;
       background: transparent;
-      color: var(--text-secondary);
+      color: var(--secondary);
       font-family: inherit;
       font-size: 12px;
-      font-weight: 500;
-      padding: 5px 10px;
-      border-radius: 6px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 8px;
       cursor: pointer;
     }
     .q-btn.active {
       background: var(--surface);
-      color: var(--text-primary);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     }
 
     .photo-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
+      gap: 3px;
     }
     .photo-cell {
       position: relative;
       aspect-ratio: 1 / 1;
-      background: var(--surface-subtle);
-      border-radius: 6px;
+      background: var(--fill);
+      border-radius: 8px;
       overflow: hidden;
       cursor: pointer;
+      animation: fadeUp 0.28s var(--ease) both;
+      transition: transform 0.18s var(--spring);
     }
-    .photo-cell img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+    .photo-cell:active { transform: scale(0.95); }
+    .photo-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .select-check {
       position: absolute;
       top: 6px;
       right: 6px;
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       border: 2px solid #FFFFFF;
-      background: rgba(28, 25, 23, 0.35);
+      background: rgba(0, 0, 0, 0.32);
       display: grid;
       place-items: center;
       color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 700;
     }
-    .photo-cell.selected .select-check {
-      background: var(--accent);
-      border-color: #FFFFFF;
+    .photo-cell.selected .select-check { background: var(--accent); }
+    .photo-cell.selected img { opacity: 0.7; }
+
+    /* Trash List */
+    .trash-list {
+      background: var(--surface);
+      border-radius: 18px;
+      overflow: hidden;
+      border: 0.5px solid var(--border);
     }
-    .photo-cell.selected img { opacity: 0.72; }
+    .trash-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .trash-row:last-child { border-bottom: none; }
+    .trash-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--fill);
+      object-fit: cover;
+      display: grid;
+      place-items: center;
+      color: var(--secondary);
+      flex-shrink: 0;
+    }
+    .trash-info { flex: 1; min-width: 0; }
+    .trash-info strong { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .trash-info span { display: block; font-size: 11.5px; color: var(--secondary); margin-top: 2px; }
 
     /* Live Upload Process Panel */
     .upload-panel {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
+      border: 0.5px solid var(--border);
+      border-radius: 18px;
       padding: 14px 16px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      animation: fadeUp 0.28s var(--spring) both;
     }
-    .upload-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .upload-head strong { font-size: 14px; font-weight: 600; }
-    .upload-count {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--accent);
-      font-variant-numeric: tabular-nums;
-    }
-    .progress-track {
-      width: 100%;
-      height: 6px;
-      border-radius: 999px;
-      background: var(--surface-subtle);
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: var(--accent);
-      border-radius: 999px;
-      transition: width 0.25s var(--ease);
-    }
-    .upload-queue {
-      max-height: 180px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .q-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px 8px;
-      border-radius: 8px;
-      background: var(--bg);
-      font-size: 12px;
-    }
-    .q-thumb {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      object-fit: cover;
-      background: var(--surface-subtle);
-      flex-shrink: 0;
-    }
-    .q-name {
-      flex: 1;
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      color: var(--text-primary);
-    }
-    .q-status {
-      font-variant-numeric: tabular-nums;
-      color: var(--text-muted);
-      flex-shrink: 0;
-    }
-    .q-status.uploading { color: var(--accent); font-weight: 500; }
-    .q-status.done { color: var(--text-secondary); }
+    .upload-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .upload-head strong { font-size: 13.5px; font-weight: 700; }
+    .upload-count { font-size: 12.5px; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .progress-track { width: 100%; height: 6px; border-radius: 999px; background: var(--fill); overflow: hidden; margin-bottom: 10px; }
+    .progress-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 999px; transition: width 0.25s var(--ease); }
+    .upload-queue { max-height: 170px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+    .q-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 10px; background: var(--bg); font-size: 12px; }
+    .q-thumb { width: 32px; height: 32px; border-radius: 7px; object-fit: cover; background: var(--fill); flex-shrink: 0; }
+    .q-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .q-status { font-variant-numeric: tabular-nums; color: var(--muted); flex-shrink: 0; }
+    .q-status.uploading { color: var(--accent); font-weight: 600; }
+    .q-status.done { color: var(--secondary); }
     .q-status.error { color: var(--danger); }
 
-    /* Modal Sheet & Lightbox */
+    /* Smooth Spring Bottom Sheet */
     .backdrop {
       position: fixed;
       inset: 0;
       z-index: 50;
-      background: rgba(28, 25, 23, 0.42);
-      display: none;
+      background: rgba(0, 0, 0, 0.36);
+      backdrop-filter: blur(4px);
+      display: flex;
       align-items: flex-end;
       justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.24s ease;
     }
-    .backdrop.open { display: flex; }
-
+    .backdrop.open { opacity: 1; pointer-events: auto; }
     .sheet {
       width: 100%;
       max-width: 560px;
       background: var(--surface);
-      border-radius: 20px 20px 0 0;
-      padding: 16px 20px calc(24px + env(safe-area-inset-bottom));
+      border-radius: 26px 26px 0 0;
+      padding: 10px 20px calc(26px + env(safe-area-inset-bottom));
+      transform: translateY(100%);
+      transition: transform 0.36s var(--spring);
     }
-    .sheet h3 { margin: 0 0 12px; font-size: 16px; font-weight: 600; }
+    .backdrop.open .sheet { transform: translateY(0); }
+    .grabber { width: 38px; height: 5px; border-radius: 999px; background: var(--fill); margin: 0 auto 14px; }
+    .sheet h3 { margin: 0 0 12px; font-size: 16.5px; font-weight: 700; }
     .field {
       width: 100%;
-      height: 42px;
+      height: 44px;
       border: 1px solid var(--border);
       background: var(--bg);
-      color: var(--text-primary);
-      border-radius: 10px;
-      padding: 0 12px;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 0 13px;
       font-family: inherit;
       font-size: 16px;
       margin-bottom: 12px;
       outline: none;
     }
-    .field:focus { border-color: var(--accent); background: var(--surface); }
+    .field:focus { border-color: var(--accent); }
     .sheet-actions { display: flex; flex-direction: column; gap: 8px; }
-    .sheet-actions button { width: 100%; justify-content: center; height: 42px; }
+    .sheet-actions .btn-primary,
+    .sheet-actions .btn-soft,
+    .sheet-actions .btn-danger { width: 100%; height: 44px; border-radius: 14px; font-size: 14.5px; }
 
+    /* Swipeable Full-Screen Lightbox */
     .lightbox {
       position: fixed;
       inset: 0;
       z-index: 60;
-      background: #141312;
+      background: rgba(12, 12, 14, 0.96);
+      backdrop-filter: blur(20px);
       color: #FFFFFF;
       display: none;
       flex-direction: column;
+      animation: fadeIn 0.22s ease;
     }
     .lightbox.open { display: flex; }
     .lb-top {
@@ -463,7 +517,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 13px;
+      font-size: 13.5px;
+      font-weight: 600;
       font-variant-numeric: tabular-nums;
     }
     .lb-stage {
@@ -474,73 +529,79 @@
       overflow: hidden;
       padding: 8px;
     }
-    .lb-stage img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-    }
+    .lb-stage img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
     .lb-bottom {
-      padding: 12px 16px calc(20px + env(safe-area-inset-bottom));
+      padding: 12px 16px calc(22px + env(safe-area-inset-bottom));
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
     }
     .lb-btn {
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      background: rgba(255, 255, 255, 0.14);
       color: #FFFFFF;
       font-family: inherit;
       font-size: 13px;
-      padding: 8px 14px;
-      border-radius: 10px;
+      font-weight: 600;
+      padding: 9px 15px;
+      border-radius: 999px;
       text-decoration: none;
       cursor: pointer;
     }
 
-    .empty {
-      text-align: center;
-      padding: 48px 16px;
-      color: var(--text-muted);
-      font-size: 14px;
-    }
-
+    .empty { text-align: center; padding: 48px 16px; color: var(--secondary); font-size: 14px; }
     .toast {
       position: fixed;
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 80;
-      background: var(--text-primary);
+      background: rgba(28, 28, 30, 0.92);
       color: #FFFFFF;
       font-size: 13px;
-      padding: 10px 16px;
-      border-radius: 10px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 999px;
       display: none;
       max-width: 90vw;
       text-align: center;
     }
     .toast.show { display: block; }
     .hidden { display: none !important; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <header class="topbar">
-      <div class="topbar-left">
-        <button class="icon-btn hidden" id="backBtn" aria-label="กลับ">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        </button>
-        <div style="min-width:0">
-          <h1 class="topbar-title" id="topTitle">BPP Album</h1>
-          <div class="topbar-meta" id="topMeta">คลังภาพกิจกรรมโรงเรียนบ้านป่าไผ่</div>
+      <div class="topbar-row">
+        <div class="topbar-left">
+          <button class="icon-btn hidden" id="backBtn" aria-label="กลับ">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div style="min-width:0">
+            <h1 class="topbar-title" id="topTitle">คลังภาพ BPP</h1>
+            <div class="topbar-sub" id="topMeta">กำลังเชื่อมต่อ Google Drive</div>
+          </div>
         </div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
         <button class="btn-primary" id="primaryActionBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
           <span id="primaryActionLabel">สร้างอัลบั้ม</span>
         </button>
+      </div>
+
+      <div class="segmented" id="mainSegBar">
+        <button type="button" class="seg-btn active" data-maintab="albums">อัลบั้มทั้งหมด</button>
+        <button type="button" class="seg-btn" data-maintab="trash">ถังขยะ</button>
       </div>
     </header>
 
@@ -558,45 +619,51 @@
       <!-- View 1: Album List -->
       <section id="albumsView">
         <div class="search-box">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input id="albumSearch" class="search-input" type="search" placeholder="ค้นหาอัลบั้ม" />
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="albumSearch" class="search-input" type="search" placeholder="ค้นหาอัลบั้มกิจกรรม..." />
         </div>
         <div class="album-list" id="albumList"></div>
       </section>
 
-      <!-- View 2: Photos Inside Album -->
+      <!-- View 2: Trash -->
+      <section id="trashView" class="hidden">
+        <div id="trashList"></div>
+      </section>
+
+      <!-- View 3: Photos Inside Album -->
       <section id="photosView" class="hidden">
-        <div class="album-toolbar">
-          <div class="quality-toggle" role="group" aria-label="คุณภาพรูปอัปโหลด">
+        <div class="album-actions-bar">
+          <div class="quality-toggle" role="group" aria-label="คุณภาพรูป">
             <button type="button" class="q-btn active" data-quality="standard">มาตรฐาน 1600px</button>
             <button type="button" class="q-btn" data-quality="original">ต้นฉบับ</button>
           </div>
-          <div style="display:flex;gap:8px">
-            <button type="button" class="btn-quiet" id="selectModeBtn">เลือกหลายรูป</button>
-            <button type="button" class="btn-danger hidden" id="deleteSelectedBtn">ลบที่เลือก (0)</button>
-          </div>
+          <button type="button" class="btn-soft" id="downloadZipBtn">โหลดทั้งอัลบั้ม (ZIP)</button>
+          <button type="button" class="btn-soft" id="selectModeBtn">เลือกหลายรูป</button>
+          <button type="button" class="btn-danger hidden" id="deleteSelectedBtn">ลบ (0)</button>
         </div>
         <div class="photo-grid" id="photoGrid"></div>
       </section>
     </main>
 
-    <!-- Hidden Unlimited Multi-Photo File Picker -->
     <input type="file" id="photoPicker" accept="image/*" multiple class="hidden" />
   </div>
 
-  <!-- Bottom Sheet Modal -->
+  <!-- Spring Bottom Sheet -->
   <div class="backdrop" id="sheetBackdrop">
-    <div class="sheet" id="sheetContent"></div>
+    <div class="sheet">
+      <div class="grabber"></div>
+      <div id="sheetContent"></div>
+    </div>
   </div>
 
-  <!-- Full-Screen Lightbox -->
+  <!-- Swipeable Full-Screen Lightbox -->
   <div class="lightbox" id="lightbox">
     <div class="lb-top">
       <button type="button" class="lb-btn" id="lbClose">ปิด</button>
       <span id="lbCounter">1 / 1</span>
-      <button type="button" class="lb-btn" id="lbDelete" style="color:#FCA5A5">ลบรูป</button>
+      <button type="button" class="lb-btn" id="lbDelete" style="color:#FF6961">ลบรูป</button>
     </div>
-    <div class="lb-stage"><img id="lbImg" src="" alt="" /></div>
+    <div class="lb-stage" id="lbStage"><img id="lbImg" src="" alt="" /></div>
     <div class="lb-bottom">
       <button type="button" class="lb-btn" id="lbPrev">ก่อนหน้า</button>
       <a class="lb-btn" id="lbDownload" target="_blank" rel="noopener">ดาวน์โหลด</a>
@@ -608,9 +675,32 @@
 
   <script src="./apps-config.js"></script>
   <script>
+    // Inherit Dark Mode & Accent Color from BPP Connect automatically
+    const savedTheme = localStorage.getItem("bpp_connect_theme_v1") || "light";
+    const savedAccent = localStorage.getItem("bpp_connect_accent_v1") || "#007AFF";
+    document.documentElement.dataset.theme = savedTheme;
+    document.documentElement.style.setProperty("--accent", savedAccent);
+
+    // Automatically read the logged-in teacher from BPP Connect (zero manual name typing!)
+    function getLoggedInTeacher() {
+      const uid = localStorage.getItem("bpp_connect_user_v1");
+      let users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+      try {
+        const raw = localStorage.getItem("bpp_connect_users_v3");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) users = parsed;
+        }
+      } catch (_) {}
+      return users.find((u) => u.id === uid) || users[0] || { name: "บุคลากรโรงเรียนบ้านป่าไผ่", shortName: "คุณครู", avatar: "" };
+    }
+
+    const currentTeacher = getLoggedInTeacher();
+
     const state = {
-      view: "albums",
+      view: "albums", // albums | trash | photos
       albums: [],
+      trashItems: [],
       query: "",
       currentAlbum: null,
       photos: [],
@@ -618,8 +708,7 @@
       selectMode: false,
       selectedIds: new Set(),
       uploading: false,
-      lbIndex: 0,
-      uploaderName: localStorage.getItem("bpp_album_uploader") || ""
+      lbIndex: 0
     };
 
     const $ = (id) => document.getElementById(id);
@@ -633,37 +722,27 @@
     }
 
     function getAlbumApiUrl() {
-      return (localStorage.getItem('bpp_album_api_url') || (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.albumApiUrl) || '').trim();
+      return (localStorage.getItem("bpp_album_api_url") || (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.albumApiUrl) || "").trim();
     }
 
-    async function runGas(fnName, ...args) {
+    async function callApi(action, payload = {}) {
       const apiUrl = getAlbumApiUrl();
-      if (!apiUrl) {
-        throw new Error('ยังไม่ได้วางลิงก์ GAS API (ส่งลิงก์ API ที่ Deploy แล้วมาเชื่อมต่อได้เลย)');
-      }
-      if (fnName === 'listAlbums') {
-        const r = await fetch(apiUrl + '?action=listAlbums', { cache: 'no-store' });
+      if (!apiUrl) throw new Error("ยังไม่ได้เชื่อมลิงก์ BPP Album API");
+      if (action === "listAlbums" || action === "listTrash") {
+        const r = await fetch(`${apiUrl}?action=${action}`, { cache: "no-store" });
         return r.json();
       }
-      if (fnName === 'listPhotos') {
-        const r = await fetch(apiUrl + '?action=listPhotos&folderId=' + encodeURIComponent(args[0]), { cache: 'no-store' });
+      if (action === "listPhotos") {
+        const r = await fetch(`${apiUrl}?action=listPhotos&folderId=${encodeURIComponent(payload.folderId)}`, { cache: "no-store" });
         return r.json();
       }
-      const bodyMap = {
-        createAlbum: { action: 'createAlbum', name: args[0] },
-        renameAlbum: { action: 'renameAlbum', folderId: args[0], newName: args[1] },
-        deleteAlbum: { action: 'deleteAlbum', folderId: args[0] },
-        uploadPhoto: { action: 'uploadPhoto', folderId: args[0], fileName: args[1], mimeType: args[2], base64Data: args[3] },
-        deletePhotos: { action: 'deletePhotos', fileIds: args[0] },
-        notifyBppConnect: { action: 'notifyBppConnect', albumName: args[0], uploadedCount: args[1], uploaderName: args[2], coverDataUrl: args[3] }
-      };
       const r = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(bodyMap[fnName] || { action: fnName })
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action, ...payload })
       });
       const json = await r.json();
-      if (json && json.ok === false) throw new Error(json.error || 'เกิดข้อผิดพลาดจาก GAS API');
+      if (json && json.ok === false) throw new Error(json.error || "เกิดข้อผิดพลาด");
       return json;
     }
 
@@ -678,33 +757,38 @@
       if (e.target === $("sheetBackdrop")) closeSheet();
     });
 
-    // --- Album List ---
+    function renderTopMeta(extraText) {
+      const av = currentTeacher.avatar ? `<img class="mini-avatar" src="${currentTeacher.avatar}" alt="" />` : "";
+      $("topMeta").innerHTML = `${av}<span>${currentTeacher.shortName} • ${extraText}</span>`;
+    }
+
+    // --- Albums View ---
     async function loadAlbums() {
-      $("albumList").innerHTML = `<div class="empty">กำลังโหลดอัลบั้มจาก Google Drive</div>`;
+      $("albumList").innerHTML = `<div class="skeleton-card"></div><div class="skeleton-card"></div>`;
       try {
-        const res = await runGas("listAlbums");
+        const res = await callApi("listAlbums");
         state.albums = (res && res.albums) || [];
         renderAlbums();
       } catch (err) {
-        $("albumList").innerHTML = `<div class="empty">ไม่สามารถโหลดอัลบั้มได้: ${err.message}</div>`;
+        $("albumList").innerHTML = `<div class="empty">${err.message}</div>`;
       }
     }
 
     function renderAlbums() {
       const q = state.query.trim().toLowerCase();
       const filtered = state.albums.filter((a) => !q || a.name.toLowerCase().includes(q));
-      $("topMeta").textContent = `${state.albums.length} อัลบั้ม • Google Drive`;
+      renderTopMeta(`${state.albums.length} อัลบั้ม`);
 
       if (filtered.length === 0) {
-        $("albumList").innerHTML = `<div class="empty">ยังไม่มีอัลบั้ม กดปุ่ม "สร้างอัลบั้ม" ด้านบนเพื่อเริ่มต้น</div>`;
+        $("albumList").innerHTML = `<div class="empty">ยังไม่มีอัลบั้ม แตะปุ่ม "สร้างอัลบั้ม" มุมขวาบนได้เลย</div>`;
         return;
       }
 
-      $("albumList").innerHTML = filtered.map((a) => {
+      $("albumList").innerHTML = filtered.map((a, idx) => {
         let collageHtml = "";
         if (a.covers.length === 0) {
           collageHtml = `<div class="collage-empty">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
             <span>ยังไม่มีรูปภาพ</span>
           </div>`;
         } else {
@@ -717,44 +801,76 @@
             <img class="collage-sub" src="${c2}" loading="lazy" alt="" />`;
         }
         return `
-          <article class="album-card" data-open-album="${a.id}">
+          <article class="album-card" style="animation-delay:${idx * 35}ms" data-open-album="${a.id}">
             <div class="collage">${collageHtml}</div>
             <div class="album-foot">
               <div class="album-info">
                 <h2 class="album-name">${a.name}</h2>
                 <div class="album-sub">${a.count} รูป • ${a.dateLabel}</div>
               </div>
-              <button type="button" class="icon-btn" data-album-menu="${a.id}" aria-label="ตัวเลือกอัลบั้ม">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              <button type="button" class="icon-btn" data-album-menu="${a.id}" aria-label="ตัวเลือก">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
               </button>
             </div>
           </article>`;
       }).join("");
     }
 
+    // --- Trash View ---
+    async function loadTrash() {
+      $("trashList").innerHTML = `<div class="skeleton-card" style="height:120px"></div>`;
+      try {
+        const res = await callApi("listTrash");
+        state.trashItems = (res && res.items) || [];
+        renderTrash();
+      } catch (err) {
+        $("trashList").innerHTML = `<div class="empty">อัปเดต Code.gs เวอร์ชัน 2.0 ใน Apps Script เพื่อดูถังขยะและดาวน์โหลด ZIP</div>`;
+      }
+    }
+
+    function renderTrash() {
+      renderTopMeta(`ถังขยะ ${state.trashItems.length} รายการ`);
+      if (state.trashItems.length === 0) {
+        $("trashList").innerHTML = `<div class="empty">ถังขยะว่างเปล่า</div>`;
+        return;
+      }
+      $("trashList").innerHTML = `
+        <div class="trash-list">
+          ${state.trashItems.map((it) => `
+            <div class="trash-row">
+              ${
+                it.thumb
+                  ? `<img class="trash-thumb" src="${it.thumb}" alt="" />`
+                  : `<div class="trash-thumb"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></div>`
+              }
+              <div class="trash-info">
+                <strong>${it.name}</strong>
+                <span>${it.itemType === "album" ? "อัลบั้ม" : `รูปภาพ • ${it.albumName || ""}`} • ${it.dateLabel}</span>
+              </div>
+              <button type="button" class="btn-soft" data-restore-id="${it.id}" data-restore-type="${it.itemType}">กู้คืน</button>
+            </div>
+          `).join("")}
+        </div>`;
+    }
+
     function openCreateAlbumSheet() {
       openSheet(`
         <h3>สร้างอัลบั้มใหม่</h3>
+        <div style="font-size:12.5px;color:var(--secondary);margin-bottom:10px">ผู้สร้าง: <strong>${currentTeacher.name}</strong></div>
         <input class="field" id="newAlbumName" placeholder="ชื่ออัลบั้ม เช่น วันไหว้ครู 2569" />
-        <input class="field" id="uploaderInput" placeholder="ชื่อผู้อัปโหลด (สำหรับแจ้งเตือนใน BPP Connect)" value="${state.uploaderName.replace(/"/g, "&quot;")}" />
         <div class="sheet-actions">
-          <button type="button" class="btn-primary" id="confirmCreateAlbum">สร้างอัลบั้มและเปิดทันที</button>
-          <button type="button" class="btn-quiet" id="cancelSheetBtn">ยกเลิก</button>
+          <button type="button" class="btn-primary" id="confirmCreateAlbum">สร้างอัลบั้มและเพิ่มรูปทันที</button>
+          <button type="button" class="btn-soft" id="cancelSheetBtn">ยกเลิก</button>
         </div>
       `);
       $("cancelSheetBtn").onclick = closeSheet;
       $("confirmCreateAlbum").onclick = async () => {
         const name = $("newAlbumName").value.trim();
-        const uploader = $("uploaderInput").value.trim();
         if (!name) { showToast("กรุณากรอกชื่ออัลบั้ม"); return; }
-        if (uploader) {
-          state.uploaderName = uploader;
-          localStorage.setItem("bpp_album_uploader", uploader);
-        }
         $("confirmCreateAlbum").disabled = true;
-        $("confirmCreateAlbum").textContent = "กำลังสร้างโฟลเดอร์";
+        $("confirmCreateAlbum").textContent = "กำลังสร้างโฟลเดอร์...";
         try {
-          const res = await runGas("createAlbum", name);
+          const res = await callApi("createAlbum", { name });
           closeSheet();
           state.albums.unshift(res.album);
           openAlbum(res.album);
@@ -762,29 +878,47 @@
         } catch (err) {
           showToast(err.message);
           $("confirmCreateAlbum").disabled = false;
-          $("confirmCreateAlbum").textContent = "สร้างอัลบั้มและเปิดทันที";
+          $("confirmCreateAlbum").textContent = "สร้างอัลบั้มและเพิ่มรูปทันที";
         }
       };
+    }
+
+    async function downloadWholeAlbum(album) {
+      showToast("กำลังรวมไฟล์ทั้งอัลบั้มเป็น ZIP...");
+      try {
+        const res = await callApi("downloadAlbumZip", { folderId: album.id });
+        if (res.downloadUrl) {
+          showToast(`พร้อมดาวน์โหลด ${res.count} รูป`);
+          window.open(res.downloadUrl, "_blank", "noopener");
+        } else if (res.fallbackDriveUrl) {
+          showToast("อัลบั้มขนาดใหญ่ เปิดโฟลเดอร์ Drive เพื่อดาวน์โหลด");
+          window.open(res.fallbackDriveUrl, "_blank", "noopener");
+        }
+      } catch (err) {
+        showToast(err.message);
+      }
     }
 
     function openAlbumMenu(album) {
       openSheet(`
         <h3>${album.name}</h3>
         <div class="sheet-actions">
-          <button type="button" class="btn-quiet" id="menuRename">เปลี่ยนชื่ออัลบั้ม</button>
-          <a class="btn-quiet" href="${album.driveUrl}" target="_blank" rel="noopener" style="text-decoration:none;justify-content:center">เปิดโฟลเดอร์ใน Google Drive</a>
-          <button type="button" class="btn-danger" id="menuDelete">ลบอัลบั้ม (ย้ายลงถังขยะ)</button>
-          <button type="button" class="btn-quiet" id="menuClose">ปิด</button>
+          <button type="button" class="btn-primary" id="menuZip">ดาวน์โหลดทั้งอัลบั้ม (.zip)</button>
+          <button type="button" class="btn-soft" id="menuRename">เปลี่ยนชื่ออัลบั้ม</button>
+          <a class="btn-soft" href="${album.driveUrl}" target="_blank" rel="noopener">เปิดใน Google Drive</a>
+          <button type="button" class="btn-danger" id="menuDelete">ย้ายอัลบั้มไปถังขยะ</button>
+          <button type="button" class="btn-soft" id="menuClose">ปิด</button>
         </div>
       `);
       $("menuClose").onclick = closeSheet;
+      $("menuZip").onclick = () => { closeSheet(); downloadWholeAlbum(album); };
       $("menuRename").onclick = () => {
         openSheet(`
           <h3>เปลี่ยนชื่ออัลบั้ม</h3>
           <input class="field" id="renameInput" value="${album.name.replace(/"/g, "&quot;")}" />
           <div class="sheet-actions">
             <button type="button" class="btn-primary" id="saveRenameBtn">บันทึกชื่อใหม่</button>
-            <button type="button" class="btn-quiet" id="cancelRenameBtn">ยกเลิก</button>
+            <button type="button" class="btn-soft" id="cancelRenameBtn">ยกเลิก</button>
           </div>
         `);
         $("cancelRenameBtn").onclick = closeSheet;
@@ -793,7 +927,7 @@
           if (!next) return;
           $("saveRenameBtn").disabled = true;
           try {
-            await runGas("renameAlbum", album.id, next);
+            await callApi("renameAlbum", { folderId: album.id, newName: next });
             album.name = next;
             closeSheet();
             renderAlbums();
@@ -803,18 +937,18 @@
       };
       $("menuDelete").onclick = () => {
         openSheet(`
-          <h3>ยืนยันการลบอัลบั้ม</h3>
-          <p style="margin:0 0 14px;font-size:13px;color:var(--text-secondary)">โฟลเดอร์ "${album.name}" จะถูกย้ายไปที่ถังขยะของ Google Drive (กู้คืนได้ภายใน 30 วัน)</p>
+          <h3>ย้ายอัลบั้มไปถังขยะ</h3>
+          <p style="margin:0 0 14px;font-size:13px;color:var(--secondary)">อัลบั้ม "${album.name}" จะย้ายไปอยู่ในแท็บถังขยะ สามารถกดกู้คืนได้ทุกเมื่อ</p>
           <div class="sheet-actions">
-            <button type="button" class="btn-danger" id="confirmDelAlbum">ยืนยันลบอัลบั้ม</button>
-            <button type="button" class="btn-quiet" id="cancelDelAlbum">ยกเลิก</button>
+            <button type="button" class="btn-danger" id="confirmDelAlbum">ยืนยันย้ายไปถังขยะ</button>
+            <button type="button" class="btn-soft" id="cancelDelAlbum">ยกเลิก</button>
           </div>
         `);
         $("cancelDelAlbum").onclick = closeSheet;
         $("confirmDelAlbum").onclick = async () => {
           $("confirmDelAlbum").disabled = true;
           try {
-            await runGas("deleteAlbum", album.id);
+            await callApi("deleteAlbum", { folderId: album.id });
             state.albums = state.albums.filter((x) => x.id !== album.id);
             closeSheet();
             renderAlbums();
@@ -830,52 +964,51 @@
       state.currentAlbum = album;
       state.selectMode = false;
       state.selectedIds.clear();
+      $("mainSegBar").classList.add("hidden");
       $("albumsView").classList.add("hidden");
+      $("trashView").classList.add("hidden");
       $("photosView").classList.remove("hidden");
       $("backBtn").classList.remove("hidden");
       $("topTitle").textContent = album.name;
-      $("topMeta").textContent = `${album.count} รูป`;
+      renderTopMeta(`${album.count} รูป`);
       $("primaryActionLabel").textContent = "เพิ่มรูป";
       updateSelectToolbar();
 
-      $("photoGrid").innerHTML = `<div class="empty" style="grid-column:1/4">กำลังโหลดรูปภาพ</div>`;
+      $("photoGrid").innerHTML = `<div class="skeleton-card" style="grid-column:1/4;height:200px"></div>`;
       try {
-        const res = await runGas("listPhotos", album.id);
+        const res = await callApi("listPhotos", { folderId: album.id });
         state.photos = (res && res.photos) || [];
-        $("topMeta").textContent = `${state.photos.length} รูป`;
         renderPhotos();
       } catch (err) {
-        $("photoGrid").innerHTML = `<div class="empty" style="grid-column:1/4">โหลดรูปไม่สำเร็จ: ${err.message}</div>`;
+        $("photoGrid").innerHTML = `<div class="empty" style="grid-column:1/4">${err.message}</div>`;
       }
     }
 
     function backToAlbums() {
-      if (state.uploading) {
-        showToast("กรุณารอให้อัปโหลดเสร็จก่อน");
-        return;
-      }
+      if (state.uploading) { showToast("กรุณารอให้อัปโหลดเสร็จก่อน"); return; }
       state.view = "albums";
       state.currentAlbum = null;
       state.selectMode = false;
       state.selectedIds.clear();
       $("photosView").classList.add("hidden");
+      $("mainSegBar").classList.remove("hidden");
       $("albumsView").classList.remove("hidden");
       $("backBtn").classList.add("hidden");
-      $("topTitle").textContent = "BPP Album";
+      $("topTitle").textContent = "คลังภาพ BPP";
       $("primaryActionLabel").textContent = "สร้างอัลบั้ม";
       loadAlbums();
     }
 
     function renderPhotos() {
-      $("topMeta").textContent = `${state.photos.length} รูป`;
+      renderTopMeta(`${state.photos.length} รูป`);
       if (state.photos.length === 0) {
-        $("photoGrid").innerHTML = `<div class="empty" style="grid-column:1/4">ยังไม่มีรูปในอัลบั้มนี้ กดปุ่ม "เพิ่มรูป" ด้านบนได้เลย</div>`;
+        $("photoGrid").innerHTML = `<div class="empty" style="grid-column:1/4">ยังไม่มีรูปในอัลบั้มนี้ แตะปุ่ม "เพิ่มรูป" ด้านบนได้เลย</div>`;
         return;
       }
       $("photoGrid").innerHTML = state.photos.map((p, idx) => {
         const sel = state.selectedIds.has(p.id);
         return `
-          <div class="photo-cell ${sel ? "selected" : ""}" data-photo-idx="${idx}" data-photo-id="${p.id}">
+          <div class="photo-cell ${sel ? "selected" : ""}" style="animation-delay:${Math.min(idx, 12) * 18}ms" data-photo-idx="${idx}" data-photo-id="${p.id}">
             <img src="${p.thumb}" loading="lazy" alt="${p.name}" />
             ${state.selectMode ? `<span class="select-check">${sel ? "✓" : ""}</span>` : ""}
           </div>`;
@@ -883,13 +1016,13 @@
     }
 
     function updateSelectToolbar() {
-      $("selectModeBtn").textContent = state.selectMode ? "ยกเลิกเลือก" : "เลือกหลายรูป";
+      $("selectModeBtn").textContent = state.selectMode ? "ยกเลิก" : "เลือกหลายรูป";
       const n = state.selectedIds.size;
       $("deleteSelectedBtn").classList.toggle("hidden", !state.selectMode || n === 0);
-      $("deleteSelectedBtn").textContent = `ลบที่เลือก (${n})`;
+      $("deleteSelectedBtn").textContent = `ลบ (${n})`;
     }
 
-    // --- Sequential Unlimited Photo Upload with Live Process Bar + Auto-Retry ---
+    // --- Sequential Unlimited Upload with Live Process ---
     function prepareImage(file, qualityMode) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -897,8 +1030,7 @@
         reader.onload = () => {
           const dataUrl = reader.result;
           if (qualityMode === "original") {
-            const parts = String(dataUrl).split(",");
-            resolve({ base64: parts[1], mime: file.type || "image/jpeg", preview: dataUrl });
+            resolve({ base64: String(dataUrl).split(",")[1], mime: file.type || "image/jpeg", preview: dataUrl });
             return;
           }
           const img = new Image();
@@ -944,18 +1076,12 @@
       $("primaryActionBtn").disabled = true;
       $("uploadPanel").classList.remove("hidden");
 
-      const queueItems = files.map((f, i) => ({
-        idx: i,
-        file: f,
-        status: "รอคิว",
-        cls: "",
-        thumb: ""
-      }));
+      const queueItems = files.map((f) => ({ file: f, status: "รอคิว", cls: "", thumb: "" }));
 
       function renderQueue(doneCount) {
         const total = queueItems.length;
         const pct = Math.round((doneCount / total) * 100);
-        $("uploadHeading").textContent = doneCount < total ? "กำลังอัปโหลดลง Google Drive" : "อัปโหลดเสร็จสมบูรณ์";
+        $("uploadHeading").textContent = doneCount < total ? `กำลังอัปโหลดโดย ${currentTeacher.shortName}` : "อัปโหลดเสร็จสมบูรณ์";
         $("uploadCounter").textContent = `${doneCount} / ${total} รูป (${pct}%)`;
         $("uploadBar").style.width = `${pct}%`;
         $("uploadQueue").innerHTML = queueItems.map((it) => `
@@ -982,10 +1108,15 @@
           try {
             const prepared = await prepareImage(item.file, state.quality);
             item.thumb = prepared.preview;
-            item.status = attempt === 1 ? "กำลังอัปโหลด" : "ลองใหม่อีกครั้ง";
+            item.status = attempt === 1 ? "กำลังอัปโหลด" : "ลองใหม่";
             renderQueue(i);
 
-            const res = await runGas("uploadPhoto", state.currentAlbum.id, item.file.name, prepared.mime, prepared.base64);
+            const res = await callApi("uploadPhoto", {
+              folderId: state.currentAlbum.id,
+              fileName: item.file.name,
+              mimeType: prepared.mime,
+              base64Data: prepared.base64
+            });
             if (res && res.photo) {
               state.photos.unshift(res.photo);
               renderPhotos();
@@ -996,21 +1127,31 @@
             successCount++;
             uploaded = true;
           } catch (_) {
-            if (attempt === 2) {
-              item.status = "ไม่สำเร็จ";
-              item.cls = "error";
-            }
+            if (attempt === 2) { item.status = "ไม่สำเร็จ"; item.cls = "error"; }
           }
         }
         renderQueue(i + 1);
       }
 
       if (successCount > 0) {
-        $("uploadHeading").textContent = "กำลังส่งแจ้งเตือนเข้า BPP Connect";
+        $("uploadHeading").textContent = "กำลังส่งแจ้งเตือนเข้า BPP Connect...";
         try {
-          await runGas("notifyBppConnect", state.currentAlbum.name, successCount, state.uploaderName, firstCover);
-          $("uploadHeading").textContent = `อัปโหลดสำเร็จ ${successCount} รูป และแจ้งเตือน BPP Connect แล้ว`;
+          await callApi("notifyBppConnect", {
+            albumName: state.currentAlbum.name,
+            uploadedCount: successCount,
+            uploaderName: currentTeacher.name,
+            coverDataUrl: firstCover
+          });
+          $("uploadHeading").textContent = `อัปโหลดสำเร็จ ${successCount} รูป และแจ้งเตือนแล้ว`;
           showToast(`อัปโหลด ${successCount} รูป และแจ้งเตือน BPP Connect แล้ว`);
+          // Immediately notify parent BPP Connect shell to refresh Bell Badge & News!
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: "BPP_ALBUM_UPLOADED",
+              albumName: state.currentAlbum.name,
+              count: successCount
+            }, location.origin);
+          }
         } catch (_) {
           $("uploadHeading").textContent = `อัปโหลดสำเร็จ ${successCount} รูป`;
         }
@@ -1018,12 +1159,10 @@
 
       state.uploading = false;
       $("primaryActionBtn").disabled = false;
-      setTimeout(() => {
-        if (!state.uploading) $("uploadPanel").classList.add("hidden");
-      }, 4500);
+      setTimeout(() => { if (!state.uploading) $("uploadPanel").classList.add("hidden"); }, 4500);
     }
 
-    // --- Lightbox ---
+    // --- Lightbox + Swipe Support ---
     function openLightbox(idx) {
       state.lbIndex = idx;
       updateLightbox();
@@ -1037,14 +1176,53 @@
       $("lbDownload").href = p.downloadUrl;
     }
 
-    // --- Event Listeners ---
+    let swipeStartX = 0;
+    $("lbStage").addEventListener("touchstart", (e) => { swipeStartX = e.touches[0].clientX; }, { passive: true });
+    $("lbStage").addEventListener("touchend", (e) => {
+      const dx = e.changedTouches[0].clientX - swipeStartX;
+      if (dx < -45 && state.lbIndex < state.photos.length - 1) { state.lbIndex++; updateLightbox(); }
+      else if (dx > 45 && state.lbIndex > 0) { state.lbIndex--; updateLightbox(); }
+    }, { passive: true });
+
+    // --- Events ---
     $("backBtn").onclick = backToAlbums;
     $("albumSearch").oninput = (e) => { state.query = e.target.value; renderAlbums(); };
     $("primaryActionBtn").onclick = () => {
-      if (state.view === "albums") openCreateAlbumSheet();
-      else { $("photoPicker").value = ""; $("photoPicker").click(); }
+      if (state.view === "photos") { $("photoPicker").value = ""; $("photoPicker").click(); }
+      else openCreateAlbumSheet();
     };
     $("photoPicker").onchange = (e) => handleMultiUpload(e.target.files);
+
+    $("mainSegBar").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-maintab]");
+      if (!btn) return;
+      const tab = btn.dataset.maintab;
+      $("mainSegBar").querySelectorAll(".seg-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      if (tab === "trash") {
+        state.view = "trash";
+        $("albumsView").classList.add("hidden");
+        $("trashView").classList.remove("hidden");
+        loadTrash();
+      } else {
+        state.view = "albums";
+        $("trashView").classList.add("hidden");
+        $("albumsView").classList.remove("hidden");
+        loadAlbums();
+      }
+    });
+
+    $("trashList").addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-restore-id]");
+      if (!btn) return;
+      btn.disabled = true;
+      btn.textContent = "กำลังกู้คืน...";
+      try {
+        await callApi("restoreTrash", { id: btn.dataset.restoreId, itemType: btn.dataset.restoreType });
+        state.trashItems = state.trashItems.filter((x) => x.id !== btn.dataset.restoreId);
+        renderTrash();
+        showToast("กู้คืนรายการเรียบร้อยแล้ว");
+      } catch (err) { showToast(err.message); }
+    });
 
     $("albumList").addEventListener("click", (e) => {
       const menuBtn = e.target.closest("[data-album-menu]");
@@ -1060,6 +1238,10 @@
         if (a) openAlbum(a);
       }
     });
+
+    $("downloadZipBtn").onclick = () => {
+      if (state.currentAlbum) downloadWholeAlbum(state.currentAlbum);
+    };
 
     document.querySelectorAll(".q-btn").forEach((btn) => {
       btn.onclick = () => {
@@ -1080,7 +1262,7 @@
       if (!ids.length) return;
       $("deleteSelectedBtn").disabled = true;
       try {
-        await runGas("deletePhotos", ids);
+        await callApi("deletePhotos", { fileIds: ids });
         state.photos = state.photos.filter((p) => !state.selectedIds.has(p.id));
         state.selectedIds.clear();
         state.selectMode = false;
@@ -1113,12 +1295,12 @@
       const p = state.photos[state.lbIndex];
       if (!p) return;
       try {
-        await runGas("deletePhotos", [p.id]);
+        await callApi("deletePhotos", { fileIds: [p.id] });
         state.photos.splice(state.lbIndex, 1);
         if (state.lbIndex >= state.photos.length) state.lbIndex = Math.max(0, state.photos.length - 1);
         renderPhotos();
         updateLightbox();
-        showToast("ลบรูปแล้ว");
+        showToast("ย้ายรูปไปถังขยะแล้ว");
       } catch (err) { showToast(err.message); }
     };
 

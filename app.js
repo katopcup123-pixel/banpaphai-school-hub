@@ -1138,7 +1138,14 @@
           }
           if (Array.isArray(data.users) && data.users.length) {
             const byId = new Map(state.users.map((u) => [u.id, u]));
-            data.users.forEach((u) => byId.set(u.id, { ...(byId.get(u.id) || {}), ...u }));
+            data.users.forEach((u) => {
+              const prev = byId.get(u.id) || {};
+              byId.set(u.id, {
+                ...prev,
+                ...u,
+                avatar: (u.avatar && String(u.avatar).trim()) ? u.avatar : (prev.avatar || "")
+              });
+            });
             state.users = [...byId.values()];
             try { localStorage.setItem(STORAGE_USERS, JSON.stringify(state.users)); } catch (_) {}
             if (state.currentUser) {
@@ -1489,13 +1496,25 @@
   function closeInAppViewer() {
     haptic();
     clearTimeout(inAppFallbackTimer);
+    const wasAlbum = activeInAppUrl.includes("album.html");
     els.inAppOverlay.classList.remove("open");
     setTimeout(() => {
       els.inAppOverlay.classList.add("hidden");
       els.inAppFrame.src = "about:blank";
       activeInAppUrl = "";
+      if (wasAlbum) loadLiveNews(true);
     }, 340);
   }
+
+  // Listen for live album upload notifications from album.html iframe
+  window.addEventListener("message", (e) => {
+    if (e.origin !== location.origin) return;
+    if (e.data && e.data.type === "BPP_ALBUM_UPLOADED") {
+      playSound("success");
+      notifyIsland(`อัปโหลดอัลบั้ม "${e.data.albumName}" (${e.data.count} รูป)`);
+      loadLiveNews(true);
+    }
+  });
 
   els.inAppFrame.addEventListener("load", () => {
     clearTimeout(inAppFallbackTimer);

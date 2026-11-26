@@ -54,6 +54,16 @@
     return Boolean(user && user.id === "thanakarin" && user.role === "admin");
   }
 
+  // เจ้าของโพสต์ข่าวหรือแอดมินสามารถแก้ไข/ลบข่าวได้
+  function canManageNews(user, item) {
+    if (!user || !item) return false;
+    if (isAdminUser(user)) return true;
+    return Boolean(
+      (item.authorId && item.authorId === user.id) ||
+      (item.author && item.author === user.name)
+    );
+  }
+
   function filterSystems(systems, { division, query, role, favoritesOnly, favoritesSet }) {
     const q = (query || "").trim().toLowerCase();
     return systems.filter((s) => {
@@ -82,7 +92,7 @@
   }
 
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { filterSystems, authenticateUser, canAccessExecutive, isAdminUser };
+    module.exports = { filterSystems, authenticateUser, canAccessExecutive, isAdminUser, canManageNews };
     return;
   }
 
@@ -587,12 +597,25 @@
       const res = await fetch(rssApi);
       const data = await res.json();
       if (data && Array.isArray(data.items)) {
-        state.obecNews = data.items.slice(0, 12).map((it) => ({
-          title: it.title || "",
-          link: it.link || "https://www.obec.go.th",
-          pubDate: (it.pubDate || "").split(" ")[0],
-          summary: String(it.description || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 140)
-        }));
+        state.obecNews = data.items.slice(0, 12).map((it) => {
+          const rawHtml = it.content || it.description || "";
+          const imgMatch = rawHtml.match(/<img[^>]+src=["']([^"']+)["']/i);
+          const cleanFull = String(rawHtml)
+            .replace(/<\/(p|div|br|li|h[1-6])>/gi, "\n")
+            .replace(/<[^>]*>/g, "")
+            .replace(/&nbsp;/g, " ")
+            .replace(/&amp;/g, "&")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+          return {
+            title: it.title || "",
+            link: it.link || "https://www.obec.go.th",
+            pubDate: (it.pubDate || "").split(" ")[0],
+            summary: cleanFull.replace(/\s+/g, " ").slice(0, 140),
+            content: cleanFull,
+            image: it.thumbnail || (imgMatch ? imgMatch[1] : "")
+          };
+        });
       }
     } catch (_) {}
 
@@ -600,21 +623,135 @@
     if (state.tab === "announcements") render();
   }
 
-  function openBroadcastNewsSheet() {
+  function compressImageFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const maxW = 720;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          let dataUrl = canvas.toDataURL("image/jpeg", 0.72);
+          if (dataUrl.length > 46000) dataUrl = canvas.toDataURL("image/jpeg", 0.5);
+          resolve(dataUrl);
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function openObecReaderSheet(idx) {
+    const item = state.obecNews[idx];
+    if (!item) return;
+    haptic();
+    els.sheetBody.innerHTML = `
+      <div class="reader-body">
+        <div class="info-meta"><span class="obec-badge">ข่าวการศึกษา สพฐ.</span>${item.pubDate || ""}</div>
+        <h3 style="margin:4px 0 8px;font-size:16.5px;line-height:1.35">${item.title}</h3>
+        ${item.image ? `<img class="news-thumb" src="${item.image}" alt="" />` : ""}
+        <div class="reader-content">${item.content || item.summary || "ไม่มีเนื้อหาย่อในฟีดข่าว"}</div>
+      </div>
+      <button class="btn-primary" id="obecOpenOriginBtn">เปิดอ่านต้นฉบับบนเว็บ สพฐ. ↗</button>
+      <button class="btn-secondary" id="obecCloseBtn">ปิด</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+    document.getElementById("obecCloseBtn").onclick = closeSheet;
+    document.getElementById("obecOpenOriginBtn").onclick = () => {
+      window.open(item.link, "_blank", "noopener,noreferrer");
+    };
+  }
+
+  function openImagePreviewSheet(src, title) {
+    haptic();
+    els.sheetBody.innerHTML = `
+      <h3 style="margin:0 0 8px;font-size:15px">${title || "รูปภาพประกอบข่าว"}</h3>
+      <img src="${src}" alt="" style="width:100%;max-height:65dvh;object-fit:contain;border-radius:14px;display:block;background:#000" />
+      <button class="btn-secondary" id="imgCloseBtn">ปิด</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+    document.getElementById("imgCloseBtn").onclick = closeSheet;
+  }
+
+  async function deleteNewsItem(id) {
+    const target = state.announcements.find((a) => a.id === id);
+    if (!target || !canManageNews(state.currentUser, target)) return;
+    haptic();
+    state.announcements = state.announcements.filter((a) => a.id !== id);
+    try { localStorage.setItem(STORAGE_LOCAL_NEWS, JSON.stringify(state.announcements)); } catch (_) {}
+    render();
+    notifyIsland("ลบข่าวแล้ว");
+
+    const apiUrl = (state.newsBackendUrl || "").trim();
+    if (apiUrl) {
+      try {
+        await fetch(apiUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "delete", id })
+        });
+      } catch (_) {}
+    }
+  }
+
+  function openBroadcastNewsSheet(existingItem = null) {
     haptic();
     const u = state.currentUser;
+    let attachedImage = existingItem ? (existingItem.image || "") : "";
+    const esc = (v) => String(v || "").replace(/"/g, "&quot;");
+
     els.sheetBody.innerHTML = `
-      <h3 style="margin:0 0 6px">แจ้งข่าวถึงครูและ ผอ. ทุกคน</h3>
+      <h3 style="margin:0 0 6px">${existingItem ? "แก้ไขข่าวประกาศ" : "แจ้งข่าวถึงครูและ ผอ. ทุกคน"}</h3>
       <div class="info-meta">ผู้แจ้ง: ${u ? `${u.name} (${u.position})` : "บุคลากรโรงเรียน"}</div>
-      <input class="admin-input" id="bcTitle" placeholder="หัวข้อข่าว / ประกาศด่วน" />
-      <textarea class="admin-input" id="bcBody" rows="3" placeholder="รายละเอียดข่าวที่ต้องการแจ้งทุกคน..."></textarea>
+      <input class="admin-input" id="bcTitle" placeholder="หัวข้อข่าว / ประกาศด่วน" value="${esc(existingItem?.title)}" />
+      <textarea class="admin-input" id="bcBody" rows="3" placeholder="รายละเอียดข่าวที่ต้องการแจ้งทุกคน...">${existingItem?.body || ""}</textarea>
+      <div style="margin-top:10px">
+        <label class="admin-mini-btn" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
+          <span>📷 แนบรูปภาพ</span>
+          <input type="file" id="bcImageFile" accept="image/*" style="display:none" />
+        </label>
+        <button type="button" class="admin-mini-btn del ${attachedImage ? "" : "hidden"}" id="bcClearImgBtn" style="margin-left:6px">ลบรูป</button>
+        <img id="bcImgPreview" class="upload-preview ${attachedImage ? "" : "hidden"}" src="${attachedImage}" alt="" />
+      </div>
       <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px">
-        <input type="checkbox" id="bcUrgent" /> ระบุเป็นข่าวด่วน (แถบสีแดง)
+        <input type="checkbox" id="bcUrgent" ${existingItem?.urgent ? "checked" : ""} /> ระบุเป็นข่าวด่วน (แถบสีแดง)
       </label>
-      <button class="btn-primary" id="bcSendBtn">ส่งข่าวและแจ้งเตือนทุกเครื่อง</button>
+      <button class="btn-primary" id="bcSendBtn">${existingItem ? "บันทึกการแก้ไข" : "ส่งข่าวและแจ้งเตือนทุกเครื่อง"}</button>
       <button class="btn-secondary" id="bcCancelBtn">ยกเลิก</button>
     `;
     els.sheetBackdrop.classList.add("open");
+
+    const fileInput = document.getElementById("bcImageFile");
+    const previewImg = document.getElementById("bcImgPreview");
+    const clearImgBtn = document.getElementById("bcClearImgBtn");
+
+    fileInput.onchange = async () => {
+      const f = fileInput.files && fileInput.files[0];
+      if (!f) return;
+      try {
+        attachedImage = await compressImageFile(f);
+        previewImg.src = attachedImage;
+        previewImg.classList.remove("hidden");
+        clearImgBtn.classList.remove("hidden");
+      } catch (_) {
+        notifyIsland("ไม่สามารถอ่านไฟล์รูปนี้ได้");
+      }
+    };
+
+    clearImgBtn.onclick = () => {
+      attachedImage = "";
+      previewImg.src = "";
+      previewImg.classList.add("hidden");
+      clearImgBtn.classList.add("hidden");
+    };
 
     document.getElementById("bcCancelBtn").onclick = closeSheet;
     document.getElementById("bcSendBtn").onclick = async () => {
@@ -623,15 +760,41 @@
       const urgent = document.getElementById("bcUrgent").checked;
       if (!title || !body) { notifyIsland("กรุณากรอกหัวข้อและรายละเอียด"); return; }
 
+      const apiUrl = (state.newsBackendUrl || "").trim();
+
+      if (existingItem) {
+        state.announcements = state.announcements.map((a) =>
+          a.id === existingItem.id ? { ...a, title, body, urgent, image: attachedImage } : a
+        );
+        try { localStorage.setItem(STORAGE_LOCAL_NEWS, JSON.stringify(state.announcements)); } catch (_) {}
+        closeSheet();
+        render();
+        notifyIsland("บันทึกการแก้ไขข่าวแล้ว");
+        if (apiUrl) {
+          try {
+            await fetch(apiUrl, {
+              method: "POST",
+              mode: "no-cors",
+              headers: { "Content-Type": "text/plain" },
+              body: JSON.stringify({ action: "edit", id: existingItem.id, title, body, urgent, image: attachedImage })
+            });
+          } catch (_) {}
+        }
+        return;
+      }
+
       const nowStr = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+      const newId = "news-" + Date.now();
       const newItem = {
-        id: "news-" + Date.now(),
+        id: newId,
         title,
         body,
         date: `วันนี้ ${nowStr} • ${u ? u.shortName : "ครู"}`,
         author: u ? u.name : "",
+        authorId: u ? u.id : "",
         position: u ? u.position : "",
-        urgent
+        urgent,
+        image: attachedImage
       };
 
       state.announcements = [newItem, ...state.announcements];
@@ -639,7 +802,6 @@
       closeSheet();
       render();
 
-      const apiUrl = (state.newsBackendUrl || "").trim();
       if (apiUrl) {
         notifyIsland("กำลังส่งแจ้งเตือนไปทุกเครื่อง...");
         try {
@@ -648,11 +810,15 @@
             mode: "no-cors",
             headers: { "Content-Type": "text/plain" },
             body: JSON.stringify({
+              action: "create",
+              id: newId,
               title,
               body,
               author: u ? u.name : "บุคลากรโรงเรียนบ้านป่าไผ่",
+              authorId: u ? u.id : "",
               position: u ? u.position : "",
-              urgent
+              urgent,
+              image: attachedImage
             })
           });
           notifyIsland("ส่งข่าวและแจ้งเตือนทุกเครื่องแล้ว!");
@@ -660,13 +826,7 @@
           notifyIsland("บันทึกในเครื่องแล้ว (ส่งคลาวด์ไม่สำเร็จ)");
         }
       } else {
-        notifyIsland("โพสต์ข่าวแล้ว (เชื่อม GAS+OneSignal เพื่อเด้งทุกเครื่อง)");
-        if ("Notification" in window && Notification.permission === "granted" && state.swReg && state.swReg.showNotification) {
-          state.swReg.showNotification((urgent ? "🚨 " : "📢 ") + title, {
-            body: `${body} — โดย ${u ? u.shortName : "ครู"}`,
-            icon: "./icons/school-logo.png"
-          });
-        }
+        notifyIsland("โพสต์ข่าวแล้ว");
       }
     };
   }
@@ -972,6 +1132,15 @@
               <h3>${a.title}</h3>
               <div class="info-meta">${a.date}</div>
               <p>${a.body}</p>
+              ${a.image ? `<img class="news-thumb" src="${a.image}" data-img-preview="${a.id}" alt="" />` : ""}
+              ${
+                canManageNews(state.currentUser, a)
+                  ? `<div class="news-card-foot">
+                      <button class="admin-mini-btn" data-news-edit="${a.id}">แก้ไข</button>
+                      <button class="admin-mini-btn del" data-news-del="${a.id}">ลบข่าว</button>
+                    </div>`
+                  : ""
+              }
             </div>`
           )
           .join("")}`;
@@ -986,14 +1155,15 @@
           state.obecLoading
             ? '<div class="empty-state">กำลังดึงข่าวล่าสุดจากเว็บไซต์ สพฐ. (obec.go.th)...</div>'
             : state.obecNews.length === 0
-              ? '<div class="empty-state">ไม่สามารถดึงข่าว สพฐ. ได้ชั่วคราว กดปุ่มโหลดใหม่หรือเปิดเว็บ สพฐ. โดยตรง</div>'
+              ? '<div class="empty-state">ไม่สามารถดึงข่าว สพฐ. ได้ชั่วคราว กดปุ่มโหลดใหม่</div>'
               : state.obecNews
                   .map(
                     (n, i) => `
-                    <div class="info-card obec-card" style="animation-delay:${i * 25}ms" data-obec-url="${n.link}" data-obec-title="${n.title.replace(/"/g, "&quot;")}">
+                    <div class="info-card obec-card" style="animation-delay:${i * 25}ms" data-obec-idx="${i}">
                       <div class="info-meta"><span class="obec-badge">สพฐ.</span>${n.pubDate || "ข่าวล่าสุด"}</div>
                       <h3>${n.title}</h3>
-                      ${n.summary ? `<p>${n.summary}...</p>` : ""}
+                      ${n.image ? `<img class="news-thumb" src="${n.image}" alt="" />` : ""}
+                      ${n.summary ? `<p style="margin-top:6px">${n.summary}...</p>` : ""}
                     </div>`
                   )
                   .join("")
@@ -1169,13 +1339,29 @@
       return;
     }
 
-    const obecCard = e.target.closest("[data-obec-url]");
+    const newsEditBtn = e.target.closest("[data-news-edit]");
+    if (newsEditBtn) {
+      const target = state.announcements.find((a) => a.id === newsEditBtn.dataset.newsEdit);
+      if (target && canManageNews(state.currentUser, target)) openBroadcastNewsSheet(target);
+      return;
+    }
+
+    const newsDelBtn = e.target.closest("[data-news-del]");
+    if (newsDelBtn) {
+      deleteNewsItem(newsDelBtn.dataset.newsDel);
+      return;
+    }
+
+    const imgPreview = e.target.closest("[data-img-preview]");
+    if (imgPreview) {
+      const target = state.announcements.find((a) => a.id === imgPreview.dataset.imgPreview);
+      if (target && target.image) openImagePreviewSheet(target.image, target.title);
+      return;
+    }
+
+    const obecCard = e.target.closest("[data-obec-idx]");
     if (obecCard) {
-      openInAppViewer({
-        name: obecCard.dataset.obecTitle || "ข่าวการศึกษา สพฐ.",
-        shortName: "ข่าว สพฐ.",
-        url: obecCard.dataset.obecUrl
-      });
+      openObecReaderSheet(Number(obecCard.dataset.obecIdx));
       return;
     }
 

@@ -3,7 +3,7 @@
   const STORAGE_USER = "bpp_connect_user_v1";
   const STORAGE_THEME = "bpp_connect_theme_v1";
   const STORAGE_ACCENT = "bpp_connect_accent_v1";
-  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v6";
+  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v7";
   const STORAGE_REMOTE = "bpp_connect_remote_url_v1";
   const STORAGE_NEWS_API = "bpp_connect_news_api_v1";
   const STORAGE_ONESIGNAL = "bpp_connect_onesignal_id_v1";
@@ -1544,7 +1544,7 @@
   function closeInAppViewer() {
     haptic();
     clearTimeout(inAppFallbackTimer);
-    const shouldRefreshNews = activeInAppUrl.includes("album.html") || activeInAppUrl.includes("docs.html") || activeInAppUrl.includes("attendance.html");
+    const shouldRefreshNews = activeInAppUrl.includes("album.html") || activeInAppUrl.includes("docs.html") || activeInAppUrl.includes("attendance.html") || activeInAppUrl.includes("leave.html");
     els.inAppOverlay.classList.remove("open");
     setTimeout(() => {
       els.inAppOverlay.classList.add("hidden");

@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>ระบบการลา & ออกนอกโรงเรียน — BPP Connect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #F2F4F8;
+      --surface: #FFFFFF;
+      --surface-soft: rgba(255, 255, 255, 0.86);
+      --text: #1C1C1E;
+      --secondary: #6C6C70;
+      --sep: rgba(60, 60, 67, 0.12);
+      --accent: #007AFF;
+      --green: #16A34A;
+      --red: #DC2626;
+      --amber: #D97706;
+      --purple: #7C3AED;
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    [data-theme="dark"] {
+      --bg: #0B0D12;
+      --surface: #1C1C1E;
+      --surface-soft: rgba(28, 28, 32, 0.88);
+      --text: #F2F2F7;
+      --secondary: #98989F;
+      --sep: rgba(255, 255, 255, 0.1);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
+      background: var(--bg); color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    .app { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    .topbar {
+      flex-shrink: 0;
+      padding: 12px 16px 10px;
+      background: var(--surface-soft);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border-bottom: 0.5px solid var(--sep);
+    }
+    .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .title-wrap h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+    .user-sub { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary); margin-top: 2px; }
+    .mini-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
+
+    .seg-tabs {
+      display: flex;
+      gap: 4px;
+      background: rgba(118, 118, 128, 0.14);
+      padding: 3px;
+      border-radius: 12px;
+    }
+    .seg-tab {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--secondary);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 4px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .seg-tab.active { background: var(--surface); color: var(--accent); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+
+    .body-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px 36px; }
+
+    /* Geofence Radar Card */
+    .geo-card {
+      background: var(--surface);
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid var(--sep);
+      margin-bottom: 12px;
+      animation: popIn 0.35s var(--spring) both;
+    }
+    .geo-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .geo-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11.5px; font-weight: 700;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(0, 122, 255, 0.12); color: var(--accent);
+    }
+    .geo-badge.ok { background: rgba(22, 163, 74, 0.14); color: var(--green); }
+    .geo-badge.warn { background: rgba(220, 38, 38, 0.14); color: var(--red); }
+    .geo-badge.perm { background: rgba(124, 58, 237, 0.14); color: var(--purple); }
+    .geo-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 1.6s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
+    .geo-detail { font-size: 12.5px; color: var(--secondary); margin: 8px 0 10px; line-height: 1.5; }
+
+    .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .btn-primary, .btn-soft, .btn-danger, .btn-green {
+      border: none; font: inherit; font-size: 13px; font-weight: 600;
+      border-radius: 12px; padding: 10px 12px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      transition: transform 0.14s ease, opacity 0.2s ease;
+    }
+    .btn-primary { background: var(--accent); color: #FFF; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.24); }
+    .btn-green { background: var(--green); color: #FFF; }
+    .btn-danger { background: rgba(220, 38, 38, 0.12); color: var(--red); }
+    .btn-soft { background: var(--surface); color: var(--text); border: 1px solid var(--sep); }
+    .btn-primary:active, .btn-soft:active, .btn-green:active, .btn-danger:active { transform: scale(0.96); }
+
+    /* Request Cards */
+    .req-list { display: flex; flex-direction: column; gap: 10px; }
+    .req-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 13px 14px;
+      border: 1px solid var(--sep);
+      animation: slideUp 0.28s ease both;
+    }
+    .req-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .type-pill {
+      font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+      background: rgba(0, 122, 255, 0.12); color: var(--accent);
+    }
+    .type-pill.t-offcampus { background: rgba(124, 58, 237, 0.14); color: var(--purple); }
+    .type-pill.t-sick { background: rgba(217, 119, 6, 0.14); color: var(--amber); }
+    .type-pill.t-personal { background: rgba(220, 38, 38, 0.12); color: var(--red); }
+    .type-pill.t-duty { background: rgba(22, 163, 74, 0.14); color: var(--green); }
+
+    .st-pill { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+    .st-pending { background: rgba(217, 119, 6, 0.14); color: var(--amber); }
+    .st-approved { background: rgba(22, 163, 74, 0.14); color: var(--green); }
+    .st-rejected { background: rgba(220, 38, 38, 0.14); color: var(--red); }
+
+    .req-name { font-size: 14.5px; font-weight: 700; margin-bottom: 2px; }
+    .req-meta { font-size: 12px; color: var(--secondary); line-height: 1.5; }
+    .req-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .mini-btn {
+      border: 1px solid var(--sep); background: var(--bg); color: var(--text);
+      font: inherit; font-size: 11.5px; font-weight: 600;
+      padding: 6px 10px; border-radius: 9px; cursor: pointer;
+    }
+    .mini-btn.ok { background: var(--green); color: #FFF; border-color: var(--green); }
+    .mini-btn.no { background: var(--red); color: #FFF; border-color: var(--red); }
+
+    /* Cards & Forms */
+    .card-box { background: var(--surface); border-radius: 18px; padding: 14px; border: 1px solid var(--sep); margin-bottom: 12px; }
+    .card-box h2 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
+    .field, .select-field, .textarea-field {
+      width: 100%; border: 1px solid var(--sep); background: var(--bg); color: var(--text);
+      border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 14px; margin-bottom: 10px; outline: none;
+    }
+    .field:focus, .select-field:focus, .textarea-field:focus { border-color: var(--accent); }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .lbl { display: block; font-size: 12px; font-weight: 600; color: var(--secondary); margin-bottom: 4px; }
+
+    .day-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
+    .day-chip {
+      border: 1px solid var(--sep); background: var(--bg); color: var(--secondary);
+      font: inherit; font-size: 12px; font-weight: 600;
+      padding: 6px 10px; border-radius: 9px; cursor: pointer;
+    }
+    .day-chip.active { background: var(--accent); color: #FFF; border-color: var(--accent); }
+
+    table.stat-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.stat-table th, table.stat-table td { padding: 8px 6px; border-bottom: 0.5px solid var(--sep); text-align: center; }
+    table.stat-table th:first-child, table.stat-table td:first-child { text-align: left; font-weight: 600; }
+    table.stat-table thead th { font-size: 11.5px; color: var(--secondary); }
+
+    .webhook-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 8px 0; border-bottom: 0.5px solid var(--sep); font-size: 12.5px;
+    }
+    .webhook-row:last-child { border-bottom: none; }
+
+    /* Spring Bottom Sheet */
+    .backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px); z-index: 60;
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+    }
+    .backdrop.open { opacity: 1; pointer-events: auto; }
+    .sheet {
+      width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+      background: var(--surface); border-radius: 24px 24px 0 0;
+      padding: 12px 18px calc(22px + env(safe-area-inset-bottom));
+      transform: translateY(100%); transition: transform 0.34s var(--spring);
+    }
+    .backdrop.open .sheet { transform: translateY(0); }
+    .grabber { width: 38px; height: 4px; border-radius: 99px; background: rgba(120, 120, 128, 0.35); margin: 0 auto 12px; }
+    .sheet h3 { margin: 0 0 10px; font-size: 17px; }
+
+    .toast {
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+      z-index: 90; background: rgba(15, 23, 42, 0.92); color: #FFF;
+      font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 999px;
+      display: none; max-width: 90vw; text-align: center;
+    }
+    .toast.show { display: block; }
+    .hidden { display: none !important; }
+
+    /* Print Slip (Hidden on screen, crisp A4 on print) */
+    #printSlipArea { display: none; }
+    @media print {
+      @page { size: A4 portrait; margin: 16mm; }
+      html, body { height: auto; background: #FFF !important; color: #000 !important; }
+      .app, .backdrop, .toast { display: none !important; }
+      #printSlipArea { display: block !important; color: #111; font-size: 14px; line-height: 1.75; }
+      .slip-head { text-align: center; margin-bottom: 18px; }
+      .slip-head img { width: 58px; height: 58px; object-fit: contain; margin-bottom: 6px; }
+      .slip-head h2 { margin: 0; font-size: 18px; }
+      .slip-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 44px; text-align: center; }
+    }
+
+    @keyframes popIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="top-row">
+        <div class="title-wrap">
+          <h1>การลา & ออกนอกโรงเรียน</h1>
+          <div class="user-sub" id="userSub">โรงเรียนบ้านป่าไผ่</div>
+        </div>
+        <button type="button" class="btn-soft" id="refreshBtn" style="padding:7px 11px;font-size:12px">รีเฟรช</button>
+      </div>
+      <div class="seg-tabs" id="mainTabs">
+        <button type="button" class="seg-tab active" data-tab="requests">ยื่นขอ / รายการ</button>
+        <button type="button" class="seg-tab" data-tab="stats">สถิติการลา</button>
+        <button type="button" class="seg-tab hidden" id="adminGeoTab" data-tab="geofence">ตั้งค่า GPS 100ม.</button>
+      </div>
+    </header>
+
+    <main class="body-scroll">
+      <!-- 1. Requests + Live Geofence View -->
+      <section id="viewRequests">
+        <div class="geo-card">
+          <div class="geo-top">
+            <strong style="font-size:14px">📍 ตรวจจับระยะรอบโรงเรียน</strong>
+            <span class="geo-badge" id="geoStatusBadge"><span class="geo-dot"></span><span id="geoStatusText">พร้อมตรวจจับ</span></span>
+          </div>
+          <div class="geo-detail" id="geoDetailText">กำลังโหลดตั้งค่าพิกัดโรงเรียน...</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" class="btn-primary" id="toggleGpsBtn" style="flex:1">เปิดเช็คพิกัด GPS ตอนนี้</button>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button type="button" class="btn-primary" id="openOffcampusBtn">🚗 ขอออกนอกโรงเรียน</button>
+          <button type="button" class="btn-soft" id="openLeaveBtn">📝 ยื่นใบลา</button>
+        </div>
+
+        <div class="req-list" id="reqList"></div>
+      </section>
+
+      <!-- 2. Leave Statistics View -->
+      <section id="viewStats" class="hidden">
+        <div class="card-box">
+          <h2>สรุปสถิติการลา & ออกนอกโรงเรียนของบุคลากร</h2>
+          <div style="overflow-x:auto" id="statsTableWrap"></div>
+        </div>
+      </section>
+
+      <!-- 3. Admin Geofence 100m + iPhone Shortcuts Settings -->
+      <section id="viewGeofence" class="hidden">
+        <div class="card-box">
+          <h2>📍 ตั้งค่าพิกัดโรงเรียนและช่วงเวลาแจ้งเตือน</h2>
+          <div style="font-size:12.5px;color:var(--secondary);margin-bottom:10px">
+            หากครูออกจากรัศมีที่กำหนดในช่วงเวลาราชการ <strong>โดยไม่ได้ยื่นขออนุญาตในระบบ</strong> จะแจ้งเตือนครูทุกคนทันที
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:12px">
+            <input type="checkbox" id="geoEnabled" /> เปิดใช้งานการแจ้งเตือนออกนอกโรงเรียน
+          </label>
+          <button type="button" class="btn-primary" id="pinCurrentLocBtn" style="width:100%;margin-bottom:10px">🎯 ปักหมุดพิกัดปัจจุบันเป็นโรงเรียนบ้านป่าไผ่</button>
+          <div class="row-2">
+            <div><label class="lbl">ละติจูด (Latitude)</label><input class="field" id="geoLat" type="number" step="any" placeholder="เช่น 14.7025" /></div>
+            <div><label class="lbl">ลองจิจูด (Longitude)</label><input class="field" id="geoLng" type="number" step="any" placeholder="เช่น 101.4125" /></div>
+          </div>
+          <div class="row-2">
+            <div><label class="lbl">ระยะห่างแจ้งเตือน (เมตร)</label><input class="field" id="geoRadius" type="number" min="30" max="2000" value="100" /></div>
+            <div><label class="lbl">สถานะพิกัด</label><div id="geoPinHint" style="font-size:12px;color:var(--secondary);padding:10px 4px">ตั้งค่ารัศมี 100 ม.</div></div>
+          </div>
+          <div class="row-2">
+            <div><label class="lbl">เวลาเริ่มเฝ้าระวัง</label><input class="field" id="geoStart" type="time" value="08:00" /></div>
+            <div><label class="lbl">เวลาสิ้นสุดเฝ้าระวัง</label><input class="field" id="geoEnd" type="time" value="16:00" /></div>
+          </div>
+          <label class="lbl">วันที่เฝ้าระวัง</label>
+          <div class="day-chips" id="geoDayChips"></div>
+          <button type="button" class="btn-green" id="saveGeoBtn" style="width:100%">💾 บันทึกการตั้งค่า GPS</button>
+        </div>
+
+        <div class="card-box">
+          <h2>📱 เชื่อม iPhone "คำสั่งลัด (Shortcuts)" (ทำงานแม้ปิดหน้าจอ!)</h2>
+          <div style="font-size:12.5px;color:var(--secondary);line-height:1.6;margin-bottom:10px">
+            บน iPhone ของครูแต่ละคน ตั้งค่าครั้งเดียว:<br/>
+            1. เปิดแอป <strong>คำสั่งลัด (Shortcuts)</strong> → แท็บ <strong>การทำงานอัตโนมัติ (Automation)</strong> → กด <strong>+</strong><br/>
+            2. เลือก <strong>"ออกจากสถานที่" (Leave)</strong> → ปักหมุด <strong>โรงเรียนบ้านป่าไผ่ (100 ม.)</strong> → เลือก <strong>ทำงานทันที (Run Immediately)</strong><br/>
+            3. เพิ่มคำสั่ง <strong>"รับเนื้อหาของ URL" (Get Contents of URL)</strong> แล้ววางลิงก์ประจำตัวครูด้านล่างนี้ได้เลยครับ (ถ้าครูขออนุญาตในแอพไว้แล้ว ระบบจะเงียบไม่แจ้งเตือน!)
+          </div>
+          <div id="shortcutLinksWrap"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Spring Bottom Sheet -->
+  <div class="backdrop" id="sheetBackdrop">
+    <div class="sheet">
+      <div class="grabber"></div>
+      <div id="sheetContent"></div>
+    </div>
+  </div>
+
+  <!-- Official Printable Leave / Off-Campus Slip -->
+  <section id="printSlipArea"></section>
+  <div class="toast" id="toast"></div>
+
+  <script src="./apps-config.js"></script>
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
+    document.documentElement.style.setProperty("--accent", localStorage.getItem("bpp_connect_accent_v1") || "#007AFF");
+
+    const STORAGE_LEAVES = "bpp_connect_leaves_v1";
+    const STORAGE_GEO = "bpp_connect_geofence_v1";
+    const THAI_DAYS_SHORT = [{ d: 1, l: "จ." }, { d: 2, l: "อ." }, { d: 3, l: "พ." }, { d: 4, l: "พฤ." }, { d: 5, l: "ศ." }, { d: 6, l: "ส." }, { d: 0, l: "อา." }];
+    const TYPE_MAP = {
+      offcampus: { label: "ขอออกนอกโรงเรียน", cls: "t-offcampus" },
+      sick: { label: "ลาป่วย", cls: "t-sick" },
+      personal: { label: "ลากิจส่วนตัว", cls: "t-personal" },
+      duty: { label: "ไปราชการ", cls: "t-duty" },
+      maternity: { label: "ลาคลอดบุตร", cls: "t-sick" }
+    };
+    const STATUS_MAP = {
+      pending: { label: "รออนุมัติ", cls: "st-pending" },
+      approved: { label: "อนุมัติแล้ว", cls: "st-approved" },
+      rejected: { label: "ไม่อนุมัติ", cls: "st-rejected" }
+    };
+
+    function getAllUsers() {
+      let users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+      try {
+        const raw = localStorage.getItem("bpp_connect_users_v3");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) users = parsed;
+        }
+      } catch (_) {}
+      return users;
+    }
+
+    function getLoggedInTeacher() {
+      const uid = localStorage.getItem("bpp_connect_user_v1");
+      const users = getAllUsers();
+      return users.find((u) => u.id === uid) || users[0] || { id: "", name: "บุคลากรโรงเรียนบ้านป่าไผ่", shortName: "คุณครู", position: "ครู", role: "teacher", avatar: "" };
+    }
+
+    function todayYmd() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function haversineMeters(lat1, lng1, lat2, lng2) {
+      const R = 6371000;
+      const toRad = (v) => (v * Math.PI) / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+      return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    const teacher = getLoggedInTeacher();
+    const isAdmin = teacher.id === "thanakarin" && teacher.role === "admin";
+    const canApprove = isAdmin || teacher.role === "director";
+    const backendUrl = ((window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
+    const $ = (id) => document.getElementById(id);
+
+    const DEFAULT_GEO = {
+      enabled: true,
+      lat: "",
+      lng: "",
+      radiusMeters: 100,
+      startTime: "08:00",
+      endTime: "16:00",
+      activeDays: [1, 2, 3, 4, 5]
+    };
+
+    const state = {
+      tab: "requests",
+      leaves: (() => { try { return JSON.parse(localStorage.getItem(STORAGE_LEAVES) || "[]"); } catch (_) { return []; } })(),
+      geofence: (() => { try { return { ...DEFAULT_GEO, ...JSON.parse(localStorage.getItem(STORAGE_GEO) || "{}") }; } catch (_) { return { ...DEFAULT_GEO }; } })(),
+      watchId: null,
+      lastDistance: null,
+      lastAlertAt: 0
+    };
+
+    function showToast(msg) {
+      const el = $("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    function openSheet(html) { $("sheetContent").innerHTML = html; $("sheetBackdrop").classList.add("open"); }
+    function closeSheet() { $("sheetBackdrop").classList.remove("open"); }
+    $("sheetBackdrop").addEventListener("click", (e) => { if (e.target === $("sheetBackdrop")) closeSheet(); });
+
+    function saveLocal() {
+      try {
+        localStorage.setItem(STORAGE_LEAVES, JSON.stringify(state.leaves));
+        localStorage.setItem(STORAGE_GEO, JSON.stringify(state.geofence));
+      } catch (_) {}
+    }
+
+    function isWithinMonitorWindow(now = new Date()) {
+      const g = state.geofence;
+      if (!g.enabled) return false;
+      const days = Array.isArray(g.activeDays) ? g.activeDays : [1, 2, 3, 4, 5];
+      if (!days.includes(now.getDay())) return false;
+      const curMin = now.getHours() * 60 + now.getMinutes();
+      const [sh, sm] = String(g.startTime || "08:00").split(":").map(Number);
+      const [eh, em] = String(g.endTime || "16:00").split(":").map(Number);
+      return curMin >= (sh * 60 + sm) && curMin <= (eh * 60 + em);
+    }
+
+    function getActivePermission(userId, now = new Date()) {
+      const today = todayYmd();
+      const curHm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      return state.leaves.find((r) => {
+        if (r.userId !== userId || r.status === "rejected") return false;
+        const start = r.startDate || "";
+        const end = r.endDate || start;
+        if (today < start || today > end) return false;
+        if (r.type === "offcampus" && r.startTime && r.endTime) {
+          return curHm >= r.startTime && curHm <= r.endTime;
+        }
+        return true; // ลาป่วย / ลากิจ / ไปราชการ ครอบคลุมทั้งวัน
+      }) || null;
+    }
+
+    async function syncFromCloud() {
+      if (!backendUrl) { render(); return; }
+      try {
+        const res = await fetch(`${backendUrl}?action=leaves`, { cache: "no-store" });
+        const json = await res.json();
+        if (json && json.ok) {
+          if (Array.isArray(json.leaves)) state.leaves = json.leaves;
+          if (json.geofence && Object.keys(json.geofence).length) {
+            state.geofence = { ...DEFAULT_GEO, ...json.geofence };
+          }
+          saveLocal();
+        }
+      } catch (_) {}
+      render();
+    }
+
+    function postBackend(payload) {
+      if (!backendUrl) return;
+      fetch(backendUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    }
+
+    function updateGeoBanner() {
+      const g = state.geofence;
+      const hasPin = g.lat !== "" && g.lng !== "" && !Number.isNaN(Number(g.lat));
+      const perm = getActivePermission(teacher.id);
+      const badge = $("geoStatusBadge");
+      const badgeTxt = $("geoStatusText");
+      const detail = $("geoDetailText");
+
+      badge.className = "geo-badge";
+      if (!hasPin) {
+        badgeTxt.textContent = "ยังไม่ปักหมุดโรงเรียน";
+        detail.textContent = isAdmin
+          ? "ไปที่แท็บ 'ตั้งค่า GPS 100ม.' เพื่อปักหมุดพิกัดโรงเรียนบ้านป่าไผ่"
+          : "รอแอดมินปักหมุดพิกัดโรงเรียนในระบบ";
+        return;
+      }
+
+      if (perm) {
+        badge.classList.add("perm");
+        badgeTxt.textContent = "ได้รับอนุญาตออกนอกสถานที่";
+        detail.textContent = `มีรายการ "${(TYPE_MAP[perm.type] || {}).label || perm.type}" ${perm.endTime ? `ถึงเวลา ${perm.endTime} น.` : "วันนี้"} — ระบบจะไม่ส่งแจ้งเตือน`;
+        return;
+      }
+
+      const radius = Number(g.radiusMeters) || 100;
+      if (state.lastDistance !== null) {
+        if (state.lastDistance <= radius) {
+          badge.classList.add("ok");
+          badgeTxt.textContent = `อยู่ในโรงเรียน (${state.lastDistance} ม.)`;
+          detail.textContent = `ช่วงเวลาเฝ้าระวัง ${g.startTime}–${g.endTime} น. • รัศมี ${radius} เมตร`;
+        } else {
+          badge.classList.add("warn");
+          badgeTxt.textContent = `นอกพื้นที่ (${state.lastDistance} ม.)`;
+          detail.textContent = isWithinMonitorWindow()
+            ? `อยู่นอกรัศมี ${radius} ม. โดยยังไม่ได้ขออนุญาต — ระบบแจ้งเตือนครูทุกคนแล้ว`
+            : `อยู่นอกรัศมี ${radius} ม. (นอกช่วงเวลาเฝ้าระวัง ${g.startTime}–${g.endTime} น.)`;
+        }
+      } else {
+        badgeTxt.textContent = state.watchId ? "กำลังจับพิกัด..." : `รัศมี ${radius} ม. (${g.startTime}–${g.endTime})`;
+        detail.textContent = `หากออกนอกโรงเรียนเกิน ${radius} ม. ช่วง ${g.startTime}–${g.endTime} น. โดยไม่ยื่นขออนุญาต ระบบจะแจ้งเตือนครูทุกคน`;
+      }
+      $("toggleGpsBtn").textContent = state.watchId ? "⏹ หยุดตรวจจับ GPS" : "📡 เปิดเช็คพิกัด GPS ตอนนี้";
+    }
+
+    function handleGpsPosition(pos) {
+      const g = state.geofence;
+      if (!g.lat || !g.lng) return;
+      const dist = haversineMeters(Number(g.lat), Number(g.lng), pos.coords.latitude, pos.coords.longitude);
+      state.lastDistance = dist;
+      const radius = Number(g.radiusMeters) || 100;
+
+      if (dist > radius && isWithinMonitorWindow() && !getActivePermission(teacher.id)) {
+        const nowMs = Date.now();
+        if (nowMs - state.lastAlertAt > 30 * 60 * 1000) {
+          state.lastAlertAt = nowMs;
+          postBackend({
+            action: "geofence_alert",
+            userId: teacher.id,
+            userName: teacher.name,
+            distance: dist,
+            radius
+          });
+          showToast(`แจ้งเตือนแล้ว: ออกนอกโรงเรียน ${dist} ม. โดยไม่ได้ขออนุญาต`);
+        }
+      }
+      updateGeoBanner();
+    }
+
+    function toggleGpsWatch() {
+      if (state.watchId !== null) {
+        navigator.geolocation.clearWatch(state.watchId);
+        state.watchId = null;
+        state.lastDistance = null;
+        updateGeoBanner();
+        return;
+      }
+      if (!navigator.geolocation) { showToast("เบราว์เซอร์นี้ไม่รองรับ GPS"); return; }
+      if (!state.geofence.lat || !state.geofence.lng) {
+        showToast("แอดมินยังไม่ได้ปักหมุดพิกัดโรงเรียน");
+        return;
+      }
+      state.watchId = navigator.geolocation.watchPosition(
+        handleGpsPosition,
+        () => showToast("กรุณาอนุญาตสิทธิ์เข้าถึงตำแหน่ง (Location)"),
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+      );
+      updateGeoBanner();
+    }
+
+    function openRequestSheet(mode) {
+      const isOff = mode === "offcampus";
+      const today = todayYmd();
+      const nowH = String(new Date().getHours()).padStart(2, "0");
+      const nextH = String(Math.min(23, new Date().getHours() + 1)).padStart(2, "0");
+
+      openSheet(`
+        <h3>${isOff ? "🚗 ขออนุญาตออกนอกโรงเรียน" : "📝 ยื่นใบลาออนไลน์"}</h3>
+        <div style="font-size:12.5px;color:var(--secondary);margin-bottom:10px">ผู้ยื่นคำขอ: <strong>${teacher.name}</strong></div>
+        ${!isOff ? `
+          <label class="lbl">ประเภทการลา</label>
+          <select class="select-field" id="fType">
+            <option value="sick">ลาป่วย</option>
+            <option value="personal">ลากิจส่วนตัว</option>
+            <option value="duty">ไปราชการ</option>
+            <option value="maternity">ลาคลอดบุตร</option>
+          </select>` : ""}
+        <div class="row-2">
+          <div><label class="lbl">${isOff ? "วันที่" : "ตั้งแต่วันที่"}</label><input class="field" id="fStartDate" type="date" value="${today}" /></div>
+          ${isOff
+            ? `<div><label class="lbl">สถานที่ที่จะไป</label><input class="field" id="fDest" placeholder="เช่น ธนาคาร / เขตพื้นที่" /></div>`
+            : `<div><label class="lbl">ถึงวันที่</label><input class="field" id="fEndDate" type="date" value="${today}" /></div>`}
+        </div>
+        ${isOff ? `
+          <div class="row-2">
+            <div><label class="lbl">เวลาออก</label><input class="field" id="fStartTime" type="time" value="${nowH}:00" /></div>
+            <div><label class="lbl">เวลากลับ</label><input class="field" id="fEndTime" type="time" value="${nextH}:00" /></div>
+          </div>` : ""}
+        <label class="lbl">เหตุผล / ภารกิจ</label>
+        <textarea class="textarea-field" id="fReason" rows="2" placeholder="ระบุเหตุผลสั้นๆ..."></textarea>
+        <button type="button" class="btn-primary" id="fSubmitBtn" style="width:100%;margin-bottom:8px">ยืนยันส่งคำขอ</button>
+        <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
+      `);
+
+      $("fCancelBtn").onclick = closeSheet;
+      $("fSubmitBtn").onclick = () => {
+        const type = isOff ? "offcampus" : $("fType").value;
+        const startDate = $("fStartDate").value || today;
+        const endDate = isOff ? startDate : ($("fEndDate").value || startDate);
+        const startTime = isOff ? $("fStartTime").value : "";
+        const endTime = isOff ? $("fEndTime").value : "";
+        const destination = isOff ? $("fDest").value.trim() : "";
+        const reason = $("fReason").value.trim();
+        if (!reason) { showToast("กรุณาระบุเหตุผล"); return; }
+
+        const item = {
+          id: "lv-" + Date.now(),
+          type,
+          userId: teacher.id,
+          userName: teacher.name,
+          position: teacher.position || "ครู",
+          startDate,
+          endDate,
+          startTime,
+          endTime,
+          reason,
+          destination,
+          status: "pending",
+          approvedBy: "",
+          createdAt: new Date().toLocaleString("th-TH")
+        };
+        state.leaves = [item, ...state.leaves];
+        saveLocal();
+        postBackend({ action: "save_leave", leave: item });
+        closeSheet();
+        showToast(isOff ? "บันทึกขอออกนอกโรงเรียนแล้ว (ระบบจะไม่แจ้งเตือน GPS)" : "ส่งใบลาเรียบร้อยแล้ว");
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: "BPP_DOC_UPLOADED", title: `${(TYPE_MAP[type] || {}).label} - ${teacher.shortName}` }, location.origin);
+        }
+        render();
+      };
+    }
+
+    function printLeaveSlip(item) {
+      const tLabel = (TYPE_MAP[item.type] || {}).label || item.type;
+      const dateRange = item.startDate === item.endDate ? item.startDate : `${item.startDate} ถึง ${item.endDate}`;
+      const timeText = item.startTime ? ` ตั้งแต่เวลา ${item.startTime} น. ถึง ${item.endTime} น.` : "";
+      $("printSlipArea").innerHTML = `
+        <div class="slip-head">
+          <img src="./icons/school-logo.png" alt="" />
+          <h2>แบบ${tLabel}</h2>
+          <div>โรงเรียนบ้านป่าไผ่ สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</div>
+        </div>
+        <p style="text-align:right">วันที่เขียนแบบฟอร์ม: ${item.createdAt || todayYmd()}</p>
+        <p><strong>เรียน</strong> ผู้อำนวยการโรงเรียนบ้านป่าไผ่</p>
+        <p style="text-indent:36px">
+          ข้าพเจ้า <strong>${item.userName}</strong> ตำแหน่ง ${item.position || "ครู"} โรงเรียนบ้านป่าไผ่
+          มีความประสงค์ขออนุญาต <strong>${tLabel}</strong>
+          ในวันที่ <strong>${dateRange}</strong>${timeText}
+          ${item.destination ? ` ณ <strong>${item.destination}</strong>` : ""}
+          เนื่องจาก ${item.reason}
+        </p>
+        <p style="text-indent:36px">จึงเรียนมาเพื่อโปรดพิจารณาอนุญาต</p>
+        <div class="slip-sign">
+          <div>
+            <div>ลงชื่อ..............................................ผู้ขออนุญาต</div>
+            <div style="margin-top:26px">(${item.userName})</div>
+            <div>${item.position || "ครูโรงเรียนบ้านป่าไผ่"}</div>
+          </div>
+          <div>
+            <div>ความเห็นผู้อำนวยการ: [ ${item.status === "approved" ? "✓" : " "} ] อนุญาต  [ ${item.status === "rejected" ? "✓" : " "} ] ไม่อนุญาต</div>
+            <div style="margin-top:26px">ลงชื่อ..............................................</div>
+            <div>(นางสาวนภาพร คงแสนคำ)</div>
+            <div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          </div>
+        </div>`;
+      window.print();
+    }
+
+    function renderRequests() {
+      updateGeoBanner();
+      if (state.leaves.length === 0) {
+        $("reqList").innerHTML = `<div style="text-align:center;padding:30px 12px;font-size:13.5px;color:var(--secondary)">ยังไม่มีรายการขอลา หรือขอออกนอกโรงเรียน</div>`;
+        return;
+      }
+      $("reqList").innerHTML = state.leaves.map((r, i) => {
+        const tm = TYPE_MAP[r.type] || { label: r.type, cls: "" };
+        const sm = STATUS_MAP[r.status] || STATUS_MAP.pending;
+        const isMine = r.userId === teacher.id;
+        return `
+          <article class="req-card" style="animation-delay:${Math.min(i, 8) * 24}ms">
+            <div class="req-head">
+              <span class="type-pill ${tm.cls}">${tm.label}</span>
+              <span class="st-pill ${sm.cls}">${sm.label}</span>
+            </div>
+            <div class="req-name">${r.userName}</div>
+            <div class="req-meta">
+              📅 ${r.startDate}${r.endDate && r.endDate !== r.startDate ? ` ถึง ${r.endDate}` : ""}${r.startTime ? ` • ⏰ ${r.startTime}–${r.endTime} น.` : ""}<br/>
+              ${r.destination ? `📍 ${r.destination} • ` : ""}💬 ${r.reason}
+            </div>
+            <div class="req-actions">
+              <button type="button" class="mini-btn" data-print="${r.id}">🖨️ ปริ้นใบลา A4</button>
+              ${canApprove && r.status === "pending" ? `<button type="button" class="mini-btn ok" data-approve="${r.id}">✓ อนุมัติ</button><button type="button" class="mini-btn no" data-reject="${r.id}">✕ ไม่อนุมัติ</button>` : ""}
+              ${(isMine || isAdmin) ? `<button type="button" class="mini-btn" data-del="${r.id}">ลบ</button>` : ""}
+            </div>
+          </article>`;
+      }).join("");
+    }
+
+    function renderStats() {
+      const users = getAllUsers();
+      const rows = users.map((u) => {
+        const mine = state.leaves.filter((r) => r.userId === u.id && r.status !== "rejected");
+        const count = (t) => mine.filter((r) => r.type === t).length;
+        return { name: u.shortName || u.name, sick: count("sick"), personal: count("personal"), duty: count("duty"), off: count("offcampus"), total: mine.length };
+      });
+      $("statsTableWrap").innerHTML = `
+        <table class="stat-table">
+          <thead><tr><th>บุคลากร</th><th>ป่วย</th><th>กิจ</th><th>ราชการ</th><th>ออกนอก</th><th>รวม</th></tr></thead>
+          <tbody>
+            ${rows.map((r) => `<tr><td>${r.name}</td><td>${r.sick}</td><td>${r.personal}</td><td>${r.duty}</td><td>${r.off}</td><td><strong>${r.total}</strong></td></tr>`).join("")}
+          </tbody>
+        </table>`;
+    }
+
+    function renderGeofenceAdmin() {
+      const g = state.geofence;
+      $("geoEnabled").checked = Boolean(g.enabled);
+      $("geoLat").value = g.lat;
+      $("geoLng").value = g.lng;
+      $("geoRadius").value = g.radiusMeters || 100;
+      $("geoStart").value = g.startTime || "08:00";
+      $("geoEnd").value = g.endTime || "16:00";
+      const days = Array.isArray(g.activeDays) ? g.activeDays : [1, 2, 3, 4, 5];
+      $("geoDayChips").innerHTML = THAI_DAYS_SHORT.map((x) =>
+        `<button type="button" class="day-chip ${days.includes(x.d) ? "active" : ""}" data-gday="${x.d}">${x.l}</button>`
+      ).join("");
+
+      const users = getAllUsers();
+      $("shortcutLinksWrap").innerHTML = users.map((u) => {
+        const url = backendUrl ? `${backendUrl}?action=geofence_exit&userId=${encodeURIComponent(u.id)}` : "(ยังไม่ได้ตั้งค่า newsBackendUrl)";
+        return `
+          <div class="webhook-row">
+            <div style="min-width:0;flex:1">
+              <strong>${u.shortName}</strong>
+              <div style="font-size:11px;color:var(--secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${url}</div>
+            </div>
+            <button type="button" class="mini-btn" data-copy-url="${url}">คัดลอกลิงก์</button>
+          </div>`;
+      }).join("");
+    }
+
+    function render() {
+      const av = teacher.avatar ? `<img class="mini-avatar" src="${teacher.avatar}" alt="" />` : "";
+      $("userSub").innerHTML = `${av}<span>${teacher.shortName} • ${teacher.position || "ครู"}</span>`;
+      $("adminGeoTab").classList.toggle("hidden", !isAdmin);
+
+      $("viewRequests").classList.toggle("hidden", state.tab !== "requests");
+      $("viewStats").classList.toggle("hidden", state.tab !== "stats");
+      $("viewGeofence").classList.toggle("hidden", state.tab !== "geofence");
+      document.querySelectorAll("#mainTabs .seg-tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === state.tab));
+
+      if (state.tab === "requests") renderRequests();
+      else if (state.tab === "stats") renderStats();
+      else if (isAdmin) renderGeofenceAdmin();
+    }
+
+    // --- Event Listeners ---
+    document.querySelectorAll("#mainTabs .seg-tab").forEach((b) => {
+      b.onclick = () => { state.tab = b.dataset.tab; render(); };
+    });
+    $("refreshBtn").onclick = () => { syncFromCloud(); showToast("อัปเดตข้อมูลล่าสุดแล้ว"); };
+    $("toggleGpsBtn").onclick = toggleGpsWatch;
+    $("openOffcampusBtn").onclick = () => openRequestSheet("offcampus");
+    $("openLeaveBtn").onclick = () => openRequestSheet("leave");
+
+    $("reqList").addEventListener("click", (e) => {
+      const pBtn = e.target.closest("[data-print]");
+      if (pBtn) {
+        const item = state.leaves.find((x) => x.id === pBtn.dataset.print);
+        if (item) printLeaveSlip(item);
+        return;
+      }
+      const apBtn = e.target.closest("[data-approve], [data-reject]");
+      if (apBtn && canApprove) {
+        const id = apBtn.dataset.approve || apBtn.dataset.reject;
+        const newSt = apBtn.dataset.approve ? "approved" : "rejected";
+        state.leaves = state.leaves.map((x) => x.id === id ? { ...x, status: newSt, approvedBy: teacher.name } : x);
+        saveLocal();
+        postBackend({ action: "update_leave_status", id, status: newSt, approvedBy: teacher.name });
+        showToast(newSt === "approved" ? "อนุมัติคำขอแล้ว" : "ไม่อนุมัติคำขอแล้ว");
+        render();
+        return;
+      }
+      const dBtn = e.target.closest("[data-del]");
+      if (dBtn) {
+        state.leaves = state.leaves.filter((x) => x.id !== dBtn.dataset.del);
+        saveLocal();
+        postBackend({ action: "delete_leave", id: dBtn.dataset.del });
+        showToast("ลบรายการแล้ว");
+        render();
+      }
+    });
+
+    $("geoDayChips").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-gday]");
+      if (!b) return;
+      const d = Number(b.dataset.gday);
+      const set = new Set(state.geofence.activeDays || [1, 2, 3, 4, 5]);
+      if (set.has(d)) set.delete(d); else set.add(d);
+      state.geofence.activeDays = [...set];
+      renderGeofenceAdmin();
+    });
+
+    $("pinCurrentLocBtn").onclick = () => {
+      if (!navigator.geolocation) { showToast("ไม่รองรับ GPS"); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          $("geoLat").value = pos.coords.latitude.toFixed(6);
+          $("geoLng").value = pos.coords.longitude.toFixed(6);
+          showToast("ดึงพิกัดปัจจุบันเรียบร้อย กดบันทึกได้เลย");
+        },
+        () => showToast("กรุณาอนุญาตสิทธิ์ Location ก่อนปักหมุด"),
+        { enableHighAccuracy: true, timeout: 12000 }
+      );
+    };
+
+    $("saveGeoBtn").onclick = () => {
+      state.geofence = {
+        enabled: $("geoEnabled").checked,
+        lat: $("geoLat").value.trim(),
+        lng: $("geoLng").value.trim(),
+        radiusMeters: Number($("geoRadius").value) || 100,
+        startTime: $("geoStart").value || "08:00",
+        endTime: $("geoEnd").value || "16:00",
+        activeDays: state.geofence.activeDays || [1, 2, 3, 4, 5]
+      };
+      saveLocal();
+      postBackend({ action: "save_geofence", geofence: state.geofence });
+      showToast("บันทึกพิกัดและช่วงเวลาเฝ้าระวังเรียบร้อย!");
+      render();
+    };
+
+    $("shortcutLinksWrap").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-copy-url]");
+      if (!b) return;
+      navigator.clipboard?.writeText(b.dataset.copyUrl).then(
+        () => showToast("คัดลอกลิงก์ Shortcut แล้ว"),
+        () => showToast("คัดลอกไม่สำเร็จ")
+      );
+    });
+
+    render();
+    syncFromCloud();
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // ตั้งค่าแอป BPP Connect — โรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)
 window.SCHOOL_CONFIG = {
-  appVersion: "2.1.0",
+  appVersion: "2.2.0",
   schoolName: "BPP Connect",
   schoolSubtitle: "โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4",
   logoUrl: "./icons/school-logo.png",
@@ -215,14 +215,14 @@ window.SCHOOL_CONFIG = {
     },
     {
       id: "e-leave",
-      name: "e-Leave ระบบสถิติและการลา",
-      shortName: "e-Leave สถิติลา",
-      description: "ยื่นลากิจ ลาป่วย และสรุปสถิติวันลาของบุคลากร",
+      name: "ระบบการลา & ขอออกนอกโรงเรียน",
+      shortName: "ลา/ออกนอก",
+      description: "ยื่นใบลา ขออนุญาตออกนอกโรงเรียน ตรวจจับ GPS 100 ม. และปริ้นใบลา A4",
       division: "personnel",
-      url: "https://script.google.com/macros/s/REPLACE_WITH_ELEAVE_ID/exec",
+      url: "./leave.html",
       icon: "calendar",
       color: "teal",
-      pinned: false,
+      pinned: true,
       directorOnly: false
     },
     {

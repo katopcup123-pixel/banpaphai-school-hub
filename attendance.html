@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>เช็คสถิตินักเรียน — BPP Connect</title>
+  <title>เช็คสถิตินักเรียน & รายงานครูเวร — BPP Connect</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -32,182 +32,110 @@
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
+      margin: 0; padding: 0; height: 100%;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background: var(--bg); color: var(--text);
       -webkit-font-smoothing: antialiased;
     }
     .app { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 
-    /* Top Bar */
     .topbar {
       flex-shrink: 0;
-      padding: 12px 16px 10px;
+      padding: 12px 14px 10px;
       background: var(--surface-soft);
       backdrop-filter: blur(22px) saturate(180%);
       -webkit-backdrop-filter: blur(22px) saturate(180%);
       border-bottom: 0.5px solid var(--sep);
     }
-    .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-    .title-wrap h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
-    .user-sub { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary); margin-top: 2px; }
+    .top-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .title-wrap h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+    .user-sub { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--secondary); margin-top: 2px; }
     .mini-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
 
     .date-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--surface);
-      border: 1px solid var(--sep);
-      border-radius: 12px;
-      padding: 6px 10px;
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--text);
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--surface); border: 1px solid var(--sep);
+      border-radius: 11px; padding: 5px 8px; font-size: 12px; font-weight: 600; color: var(--text);
     }
-    .date-pill input[type="date"] {
-      border: none;
-      background: transparent;
-      color: var(--text);
-      font: inherit;
-      outline: none;
-      cursor: pointer;
-    }
+    .date-pill input[type="date"] { border: none; background: transparent; color: var(--text); font: inherit; outline: none; cursor: pointer; }
 
-    /* Segmented Tabs */
     .seg-tabs {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
+      display: flex; gap: 3px;
       background: rgba(118, 118, 128, 0.14);
-      padding: 3px;
-      border-radius: 12px;
+      padding: 3px; border-radius: 12px;
     }
     .seg-tab {
-      border: none;
-      background: transparent;
-      color: var(--secondary);
-      font: inherit;
-      font-size: 12.5px;
-      font-weight: 600;
-      padding: 7px 6px;
-      border-radius: 9px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      flex: 1; border: none; background: transparent; color: var(--secondary);
+      font: inherit; font-size: 11.5px; font-weight: 600;
+      padding: 7px 4px; border-radius: 9px; cursor: pointer;
+      transition: all 0.2s ease; white-space: nowrap;
     }
-    .seg-tab.active {
-      background: var(--surface);
-      color: var(--accent);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    }
+    .seg-tab.active { background: var(--surface); color: var(--accent); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
 
-    .body-scroll {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 12px 14px 36px;
-    }
+    .body-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px 36px; }
 
-    /* Animated KPI Grid */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-bottom: 12px;
-    }
+    /* KPI Grid */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 12px; }
     .kpi-card {
-      background: var(--surface);
-      border-radius: 15px;
-      padding: 10px 6px;
-      text-align: center;
-      border: 1px solid var(--sep);
+      background: var(--surface); border-radius: 15px; padding: 10px 4px;
+      text-align: center; border: 1px solid var(--sep);
       animation: popIn 0.35s var(--spring) both;
     }
     .kpi-label { font-size: 11px; color: var(--secondary); font-weight: 600; }
-    .kpi-val { font-size: 20px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
-    .kpi-val.c-green { color: var(--green); }
-    .kpi-val.c-red { color: var(--red); }
-    .kpi-val.c-amber { color: var(--amber); }
-    .kpi-val.c-accent { color: var(--accent); }
+    .kpi-val { font-size: 19px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .c-green { color: var(--green); }
+    .c-red { color: var(--red); }
+    .c-amber { color: var(--amber); }
+    .c-accent { color: var(--accent); }
 
-    /* Grade Filter Pills */
-    .grade-bar {
-      display: flex;
-      gap: 7px;
-      overflow-x: auto;
-      padding: 2px 0 10px;
-      scrollbar-width: none;
-    }
-    .grade-bar::-webkit-scrollbar { display: none; }
-    .grade-pill {
-      flex-shrink: 0;
-      border: 1px solid var(--sep);
-      background: var(--surface);
-      color: var(--text);
-      font: inherit;
+    /* Homeroom Banner & Grade Pills */
+    .homeroom-banner {
+      background: rgba(0, 122, 255, 0.08);
+      border: 1px solid rgba(0, 122, 255, 0.18);
+      border-radius: 14px;
+      padding: 9px 12px;
       font-size: 12.5px;
-      font-weight: 600;
-      padding: 7px 13px;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: transform 0.14s ease, background 0.2s ease;
-    }
-    .grade-pill:active { transform: scale(0.94); }
-    .grade-pill.active { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
-
-    .quick-bar {
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 10px;
       flex-wrap: wrap;
     }
-    .thai-date-label { font-size: 12.5px; font-weight: 600; color: var(--secondary); }
+    .grade-bar { display: flex; gap: 7px; overflow-x: auto; padding: 2px 0 10px; scrollbar-width: none; }
+    .grade-bar::-webkit-scrollbar { display: none; }
+    .grade-pill {
+      flex-shrink: 0; border: 1px solid var(--sep); background: var(--surface); color: var(--text);
+      font: inherit; font-size: 12.5px; font-weight: 600;
+      padding: 7px 13px; border-radius: 999px; cursor: pointer;
+    }
+    .grade-pill.active { background: var(--accent); color: #FFF; border-color: var(--accent); }
+
+    .quick-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .thai-date-label { font-size: 12px; font-weight: 600; color: var(--secondary); }
 
     .btn-primary, .btn-soft {
-      border: none;
-      font: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      border-radius: 12px;
-      padding: 9px 14px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: transform 0.14s ease, opacity 0.2s ease;
+      border: none; font: inherit; font-size: 13px; font-weight: 600;
+      border-radius: 12px; padding: 9px 13px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      transition: transform 0.14s ease;
     }
-    .btn-primary { background: var(--accent); color: #FFFFFF; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.24); }
+    .btn-primary { background: var(--accent); color: #FFF; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.24); }
     .btn-soft { background: var(--surface); color: var(--text); border: 1px solid var(--sep); }
     .btn-primary:active, .btn-soft:active { transform: scale(0.96); }
 
     /* Student Check-in Cards */
     .stu-list { display: flex; flex-direction: column; gap: 8px; }
     .stu-card {
-      background: var(--surface);
-      border-radius: 16px;
-      padding: 11px 12px;
-      border: 1px solid var(--sep);
-      animation: slideUp 0.26s ease both;
+      background: var(--surface); border-radius: 16px; padding: 11px 12px;
+      border: 1px solid var(--sep); animation: slideUp 0.24s ease both;
     }
     .stu-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
     .stu-name-wrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .stu-num {
-      width: 26px;
-      height: 26px;
-      border-radius: 8px;
-      background: rgba(0, 122, 255, 0.1);
-      color: var(--accent);
-      font-size: 11.5px;
-      font-weight: 700;
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
+      width: 26px; height: 26px; border-radius: 8px;
+      background: rgba(0, 122, 255, 0.1); color: var(--accent);
+      font-size: 11.5px; font-weight: 700; display: grid; place-items: center; flex-shrink: 0;
     }
     .stu-num.female { background: rgba(236, 72, 153, 0.12); color: #DB2777; }
     .stu-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -215,129 +143,102 @@
 
     .status-pills { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
     .st-btn {
-      border: 1px solid var(--sep);
-      background: var(--bg);
-      color: var(--secondary);
-      font: inherit;
-      font-size: 11.5px;
-      font-weight: 600;
-      padding: 6px 2px;
-      border-radius: 9px;
-      cursor: pointer;
-      transition: all 0.15s ease;
+      border: 1px solid var(--sep); background: var(--bg); color: var(--secondary);
+      font: inherit; font-size: 11.5px; font-weight: 600;
+      padding: 6px 2px; border-radius: 9px; cursor: pointer;
     }
-    .st-btn:active { transform: scale(0.93); }
     .st-btn.active.s-present { background: var(--green); color: #FFF; border-color: var(--green); }
     .st-btn.active.s-absent  { background: var(--red); color: #FFF; border-color: var(--red); }
     .st-btn.active.s-sick    { background: var(--amber); color: #FFF; border-color: var(--amber); }
     .st-btn.active.s-personal{ background: var(--purple); color: #FFF; border-color: var(--purple); }
     .st-btn.active.s-late    { background: var(--accent); color: #FFF; border-color: var(--accent); }
 
-    .action-footer {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 14px;
-    }
+    .action-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
 
-    /* Statistics Table */
+    /* Cards, Forms & Charts */
     .card-box {
-      background: var(--surface);
-      border-radius: 18px;
-      padding: 14px;
-      border: 1px solid var(--sep);
-      margin-bottom: 12px;
+      background: var(--surface); border-radius: 18px; padding: 14px;
+      border: 1px solid var(--sep); margin-bottom: 12px;
     }
-    .card-box h2 { margin: 0 0 10px; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+    .card-box h2 { margin: 0 0 10px; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .lbl { display: block; font-size: 12px; font-weight: 600; color: var(--secondary); margin-bottom: 4px; }
+    .field, .select-field, .textarea-field {
+      width: 100%; border: 1px solid var(--sep); background: var(--bg); color: var(--text);
+      border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 14px; margin-bottom: 10px; outline: none;
+    }
+    .field:focus, .select-field:focus, .textarea-field:focus { border-color: var(--accent); }
+
+    /* Animated SVG Donut + Bar Charts */
+    .chart-grid { display: grid; grid-template-columns: 130px 1fr; gap: 14px; align-items: center; }
+    .donut-wrap { position: relative; width: 124px; height: 124px; margin: 0 auto; }
+    .donut-center {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+    }
+    .donut-pct { font-size: 21px; font-weight: 800; color: var(--text); }
+    .donut-sub { font-size: 10.5px; color: var(--secondary); }
+    .legend-list { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
+    .legend-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .legend-left { display: flex; align-items: center; gap: 7px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    .bar-chart { display: flex; flex-direction: column; gap: 9px; margin-top: 4px; }
+    .bar-row { display: grid; grid-template-columns: 44px 1fr 74px; align-items: center; gap: 8px; font-size: 12.5px; }
+    .bar-track { height: 12px; border-radius: 999px; background: rgba(118, 118, 128, 0.16); overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), #38BDF8); transition: width 0.55s var(--spring); }
+    .bar-fill.full { background: linear-gradient(90deg, #16A34A, #4ADE80); }
+    .bar-fill.warn { background: linear-gradient(90deg, #D97706, #FBBF24); }
+    .bar-val { text-align: right; font-weight: 700; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+
     .table-wrap { overflow-x: auto; }
-    table.stat-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12.5px;
-      font-variant-numeric: tabular-nums;
-    }
-    table.stat-table th, table.stat-table td {
-      padding: 8px 6px;
-      border-bottom: 0.5px solid var(--sep);
-      text-align: center;
-      white-space: nowrap;
-    }
+    table.stat-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+    table.stat-table th, table.stat-table td { padding: 8px 5px; border-bottom: 0.5px solid var(--sep); text-align: center; white-space: nowrap; }
     table.stat-table th:first-child, table.stat-table td:first-child { text-align: left; font-weight: 600; }
-    table.stat-table thead th { font-size: 11.5px; color: var(--secondary); font-weight: 700; }
+    table.stat-table thead th { font-size: 11px; color: var(--secondary); font-weight: 700; }
     table.stat-table tfoot td { font-weight: 700; border-top: 1.5px solid var(--sep); border-bottom: none; background: rgba(0, 122, 255, 0.06); }
 
-    .absent-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 0.5px solid var(--sep);
-      font-size: 13px;
-    }
+    .absent-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid var(--sep); font-size: 13px; }
     .absent-item:last-child { border-bottom: none; }
-    .tag-st {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 999px;
-      color: #FFF;
-    }
+    .tag-st { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; color: #FFF; }
     .tag-absent { background: var(--red); }
     .tag-sick { background: var(--amber); }
     .tag-personal { background: var(--purple); }
     .tag-late { background: var(--accent); }
 
-    /* Official A4 Print Report Preview */
-    .report-toolbar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
+    /* Official A4 Print Report */
+    .period-controls { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    .period-controls select { border: 1px solid var(--sep); background: var(--surface); color: var(--text); border-radius: 10px; padding: 7px 10px; font: inherit; font-size: 12.5px; font-weight: 600; }
+
     .report-paper {
-      background: #FFFFFF;
-      color: #111827;
-      border-radius: 14px;
-      padding: 22px 18px;
-      box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+      background: #FFFFFF; color: #111827; border-radius: 14px;
+      padding: 20px 16px; box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
       border: 1px solid #E5E7EB;
     }
-    .rep-head { text-align: center; margin-bottom: 14px; }
-    .rep-head img { width: 54px; height: 54px; object-fit: contain; margin-bottom: 6px; }
-    .rep-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: #111827; }
-    .rep-head p { margin: 3px 0 0; font-size: 13px; color: #374151; }
-    .rep-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 12px 0; }
-    .rep-table th, .rep-table td { border: 1px solid #374151; padding: 6px 4px; text-align: center; color: #111827; }
+    .rep-head { text-align: center; margin-bottom: 12px; }
+    .rep-head img { width: 52px; height: 52px; object-fit: contain; margin-bottom: 4px; }
+    .rep-head h3 { margin: 0; font-size: 15.5px; font-weight: 700; color: #111827; }
+    .rep-head p { margin: 2px 0 0; font-size: 12.5px; color: #374151; }
+    .rep-table { width: 100%; border-collapse: collapse; font-size: 11.5px; margin: 10px 0; }
+    .rep-table th, .rep-table td { border: 1px solid #374151; padding: 5px 4px; text-align: center; color: #111827; }
     .rep-table th { background: #F3F4F6; font-weight: 700; }
-    .rep-table td:first-child { text-align: left; padding-left: 8px; font-weight: 600; }
+    .rep-table td:first-child { text-align: left; padding-left: 7px; font-weight: 600; }
     .rep-table tfoot td { font-weight: 700; background: #F9FAFB; }
-    .rep-absent-box { margin-top: 12px; font-size: 12.5px; line-height: 1.65; color: #111827; }
-    .rep-sign-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 28px;
-      text-align: center;
-      font-size: 12.5px;
-      color: #111827;
+    .rep-box {
+      margin-top: 10px; padding: 10px 12px;
+      border: 1px solid #D1D5DB; border-radius: 8px;
+      font-size: 12px; line-height: 1.65; color: #111827;
     }
-    .rep-sign-line { margin-top: 32px; }
+    .rep-sign-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+      margin-top: 24px; text-align: center; font-size: 12px; color: #111827;
+    }
+    .rep-sign-line { margin-top: 28px; }
 
     .toast {
-      position: fixed;
-      bottom: 22px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 90;
-      background: rgba(15, 23, 42, 0.92);
-      color: #FFF;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 10px 18px;
-      border-radius: 999px;
-      display: none;
-      max-width: 90vw;
-      text-align: center;
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+      z-index: 90; background: rgba(15, 23, 42, 0.92); color: #FFF;
+      font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 999px;
+      display: none; max-width: 90vw; text-align: center;
     }
     .toast.show { display: block; }
     .hidden { display: none !important; }
@@ -345,12 +246,11 @@
     @keyframes popIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Crisp Official A4 Print Mode */
     @media print {
-      @page { size: A4 portrait; margin: 14mm; }
+      @page { size: A4 portrait; margin: 13mm; }
       html, body { height: auto; background: #FFFFFF !important; color: #000 !important; }
       .app { display: block; height: auto; overflow: visible; }
-      .topbar, .report-toolbar, .toast, #viewCheckin, #viewStats { display: none !important; }
+      .topbar, .no-print, .toast, #viewCheckin, #viewDuty, #viewStats { display: none !important; }
       .body-scroll { overflow: visible; padding: 0 !important; }
       #viewReport { display: block !important; }
       .report-paper { box-shadow: none; border: none; padding: 0; border-radius: 0; }
@@ -362,7 +262,7 @@
     <header class="topbar">
       <div class="top-row">
         <div class="title-wrap">
-          <h1>เช็คสถิตินักเรียน</h1>
+          <h1>สถิตินักเรียน & ครูเวร</h1>
           <div class="user-sub" id="userSub">โรงเรียนบ้านป่าไผ่</div>
         </div>
         <label class="date-pill">
@@ -371,15 +271,18 @@
         </label>
       </div>
       <div class="seg-tabs" role="tablist">
-        <button type="button" class="seg-tab active" data-view="checkin">เช็คชื่อรายวัน</button>
-        <button type="button" class="seg-tab" data-view="stats">สรุปสถิติ</button>
-        <button type="button" class="seg-tab" data-view="report">แบบรายงาน A4</button>
+        <button type="button" class="seg-tab" data-view="checkin" id="tabCheckin">เช็คชื่อ</button>
+        <button type="button" class="seg-tab" data-view="duty" id="tabDuty">ครูเวร</button>
+        <button type="button" class="seg-tab" data-view="stats" id="tabStats">กราฟ/สถิติ</button>
+        <button type="button" class="seg-tab" data-view="report" id="tabReport">รายงาน A4</button>
       </div>
     </header>
 
     <main class="body-scroll">
-      <!-- 1. Check-in View -->
+      <!-- 1. Homeroom Check-in View -->
       <section id="viewCheckin">
+        <div class="homeroom-banner" id="homeroomBanner"></div>
+
         <div class="kpi-grid">
           <div class="kpi-card"><div class="kpi-label">มาเรียน</div><div class="kpi-val c-green" id="kpiPresent">0</div></div>
           <div class="kpi-card"><div class="kpi-label">ขาด</div><div class="kpi-val c-red" id="kpiAbsent">0</div></div>
@@ -391,44 +294,82 @@
 
         <div class="quick-bar">
           <span class="thai-date-label" id="thaiDateLabel"></span>
-          <button type="button" class="btn-soft" id="markAllPresentBtn">✓ มาครบทุกคน (ชั้นนี้)</button>
+          <button type="button" class="btn-soft" id="markAllPresentBtn" style="padding:7px 11px;font-size:12px">✓ มาครบทุกคน (ห้องนี้)</button>
         </div>
 
         <div class="stu-list" id="studentList"></div>
 
         <div class="action-footer">
-          <button type="button" class="btn-primary" id="saveAttBtn">💾 บันทึกสถิติวันนี้</button>
+          <button type="button" class="btn-primary" id="saveAttBtn">💾 บันทึกเช็คชื่อ</button>
           <button type="button" class="btn-soft" id="shareNewsBtn">📢 ส่งสรุปเข้าประกาศ</button>
         </div>
       </section>
 
-      <!-- 2. Statistics View -->
-      <section id="viewStats" class="hidden">
-        <div class="quick-bar">
-          <div class="seg-tabs" style="width:210px">
-            <button type="button" class="seg-tab active" data-period="day">สรุปรายวัน</button>
-            <button type="button" class="seg-tab" data-period="month">สรุปรายเดือน</button>
-          </div>
-          <button type="button" class="btn-primary" id="goPrintBtn">🖨️ ปริ้นรายงาน A4</button>
+      <!-- 2. Daily Duty Teacher Report View -->
+      <section id="viewDuty" class="hidden">
+        <div class="card-box">
+          <h2>📋 รายงานเหตุการณ์ประจำวันของครูเวร</h2>
+          <div style="font-size:12px;color:var(--secondary);margin-bottom:10px" id="dutyDateText"></div>
+          <label class="lbl">ชื่อครูเวรประจำวัน</label>
+          <select class="select-field" id="dutyTeacherSelect"></select>
+          <label class="lbl">เรื่องที่ครูเวรพูดอบรมหน้าเสาธง</label>
+          <textarea class="textarea-field" id="dutyFlagTopic" rows="3" placeholder="เช่น ความมีระเบียบวินัย การแต่งกาย การรักษาความสะอาด การป้องกันอุบัติเหตุ..."></textarea>
+          <label class="lbl">เหตุการณ์ประจำวันทั่วไป</label>
+          <textarea class="textarea-field" id="dutyEvents" rows="2" placeholder="เช่น เหตุการณ์ปกติ / มีการเยี่ยมบ้านนักเรียน / แขกมาติดต่อราชการ..."></textarea>
+          <label class="lbl">หมายเหตุ</label>
+          <textarea class="textarea-field" id="dutyNotes" rows="2" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></textarea>
+          <button type="button" class="btn-primary" id="saveDutyBtn" style="width:100%">💾 บันทึกรายงานครูเวรประจำวัน</button>
         </div>
         <div class="card-box">
-          <h2 id="statsHeading">สถิติแยกตามระดับชั้น</h2>
+          <h2>ประวัติรายงานครูเวรล่าสุด</h2>
+          <div id="dutyHistoryWrap"></div>
+        </div>
+      </section>
+
+      <!-- 3. Statistics & Visual Charts View (Ideal for Director & Teachers) -->
+      <section id="viewStats" class="hidden">
+        <div class="seg-tabs" style="margin-bottom:10px">
+          <button type="button" class="seg-tab active" data-period="day">รายวัน</button>
+          <button type="button" class="seg-tab" data-period="month">รายเดือน</button>
+          <button type="button" class="seg-tab" data-period="term">รายภาคเรียน</button>
+          <button type="button" class="seg-tab" data-period="year">รายปีการศึกษา</button>
+        </div>
+        <div class="period-controls" id="statsSubControls"></div>
+
+        <div class="card-box">
+          <h2>สัดส่วนการมาเรียนภาพรวม</h2>
+          <div class="chart-grid" id="donutChartWrap"></div>
+        </div>
+
+        <div class="card-box">
+          <h2>กราฟร้อยละการมาเรียนแยกตามระดับชั้น</h2>
+          <div class="bar-chart" id="barChartWrap"></div>
+        </div>
+
+        <div class="card-box">
+          <h2 id="statsHeading">ตารางสถิติแยกตามระดับชั้น</h2>
           <div class="table-wrap" id="statsTableWrap"></div>
         </div>
+
         <div class="card-box" id="absentCard">
           <h2>รายชื่อนักเรียนที่ไม่มาเรียน / มาสาย</h2>
           <div id="absentListWrap"></div>
         </div>
       </section>
 
-      <!-- 3. Official A4 Print Report View -->
+      <!-- 4. Official A4 Print Report View (4 Periods: Daily / Monthly / Semester / Academic Year) -->
       <section id="viewReport" class="hidden">
-        <div class="report-toolbar">
-          <div class="seg-tabs" style="flex:1;min-width:190px">
-            <button type="button" class="seg-tab active" data-rperiod="day">รายงานรายวัน</button>
-            <button type="button" class="seg-tab" data-rperiod="month">รายงานรายเดือน</button>
+        <div class="no-print">
+          <div class="seg-tabs" style="margin-bottom:8px">
+            <button type="button" class="seg-tab active" data-rperiod="day">รายวัน</button>
+            <button type="button" class="seg-tab" data-rperiod="month">รายเดือน</button>
+            <button type="button" class="seg-tab" data-rperiod="term">รายภาคเรียน</button>
+            <button type="button" class="seg-tab" data-rperiod="year">รายปีการศึกษา</button>
           </div>
-          <button type="button" class="btn-primary" id="printNowBtn">🖨️ ปริ้น / บันทึก PDF</button>
+          <div class="period-controls">
+            <div id="reportSubControls" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+            <button type="button" class="btn-primary" id="printNowBtn" style="margin-left:auto">🖨️ ปริ้น / บันทึก PDF (A4)</button>
+          </div>
         </div>
         <article class="report-paper" id="reportPaper"></article>
       </section>
@@ -440,13 +381,23 @@
   <script src="./apps-config.js"></script>
   <script src="./students-data.js"></script>
   <script>
-    // Auto-inherit Dark Mode & Accent Color from BPP Connect
     document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
     document.documentElement.style.setProperty("--accent", localStorage.getItem("bpp_connect_accent_v1") || "#007AFF");
 
     const STORAGE_ATT = "bpp_connect_attendance_v1";
+    const STORAGE_DUTY = "bpp_connect_duty_reports_v1";
     const THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
     const THAI_DAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+
+    // ครูประจำชั้นแต่ละระดับชั้น (โรงเรียนบ้านป่าไผ่)
+    const HOMEROOM_MAP = {
+      narisara: ["อ.2", "อ.3"],
+      namphet: ["ป.1"],
+      pacharasaran: ["ป.2", "ป.3"],
+      thanakarin: ["ป.4", "ป.5"],
+      nantaphat: ["ป.6"]
+    };
+
     const STATUS_OPTS = [
       { id: "present", label: "มา", cls: "s-present" },
       { id: "absent", label: "ขาด", cls: "s-absent" },
@@ -456,8 +407,7 @@
     ];
     const STATUS_LABEL = { present: "มาเรียน", absent: "ขาดเรียน", sick: "ลาป่วย", personal: "ลากิจ", late: "มาสาย" };
 
-    function getLoggedInTeacher() {
-      const uid = localStorage.getItem("bpp_connect_user_v1");
+    function getAllUsers() {
       let users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
       try {
         const raw = localStorage.getItem("bpp_connect_users_v3");
@@ -466,12 +416,29 @@
           if (Array.isArray(parsed) && parsed.length) users = parsed;
         }
       } catch (_) {}
-      return users.find((u) => u.id === uid) || users[0] || { id: "", name: "ครูเวรประจำวัน", shortName: "คุณครู", avatar: "" };
+      return users;
+    }
+
+    function getLoggedInTeacher() {
+      const uid = localStorage.getItem("bpp_connect_user_v1");
+      const users = getAllUsers();
+      return users.find((u) => u.id === uid) || users[0] || { id: "", name: "ครูเวรประจำวัน", shortName: "คุณครู", role: "teacher", avatar: "" };
     }
 
     function todayYmd() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    function getAcademicYearBE(ymd) {
+      const [y, m] = ymd.split("-").map(Number);
+      // ปีการศึกษาไทยเริ่ม พ.ค. (เดือน 5) ถึง เม.ย. ปีถัดไป
+      return (m >= 5 ? y : y - 1) + 543;
+    }
+
+    function getDefaultTerm(ymd) {
+      const m = Number(ymd.split("-")[1]);
+      return (m >= 5 && m <= 10) ? "1" : "2";
     }
 
     function formatThaiFullDate(ymd) {
@@ -486,15 +453,24 @@
     }
 
     const teacher = getLoggedInTeacher();
+    const isDirector = teacher.role === "director";
+    const isAdmin = teacher.id === "thanakarin" && teacher.role === "admin";
+    const myGrades = HOMEROOM_MAP[teacher.id] || [];
+    const backendUrl = ((window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
     const $ = (id) => document.getElementById(id);
 
+    const initDate = todayYmd();
     const state = {
       students: window.BPP_STUDENTS_HELPER.loadStudents(),
       records: (() => { try { return JSON.parse(localStorage.getItem(STORAGE_ATT) || "{}"); } catch (_) { return {}; } })(),
-      date: todayYmd(),
-      grade: "all",
-      view: "checkin",
-      period: "day"
+      dutyReports: (() => { try { return JSON.parse(localStorage.getItem(STORAGE_DUTY) || "{}"); } catch (_) { return {}; } })(),
+      date: initDate,
+      grade: myGrades[0] || "all",
+      adminShowAllGrades: false,
+      view: isDirector ? "stats" : "checkin",
+      period: "day", // day | month | term | year
+      term: getDefaultTerm(initDate),
+      acadYearBE: getAcademicYearBE(initDate)
     };
 
     function showToast(msg) {
@@ -502,7 +478,7 @@
       el.textContent = msg;
       el.classList.add("show");
       clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => el.classList.remove("show"), 2500);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 2600);
     }
 
     function getDayMap(ymd) {
@@ -514,12 +490,45 @@
       return (state.records[ymd] && state.records[ymd][stuId]) || "present";
     }
 
-    function saveRecords() {
-      try { localStorage.setItem(STORAGE_ATT, JSON.stringify(state.records)); } catch (_) {}
+    function saveLocal() {
+      try {
+        localStorage.setItem(STORAGE_ATT, JSON.stringify(state.records));
+        localStorage.setItem(STORAGE_DUTY, JSON.stringify(state.dutyReports));
+      } catch (_) {}
     }
 
-    function getOrderedGrades() {
-      const set = new Set(state.students.map((s) => s.grade));
+    function postBackend(payload) {
+      if (!backendUrl) return;
+      fetch(backendUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    }
+
+    async function syncFromCloud() {
+      if (!backendUrl) return;
+      try {
+        const res = await fetch(`${backendUrl}?action=attendance`, { cache: "no-store" });
+        const json = await res.json();
+        if (json && json.ok) {
+          if (json.records && typeof json.records === "object") {
+            Object.keys(json.records).forEach((d) => {
+              state.records[d] = { ...(state.records[d] || {}), ...(json.records[d] || {}) };
+            });
+          }
+          if (json.dutyReports && typeof json.dutyReports === "object") {
+            state.dutyReports = { ...state.dutyReports, ...json.dutyReports };
+          }
+          saveLocal();
+          render();
+        }
+      } catch (_) {}
+    }
+
+    function getOrderedGrades(list = state.students) {
+      const set = new Set(list.map((s) => s.grade));
       const order = window.BPP_GRADE_ORDER || [];
       return [...set].sort((a, b) => {
         const ia = order.indexOf(a), ib = order.indexOf(b);
@@ -527,47 +536,46 @@
       });
     }
 
-    function computeDailySummary(ymd) {
-      const grades = getOrderedGrades();
-      const rows = grades.map((g) => {
-        const list = state.students.filter((s) => s.grade === g);
-        const male = list.filter((s) => s.gender === "ช").length;
-        const female = list.filter((s) => s.gender === "ญ").length;
-        let present = 0, absent = 0, sick = 0, personal = 0, late = 0;
-        list.forEach((s) => {
-          const st = getStatus(ymd, s.id);
-          if (st === "present") present++;
-          else if (st === "absent") absent++;
-          else if (st === "sick") sick++;
-          else if (st === "personal") personal++;
-          else if (st === "late") late++;
-        });
-        const attended = present + late;
-        const pct = list.length ? ((attended / list.length) * 100).toFixed(1) : "0.0";
-        return { grade: g, male, female, total: list.length, present, absent, sick, personal, late, attended, pct };
-      });
-
-      const totals = rows.reduce((acc, r) => {
-        acc.male += r.male; acc.female += r.female; acc.total += r.total;
-        acc.present += r.present; acc.absent += r.absent; acc.sick += r.sick;
-        acc.personal += r.personal; acc.late += r.late; acc.attended += r.attended;
-        return acc;
-      }, { male: 0, female: 0, total: 0, present: 0, absent: 0, sick: 0, personal: 0, late: 0, attended: 0 });
-      totals.pct = totals.total ? ((totals.attended / totals.total) * 100).toFixed(1) : "0.0";
-
-      const nonPresent = state.students
-        .map((s) => ({ student: s, status: getStatus(ymd, s.id) }))
-        .filter((x) => x.status !== "present");
-
-      return { rows, totals, nonPresent, daysCount: 1 };
+    function getCheckinAllowedGrades() {
+      if (isDirector) return getOrderedGrades();
+      if (isAdmin && state.adminShowAllGrades) return getOrderedGrades();
+      if (myGrades.length) return myGrades;
+      return getOrderedGrades();
     }
 
-    function computeMonthlySummary(ymd) {
-      const prefix = ymd.slice(0, 7);
-      const savedDays = Object.keys(state.records).filter((k) => k.startsWith(prefix)).sort();
-      const days = savedDays.length ? savedDays : [ymd];
-      const grades = getOrderedGrades();
+    // คัดกรองรายการวันที่ตามช่วงเวลา (รายวัน / รายเดือน / รายภาคเรียน / รายปีการศึกษา)
+    function getDaysForPeriod() {
+      const savedDays = Object.keys(state.records).sort();
+      if (state.period === "day") return [state.date];
+      if (state.period === "month") {
+        const prefix = state.date.slice(0, 7);
+        const list = savedDays.filter((d) => d.startsWith(prefix));
+        return list.length ? list : [state.date];
+      }
+      const adStart = state.acadYearBE - 543;
+      if (state.period === "term") {
+        const start = state.term === "1" ? `${adStart}-05-01` : `${adStart}-11-01`;
+        const end = state.term === "1" ? `${adStart}-10-31` : `${adStart + 1}-04-30`;
+        const list = savedDays.filter((d) => d >= start && d <= end);
+        return list.length ? list : [state.date];
+      }
+      // year: พ.ค. ปี adStart ถึง เม.ย. ปี adStart+1
+      const yStart = `${adStart}-05-01`;
+      const yEnd = `${adStart + 1}-04-30`;
+      const list = savedDays.filter((d) => d >= yStart && d <= yEnd);
+      return list.length ? list : [state.date];
+    }
 
+    function getPeriodTitle(daysCount) {
+      if (state.period === "day") return `ประจำ${formatThaiFullDate(state.date)}`;
+      if (state.period === "month") return `ประจำ${formatThaiMonth(state.date)} (รวมบันทึก ${daysCount} วัน)`;
+      if (state.period === "term") return `ประจำภาคเรียนที่ ${state.term} ปีการศึกษา ${state.acadYearBE} (รวมบันทึก ${daysCount} วัน)`;
+      return `ประจำปีการศึกษา ${state.acadYearBE} (รวมบันทึก ${daysCount} วัน)`;
+    }
+
+    function computeSummary(daysList, gradeFilterList = null) {
+      const grades = gradeFilterList || getOrderedGrades();
+      const days = daysList.length ? daysList : [state.date];
       const rows = grades.map((g) => {
         const list = state.students.filter((s) => s.grade === g);
         const male = list.filter((s) => s.gender === "ช").length;
@@ -583,43 +591,65 @@
             else if (st === "late") late++;
           });
         });
-        const totalSlots = list.length * days.length;
+        const slots = list.length * days.length;
         const attended = present + late;
-        const pct = totalSlots ? ((attended / totalSlots) * 100).toFixed(1) : "0.0";
-        return { grade: g, male, female, total: list.length, present, absent, sick, personal, late, attended, pct };
+        const pct = slots ? ((attended / slots) * 100).toFixed(1) : "0.0";
+        return { grade: g, male, female, total: list.length, present, absent, sick, personal, late, attended, slots, pct: Number(pct) };
       });
 
       const totals = rows.reduce((acc, r) => {
         acc.male += r.male; acc.female += r.female; acc.total += r.total;
         acc.present += r.present; acc.absent += r.absent; acc.sick += r.sick;
-        acc.personal += r.personal; acc.late += r.late; acc.attended += r.attended;
+        acc.personal += r.personal; acc.late += r.late; acc.attended += r.attended; acc.slots += r.slots;
         return acc;
-      }, { male: 0, female: 0, total: 0, present: 0, absent: 0, sick: 0, personal: 0, late: 0, attended: 0 });
-      const totalSlots = totals.total * days.length;
-      totals.pct = totalSlots ? ((totals.attended / totalSlots) * 100).toFixed(1) : "0.0";
+      }, { male: 0, female: 0, total: 0, present: 0, absent: 0, sick: 0, personal: 0, late: 0, attended: 0, slots: 0 });
+      totals.pct = totals.slots ? Number(((totals.attended / totals.slots) * 100).toFixed(1)) : 0;
 
-      return { rows, totals, nonPresent: [], daysCount: days.length };
+      const nonPresent = days.length === 1
+        ? state.students
+            .filter((s) => grades.includes(s.grade))
+            .map((s) => ({ student: s, status: getStatus(days[0], s.id) }))
+            .filter((x) => x.status !== "present")
+        : [];
+
+      return { rows, totals, nonPresent, daysCount: days.length };
     }
 
     function renderCheckin() {
-      const sum = computeDailySummary(state.date);
+      const allowedGrades = getCheckinAllowedGrades();
+      if (!allowedGrades.includes(state.grade)) state.grade = allowedGrades[0] || "all";
+
+      $("homeroomBanner").innerHTML = isDirector
+        ? `<div><strong>👑 ผู้อำนวยการ:</strong> ดูสถิติและตรวจสอบการเช็คชื่อได้ทุกชั้น</div>`
+        : `<div><strong>👩‍🏫 ครูประจำชั้น:</strong> ${myGrades.length ? `ชั้น ${myGrades.join(", ")}` : "ทุกชั้น"}</div>
+           ${isAdmin ? `<button type="button" class="btn-soft" id="toggleAllGradesBtn" style="padding:5px 10px;font-size:11.5px">${state.adminShowAllGrades ? "แสดงเฉพาะชั้น ป.4–ป.5" : "ดู/เช็คแทนทุกชั้น (แอดมิน)"}</button>` : ""}`;
+
+      const toggleBtn = document.getElementById("toggleAllGradesBtn");
+      if (toggleBtn) {
+        toggleBtn.onclick = () => {
+          state.adminShowAllGrades = !state.adminShowAllGrades;
+          state.grade = getCheckinAllowedGrades()[0] || "all";
+          renderCheckin();
+        };
+      }
+
+      const sum = computeSummary([state.date], allowedGrades);
       $("kpiPresent").textContent = sum.totals.present;
       $("kpiAbsent").textContent = sum.totals.absent;
       $("kpiLeave").textContent = sum.totals.sick + sum.totals.personal + sum.totals.late;
       $("kpiPct").textContent = `${sum.totals.pct}%`;
       $("thaiDateLabel").textContent = formatThaiFullDate(state.date);
 
-      const grades = ["all", ...getOrderedGrades()];
-      $("gradeBar").innerHTML = grades.map((g) => {
-        const cnt = g === "all" ? state.students.length : state.students.filter((s) => s.grade === g).length;
-        return `<button type="button" class="grade-pill ${state.grade === g ? "active" : ""}" data-grade="${g}">${g === "all" ? "ทั้งหมด" : g} (${cnt})</button>`;
+      $("gradeBar").innerHTML = allowedGrades.map((g) => {
+        const cnt = state.students.filter((s) => s.grade === g).length;
+        return `<button type="button" class="grade-pill ${state.grade === g ? "active" : ""}" data-grade="${g}">ชั้น ${g} (${cnt})</button>`;
       }).join("");
 
-      const filtered = state.grade === "all" ? state.students : state.students.filter((s) => s.grade === state.grade);
+      const filtered = state.students.filter((s) => s.grade === state.grade);
       $("studentList").innerHTML = filtered.map((s, idx) => {
         const cur = getStatus(state.date, s.id);
         return `
-          <div class="stu-card" style="animation-delay:${Math.min(idx, 12) * 18}ms">
+          <div class="stu-card" style="animation-delay:${Math.min(idx, 12) * 16}ms">
             <div class="stu-top">
               <div class="stu-name-wrap">
                 <div class="stu-num ${s.gender === "ญ" ? "female" : ""}">${idx + 1}</div>
@@ -638,29 +668,126 @@
       }).join("");
     }
 
-    function renderStats() {
-      const data = state.period === "month" ? computeMonthlySummary(state.date) : computeDailySummary(state.date);
-      $("statsHeading").textContent = state.period === "month"
-        ? `สถิติสะสม${formatThaiMonth(state.date)} (${data.daysCount} วันทำการ)`
-        : `สถิติประจำ${formatThaiFullDate(state.date)}`;
+    function renderDuty() {
+      $("dutyDateText").textContent = `วันที่: ${formatThaiFullDate(state.date)}`;
+      const users = getAllUsers();
+      const cur = state.dutyReports[state.date] || {
+        dutyTeacher: teacher.name,
+        flagTopic: "",
+        events: "เหตุการณ์ทั่วไปปกติ",
+        notes: ""
+      };
+      $("dutyTeacherSelect").innerHTML = users.map((u) =>
+        `<option value="${u.name}" ${cur.dutyTeacher === u.name ? "selected" : ""}>${u.name} (${u.shortName})</option>`
+      ).join("");
+      $("dutyFlagTopic").value = cur.flagTopic || "";
+      $("dutyEvents").value = cur.events || "";
+      $("dutyNotes").value = cur.notes || "";
 
+      const histKeys = Object.keys(state.dutyReports).sort().reverse().slice(0, 10);
+      $("dutyHistoryWrap").innerHTML = histKeys.length === 0
+        ? `<div style="font-size:12.5px;color:var(--secondary);text-align:center;padding:12px">ยังไม่มีประวัติรายงานครูเวร</div>`
+        : histKeys.map((d) => {
+            const r = state.dutyReports[d];
+            return `
+              <div style="padding:9px 0;border-bottom:0.5px solid var(--sep);font-size:12.5px;line-height:1.5">
+                <strong>📅 ${formatThaiFullDate(d)}</strong> • ครูเวร: ${r.dutyTeacher}<br/>
+                <span style="color:var(--secondary)">หน้าเสาธง:</span> ${r.flagTopic || "-"}<br/>
+                <span style="color:var(--secondary)">เหตุการณ์:</span> ${r.events || "-"}${r.notes ? ` • หมายเหตุ: ${r.notes}` : ""}
+              </div>`;
+          }).join("");
+    }
+
+    function renderPeriodSubControls(containerEl) {
+      if (state.period === "day" || state.period === "month") {
+        containerEl.innerHTML = "";
+        return;
+      }
+      const curY = getAcademicYearBE(todayYmd());
+      const years = [curY - 1, curY, curY + 1];
+      containerEl.innerHTML = `
+        ${state.period === "term" ? `
+          <select id="selTerm">
+            <option value="1" ${state.term === "1" ? "selected" : ""}>ภาคเรียนที่ 1 (พ.ค.–ต.ค.)</option>
+            <option value="2" ${state.term === "2" ? "selected" : ""}>ภาคเรียนที่ 2 (พ.ย.–เม.ย.)</option>
+          </select>` : ""}
+        <select id="selAcadYear">
+          ${years.map((y) => `<option value="${y}" ${state.acadYearBE === y ? "selected" : ""}>ปีการศึกษา ${y}</option>`).join("")}
+        </select>
+      `;
+      const tSel = containerEl.querySelector("#selTerm");
+      if (tSel) tSel.onchange = (e) => { state.term = e.target.value; render(); };
+      const ySel = containerEl.querySelector("#selAcadYear");
+      if (ySel) ySel.onchange = (e) => { state.acadYearBE = Number(e.target.value); render(); };
+    }
+
+    function renderCharts(data) {
+      const t = data.totals;
+      const totalSlots = Math.max(1, t.slots);
+      const r = 46, C = 2 * Math.PI * r;
+      const segs = [
+        { label: "มาเรียน", val: t.present, color: "#16A34A" },
+        { label: "ขาดเรียน", val: t.absent, color: "#DC2626" },
+        { label: "ลาป่วย/ลากิจ", val: t.sick + t.personal, color: "#D97706" },
+        { label: "มาสาย", val: t.late, color: "#007AFF" }
+      ];
+      let offset = 0;
+      const circles = segs.map((s) => {
+        const dash = (s.val / totalSlots) * C;
+        const el = `<circle cx="62" cy="62" r="${r}" fill="none" stroke="${s.color}" stroke-width="14" stroke-dasharray="${dash} ${C - dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 62 62)" />`;
+        offset += dash;
+        return el;
+      }).join("");
+
+      $("donutChartWrap").innerHTML = `
+        <div class="donut-wrap">
+          <svg width="124" height="124" viewBox="0 0 124 124">
+            <circle cx="62" cy="62" r="${r}" fill="none" stroke="rgba(118,118,128,0.15)" stroke-width="14" />
+            ${circles}
+          </svg>
+          <div class="donut-center">
+            <div class="donut-pct">${t.pct}%</div>
+            <div class="donut-sub">มาเรียน</div>
+          </div>
+        </div>
+        <div class="legend-list">
+          ${segs.map((s) => `
+            <div class="legend-row">
+              <span class="legend-left"><span class="legend-dot" style="background:${s.color}"></span>${s.label}</span>
+              <strong>${s.val}</strong>
+            </div>`).join("")}
+        </div>`;
+
+      $("barChartWrap").innerHTML = data.rows.map((row) => {
+        const cls = row.pct >= 98 ? "full" : row.pct < 85 ? "warn" : "";
+        return `
+          <div class="bar-row">
+            <strong>${row.grade}</strong>
+            <div class="bar-track"><div class="bar-fill ${cls}" style="width:${row.pct}%"></div></div>
+            <span class="bar-val">${row.pct}% (${row.attended}/${row.slots})</span>
+          </div>`;
+      }).join("");
+    }
+
+    function renderStats() {
+      renderPeriodSubControls($("statsSubControls"));
+      const days = getDaysForPeriod();
+      const data = computeSummary(days);
+      renderCharts(data);
+
+      $("statsHeading").textContent = `สถิติ${getPeriodTitle(data.daysCount)}`;
       $("statsTableWrap").innerHTML = `
         <table class="stat-table">
           <thead>
-            <tr>
-              <th>ชั้น</th><th>ชาย</th><th>หญิง</th><th>รวม</th>
-              <th>มา</th><th>ขาด</th><th>ลา</th><th>สาย</th><th>%</th>
-            </tr>
+            <tr><th>ชั้น</th><th>ชาย</th><th>หญิง</th><th>รวม</th><th>มา</th><th>ขาด</th><th>ลา</th><th>สาย</th><th>%</th></tr>
           </thead>
           <tbody>
             ${data.rows.map((r) => `
               <tr>
                 <td>${r.grade}</td><td>${r.male}</td><td>${r.female}</td><td>${r.total}</td>
-                <td style="color:var(--green);font-weight:700">${r.present}</td>
+                <td class="c-green" style="font-weight:700">${r.present}</td>
                 <td style="color:${r.absent ? "var(--red)" : "inherit"}">${r.absent}</td>
-                <td>${r.sick + r.personal}</td>
-                <td>${r.late}</td>
-                <td><strong>${r.pct}%</strong></td>
+                <td>${r.sick + r.personal}</td><td>${r.late}</td><td><strong>${r.pct}%</strong></td>
               </tr>`).join("")}
           </tbody>
           <tfoot>
@@ -673,7 +800,7 @@
           </tfoot>
         </table>`;
 
-      if (state.period === "month") {
+      if (state.period !== "day") {
         $("absentCard").classList.add("hidden");
       } else {
         $("absentCard").classList.remove("hidden");
@@ -688,72 +815,70 @@
     }
 
     function renderReport() {
-      const isMonth = state.period === "month";
-      const data = isMonth ? computeMonthlySummary(state.date) : computeDailySummary(state.date);
-      const periodText = isMonth
-        ? `ประจำ${formatThaiMonth(state.date)} (รวมบันทึก ${data.daysCount} วัน)`
-        : `ประจำ${formatThaiFullDate(state.date)}`;
+      renderPeriodSubControls($("reportSubControls"));
+      const days = getDaysForPeriod();
+      const data = computeSummary(days);
+      const duty = state.dutyReports[state.date];
 
-      const absentHtml = !isMonth
-        ? `<div class="rep-absent-box">
+      const dutyBoxHtml = state.period === "day"
+        ? `<div class="rep-box">
+            <strong>รายงานเหตุการณ์ประจำวันของครูเวร:</strong><br/>
+            • <strong>ครูเวรประจำวัน:</strong> ${duty ? duty.dutyTeacher : teacher.name}<br/>
+            • <strong>เรื่องที่พูดอบรมหน้าเสาธง:</strong> ${duty && duty.flagTopic ? duty.flagTopic : "................................................................................................"}<br/>
+            • <strong>เหตุการณ์ประจำวัน:</strong> ${duty && duty.events ? duty.events : "เหตุการณ์ทั่วไปปกติ"}<br/>
+            • <strong>หมายเหตุ:</strong> ${duty && duty.notes ? duty.notes : "-"}
+          </div>`
+        : "";
+
+      const absentHtml = state.period === "day"
+        ? `<div class="rep-box">
             <strong>รายชื่อนักเรียนที่ไม่มาเรียน / มาสาย:</strong>
             ${data.nonPresent.length === 0
               ? ` ไม่มี (มาเรียนครบทุกคน)`
-              : `<ol style="margin:6px 0 0;padding-left:20px">${data.nonPresent.map(({ student: s, status }) =>
+              : `<ol style="margin:4px 0 0;padding-left:20px">${data.nonPresent.map(({ student: s, status }) =>
                   `<li>${s.prefix}${s.firstName} ${s.lastName} ชั้น ${s.grade} — <strong>${STATUS_LABEL[status]}</strong></li>`
                 ).join("")}</ol>`}
-           </div>`
+          </div>`
         : "";
 
       $("reportPaper").innerHTML = `
         <div class="rep-head">
           <img src="./icons/school-logo.png" alt="ตราโรงเรียนบ้านป่าไผ่" />
-          <h3>แบบรายงานสถิติการมาเรียนของนักเรียน</h3>
+          <h3>แบบรายงานสถิติการมาเรียนของนักเรียนและเหตุการณ์ประจำวัน</h3>
           <p>โรงเรียนบ้านป่าไผ่ สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</p>
-          <p style="font-weight:600;margin-top:4px">${periodText}</p>
+          <p style="font-weight:600;margin-top:3px">${getPeriodTitle(data.daysCount)}</p>
         </div>
 
         <table class="rep-table">
           <thead>
             <tr>
-              <th>ระดับชั้น</th>
-              <th>ชาย</th>
-              <th>หญิง</th>
-              <th>รวม</th>
-              <th>มาเรียน</th>
-              <th>ขาด</th>
-              <th>ลาป่วย</th>
-              <th>ลากิจ</th>
-              <th>สาย</th>
-              <th>ร้อยละ</th>
+              <th>ระดับชั้น</th><th>ชาย</th><th>หญิง</th><th>รวม</th>
+              <th>มาเรียน</th><th>ขาด</th><th>ลาป่วย</th><th>ลากิจ</th><th>สาย</th><th>ร้อยละ</th>
             </tr>
           </thead>
           <tbody>
             ${data.rows.map((r) => `
               <tr>
-                <td>ชั้น ${r.grade}</td>
-                <td>${r.male}</td><td>${r.female}</td><td>${r.total}</td>
-                <td>${r.present}</td><td>${r.absent}</td><td>${r.sick}</td><td>${r.personal}</td><td>${r.late}</td>
-                <td>${r.pct}%</td>
+                <td>ชั้น ${r.grade}</td><td>${r.male}</td><td>${r.female}</td><td>${r.total}</td>
+                <td>${r.present}</td><td>${r.absent}</td><td>${r.sick}</td><td>${r.personal}</td><td>${r.late}</td><td>${r.pct}%</td>
               </tr>`).join("")}
           </tbody>
           <tfoot>
             <tr>
-              <td>รวมทั้งสิ้น</td>
-              <td>${data.totals.male}</td><td>${data.totals.female}</td><td>${data.totals.total}</td>
-              <td>${data.totals.present}</td><td>${data.totals.absent}</td><td>${data.totals.sick}</td><td>${data.totals.personal}</td><td>${data.totals.late}</td>
-              <td>${data.totals.pct}%</td>
+              <td>รวมทั้งสิ้น</td><td>${data.totals.male}</td><td>${data.totals.female}</td><td>${data.totals.total}</td>
+              <td>${data.totals.present}</td><td>${data.totals.absent}</td><td>${data.totals.sick}</td><td>${data.totals.personal}</td><td>${data.totals.late}</td><td>${data.totals.pct}%</td>
             </tr>
           </tfoot>
         </table>
 
         ${absentHtml}
+        ${dutyBoxHtml}
 
         <div class="rep-sign-grid">
           <div>
             <div>ลงชื่อ......................................................ผู้รายงาน</div>
-            <div class="rep-sign-line">(${teacher.name})</div>
-            <div>ตำแหน่ง ${teacher.position || "ครูโรงเรียนบ้านป่าไผ่"}</div>
+            <div class="rep-sign-line">(${duty && state.period === "day" ? duty.dutyTeacher : teacher.name})</div>
+            <div>ครูเวรประจำวัน / ผู้รายงาน</div>
           </div>
           <div>
             <div>ลงชื่อ......................................................ผู้รับรอง</div>
@@ -765,9 +890,11 @@
 
     function render() {
       const av = teacher.avatar ? `<img class="mini-avatar" src="${teacher.avatar}" alt="" />` : "";
-      $("userSub").innerHTML = `${av}<span>ผู้บันทึก: ${teacher.shortName} • นักเรียน ${state.students.length} คน</span>`;
+      const roleSub = isDirector ? "ผู้อำนวยการ (ดูสถิติทุกชั้น)" : (myGrades.length ? `ครูประจำชั้น ${myGrades.join(", ")}` : teacher.shortName);
+      $("userSub").innerHTML = `${av}<span>${teacher.shortName} • ${roleSub}</span>`;
 
       $("viewCheckin").classList.toggle("hidden", state.view !== "checkin");
+      $("viewDuty").classList.toggle("hidden", state.view !== "duty");
       $("viewStats").classList.toggle("hidden", state.view !== "stats");
       $("viewReport").classList.toggle("hidden", state.view !== "report");
 
@@ -778,19 +905,16 @@
       });
 
       if (state.view === "checkin") renderCheckin();
+      else if (state.view === "duty") renderDuty();
       else if (state.view === "stats") renderStats();
       else renderReport();
     }
 
     // --- Event Listeners ---
     $("attDateInput").value = state.date;
-    $("attDateInput").onchange = (e) => {
-      if (e.target.value) { state.date = e.target.value; render(); }
-    };
+    $("attDateInput").onchange = (e) => { if (e.target.value) { state.date = e.target.value; render(); } };
 
-    document.querySelectorAll("[data-view]").forEach((btn) => {
-      btn.onclick = () => { state.view = btn.dataset.view; render(); };
-    });
+    document.querySelectorAll("[data-view]").forEach((btn) => { btn.onclick = () => { state.view = btn.dataset.view; render(); }; });
     document.querySelectorAll("[data-period], [data-rperiod]").forEach((btn) => {
       btn.onclick = () => { state.period = btn.dataset.period || btn.dataset.rperiod; render(); };
     });
@@ -807,61 +931,72 @@
       if (!btn) return;
       const map = getDayMap(state.date);
       map[btn.dataset.stu] = btn.dataset.st;
-      saveRecords();
+      saveLocal();
       renderCheckin();
     });
 
     $("markAllPresentBtn").onclick = () => {
       const map = getDayMap(state.date);
-      const filtered = state.grade === "all" ? state.students : state.students.filter((s) => s.grade === state.grade);
+      const filtered = state.students.filter((s) => s.grade === state.grade);
       filtered.forEach((s) => { map[s.id] = "present"; });
-      saveRecords();
+      saveLocal();
       renderCheckin();
-      showToast(`ตั้งค่ามาครบทุกคน (${filtered.length} คน) แล้ว`);
+      showToast(`ตั้งค่าชั้น ${state.grade} มาครบทุกคน (${filtered.length} คน) แล้ว`);
     };
 
     $("saveAttBtn").onclick = () => {
       const map = getDayMap(state.date);
-      state.students.forEach((s) => { if (!map[s.id]) map[s.id] = "present"; });
-      saveRecords();
-      showToast(`บันทึกสถิติวันที่ ${state.date.split("-").reverse().join("/")} เรียบร้อย!`);
+      const allowed = getCheckinAllowedGrades();
+      const partial = {};
+      state.students.filter((s) => allowed.includes(s.grade)).forEach((s) => {
+        if (!map[s.id]) map[s.id] = "present";
+        partial[s.id] = map[s.id];
+      });
+      saveLocal();
+      postBackend({ action: "save_attendance", date: state.date, entries: partial, teacher: teacher.name });
+      showToast(`บันทึกเช็คชื่อชั้น ${allowed.join(", ")} เรียบร้อย!`);
+    };
+
+    $("saveDutyBtn").onclick = () => {
+      const rec = {
+        date: state.date,
+        dutyTeacher: $("dutyTeacherSelect").value || teacher.name,
+        flagTopic: $("dutyFlagTopic").value.trim(),
+        events: $("dutyEvents").value.trim() || "เหตุการณ์ทั่วไปปกติ",
+        notes: $("dutyNotes").value.trim(),
+        updatedBy: teacher.name
+      };
+      state.dutyReports[state.date] = rec;
+      saveLocal();
+      postBackend({ action: "save_duty", report: rec });
+      showToast("บันทึกรายงานครูเวรประจำวันแล้ว!");
+      renderDuty();
     };
 
     $("shareNewsBtn").onclick = async () => {
-      const apiUrl = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "";
-      if (!apiUrl) { showToast("ยังไม่ได้ตั้งค่าลิงก์ข่าว BPP Connect"); return; }
-      const sum = computeDailySummary(state.date);
+      if (!backendUrl) { showToast("ยังไม่ได้ตั้งค่าลิงก์ข่าว BPP Connect"); return; }
+      const sum = computeSummary([state.date]);
       const t = sum.totals;
+      const duty = state.dutyReports[state.date];
       const title = `สถิตินักเรียน ${formatThaiFullDate(state.date)}`;
-      const body = `มาเรียน ${t.present} คน | ขาด ${t.absent} คน | ลา ${t.sick + t.personal} คน | สาย ${t.late} คน (รวม ${t.total} คน คิดเป็น ${t.pct}%)`;
-      try {
-        await fetch(apiUrl, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({
-            action: "broadcast",
-            id: "att-" + Date.now(),
-            title,
-            body,
-            urgent: false,
-            authorId: teacher.id,
-            author: teacher.name
-          })
-        });
-        showToast("ส่งสรุปสถิติเข้าประกาศ BPP Connect แล้ว!");
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: "BPP_DOC_UPLOADED", title }, location.origin);
-        }
-      } catch (_) {
-        showToast("ส่งประกาศไม่สำเร็จ กรุณาลองใหม่");
+      const dutyLine = duty && duty.flagTopic ? ` • หน้าเสาธง (${duty.dutyTeacher}): ${duty.flagTopic}` : "";
+      const body = `มาเรียน ${t.present} | ขาด ${t.absent} | ลา ${t.sick + t.personal} | สาย ${t.late} (รวม ${t.total} คน คิดเป็น ${t.pct}%)${dutyLine}`;
+      postBackend({
+        action: "broadcast",
+        id: "att-" + Date.now(),
+        title, body, urgent: false,
+        authorId: teacher.id, author: teacher.name
+      });
+      showToast("ส่งสรุปสถิติเข้าประกาศ BPP Connect แล้ว!");
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "BPP_DOC_UPLOADED", title }, location.origin);
       }
     };
 
-    $("goPrintBtn").onclick = () => { state.view = "report"; render(); };
     $("printNowBtn").onclick = () => { window.print(); };
 
     render();
+    syncFromCloud();
   </script>
 </body>
 </html>

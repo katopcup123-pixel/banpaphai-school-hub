@@ -209,9 +209,9 @@
     })(),
     balloonOpen: false,
     pushSubId: "",
-    remoteConfigUrl: localStorage.getItem(STORAGE_REMOTE) || config.remoteConfigUrl || "",
-    newsBackendUrl: localStorage.getItem(STORAGE_NEWS_API) || config.newsBackendUrl || "",
-    oneSignalAppId: localStorage.getItem(STORAGE_ONESIGNAL) || config.oneSignalAppId || "",
+    remoteConfigUrl: config.remoteConfigUrl || localStorage.getItem(STORAGE_REMOTE) || "",
+    newsBackendUrl: config.newsBackendUrl || localStorage.getItem(STORAGE_NEWS_API) || "",
+    oneSignalAppId: config.oneSignalAppId || localStorage.getItem(STORAGE_ONESIGNAL) || "",
     deferredInstallPrompt: null,
     swReg: null
   };
@@ -1045,7 +1045,7 @@
           await OneSignal.init({
             appId,
             allowLocalhostAsSecureOrigin: true,
-            serviceWorkerPath: isGhPages ? "/banpaphai-school-hub/OneSignalSDKWorker.js" : "/OneSignalSDKWorker.js",
+            serviceWorkerPath: isGhPages ? "banpaphai-school-hub/OneSignalSDKWorker.js" : "OneSignalSDKWorker.js",
             serviceWorkerParam: { scope: isGhPages ? "/banpaphai-school-hub/" : "/" }
           });
           const sub = OneSignal.User && OneSignal.User.PushSubscription;
@@ -1371,6 +1371,19 @@
       try { localStorage.setItem(STORAGE_LOCAL_NEWS, JSON.stringify(state.announcements)); } catch (_) {}
       closeSheet();
       render();
+
+      // Immediately show real OS notification banner on this device too (if permitted)
+      try {
+        if ("Notification" in window && Notification.permission === "granted") {
+          const nTitle = (urgent ? "🚨 [ด่วน] " : "📢 ") + title;
+          const nBody = `${body} — โดย ${u ? u.shortName : "ครู"}`;
+          if (state.swReg && state.swReg.showNotification) {
+            state.swReg.showNotification(nTitle, { body: nBody, icon: "./icons/school-logo.png" });
+          } else {
+            new Notification(nTitle, { body: nBody, icon: "./icons/school-logo.png" });
+          }
+        }
+      } catch (_) {}
 
       if (apiUrl) {
         notifyIsland("กำลังส่งแจ้งเตือนไปทุกเครื่อง...");

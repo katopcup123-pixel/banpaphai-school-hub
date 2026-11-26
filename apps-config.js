@@ -6,7 +6,7 @@ window.SCHOOL_CONFIG = {
   logoUrl: "./icons/school-logo.png",
   // วางลิงก์ GAS หลังบ้านข่าว & แจ้งเตือน (จาก gas-backend.gs) และ OneSignal App ID ที่นี่
   newsBackendUrl: "",
-  oneSignalAppId: "",
+  oneSignalAppId: "9fa72faa-3c98-4cd9-a1c6-0a39be405861",
   // วางลิงก์ GAS Web App (JSON) หรือลิงก์ JSON สาธารณะ เพื่อให้ทุกเครื่องซิงก์รายการระบบล่าสุดอัตโนมัติ
   remoteConfigUrl: "",
 

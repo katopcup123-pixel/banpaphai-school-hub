@@ -1,13 +1,13 @@
 // ตั้งค่าแอป BPP Connect — โรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)
 window.SCHOOL_CONFIG = {
-  appVersion: "1.9.1",
+  appVersion: "1.9.2",
   schoolName: "BPP Connect",
   schoolSubtitle: "โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4",
   logoUrl: "./icons/school-logo.png",
-  // ลิงก์หลังบ้าน GAS + ชื่อช่องแจ้งเตือน ntfy.sh (ฟรีไม่จำกัด ไม่ต้องใช้ API Key)
+  // วางลิงก์ GAS หลังบ้านข่าว & แจ้งเตือน (จาก gas-backend.gs) และ OneSignal App ID ที่นี่
   newsBackendUrl: "https://script.google.com/macros/s/AKfycbyY5tXe6nNyZpdb1EWE8taHLgEJU63sYvZ_vmu8MoiNVOgQc26McD-kNoatNLeeGsYbRw/exec",
   albumApiUrl: "https://script.google.com/macros/s/AKfycbxEl6j7WfPhcyO9zoCFSPB4wgTz69PmBT-L02w-XznZOkeQiz6ZfnHfYOnQB8gdXQVo/exec",
-  ntfyTopic: "bpp-connect-korat4-2569",
+  oneSignalAppId: "9fa72faa-3c98-4cd9-a1c6-0a39be405861",
   // วางลิงก์ GAS Web App (JSON) หรือลิงก์ JSON สาธารณะ เพื่อให้ทุกเครื่องซิงก์รายการระบบล่าสุดอัตโนมัติ
   remoteConfigUrl: "",
 

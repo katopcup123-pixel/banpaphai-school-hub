@@ -209,6 +209,7 @@
     })(),
     balloonOpen: false,
     pushSubId: "",
+    pushDebug: "",
     remoteConfigUrl: config.remoteConfigUrl || localStorage.getItem(STORAGE_REMOTE) || "",
     newsBackendUrl: config.newsBackendUrl || localStorage.getItem(STORAGE_NEWS_API) || "",
     oneSignalAppId: config.oneSignalAppId || localStorage.getItem(STORAGE_ONESIGNAL) || "",
@@ -1046,20 +1047,26 @@
             appId,
             allowLocalhostAsSecureOrigin: true,
             serviceWorkerPath: isGhPages ? "banpaphai-school-hub/OneSignalSDKWorker.js" : "OneSignalSDKWorker.js",
+            serviceWorkerUpdaterPath: isGhPages ? "banpaphai-school-hub/OneSignalSDKWorker.js" : "OneSignalSDKWorker.js",
             serviceWorkerParam: { scope: isGhPages ? "/banpaphai-school-hub/" : "/" }
           });
           const sub = OneSignal.User && OneSignal.User.PushSubscription;
+          state.pushDebug = `SDK พร้อม (perm=${Notification?.permission || "?"}, optedIn=${Boolean(sub?.optedIn)})`;
           if (sub && sub.id && sub.optedIn) {
             state.pushSubId = sub.id;
-            if (state.tab === "settings") render();
           }
+          if (state.tab === "settings") render();
           if (sub && sub.addEventListener) {
             sub.addEventListener("change", (ev) => {
               state.pushSubId = ev.current && ev.current.optedIn ? (ev.current.id || "active") : "";
+              state.pushDebug = `sub=${state.pushSubId || "none"}`;
               if (state.tab === "settings") render();
             });
           }
-        } catch (_) {}
+        } catch (err) {
+          state.pushDebug = "Init err: " + (err && err.message ? err.message : String(err));
+          if (state.tab === "settings") render();
+        }
       });
     });
   }
@@ -1081,12 +1088,15 @@
           if (sub) {
             await sub.optIn();
             state.pushSubId = sub.id || (sub.optedIn ? "subscribed" : "");
+            state.pushDebug = `id=${sub.id || "pending"}, optedIn=${Boolean(sub.optedIn)}`;
           }
           playSound("success");
           notifyIsland(state.pushSubId ? "ลงทะเบียน Push สำเร็จแล้ว!" : "อนุญาตแล้ว รอซิงก์สักครู่");
           render();
         } catch (err) {
-          notifyIsland("ลงทะเบียนไม่สำเร็จ ลองปิดแอปแล้วเปิดใหม่");
+          state.pushDebug = "OptIn err: " + (err && err.message ? err.message : String(err));
+          notifyIsland("ลงทะเบียนไม่สำเร็จ ดูข้อความในหน้าตั้งค่า");
+          render();
         }
       });
       return;
@@ -1887,6 +1897,7 @@
           <div>
             <strong>แจ้งเตือนข่าวบนมือถือ (Push)</strong>
             <div class="info-meta" style="margin:0">สถานะ: ${notifStatus}</div>
+            ${state.pushDebug ? `<div class="info-meta" style="margin:2px 0 0;font-size:10.5px;opacity:0.75">${state.pushDebug}</div>` : ""}
           </div>
         </div>
         <button class="btn-primary" id="enablePushBtn">เปิดรับการแจ้งเตือนจริง (iPhone / Android)</button>

@@ -3,7 +3,7 @@
   const STORAGE_USER = "bpp_connect_user_v1";
   const STORAGE_THEME = "bpp_connect_theme_v1";
   const STORAGE_ACCENT = "bpp_connect_accent_v1";
-  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v7";
+  const STORAGE_OVERRIDE = "bpp_connect_systems_override_v8";
   const STORAGE_REMOTE = "bpp_connect_remote_url_v1";
   const STORAGE_NEWS_API = "bpp_connect_news_api_v1";
   const STORAGE_ONESIGNAL = "bpp_connect_onesignal_id_v1";
@@ -761,6 +761,54 @@
     });
   }
 
+  // วันหยุดราชการ / นักขัตฤกษ์ไทย (พ.ศ. 2569–2570 / 2026–2027)
+  const THAI_HOLIDAYS = {
+    "2026-01-01": "วันขึ้นปีใหม่",
+    "2026-01-02": "วันหยุดราชการเพิ่มพิเศษ (ปีใหม่)",
+    "2026-03-03": "วันมาฆบูชา",
+    "2026-04-06": "วันจักรี",
+    "2026-04-13": "วันสงกรานต์",
+    "2026-04-14": "วันสงกรานต์",
+    "2026-04-15": "วันสงกรานต์",
+    "2026-05-04": "วันฉัตรมงคล",
+    "2026-05-11": "วันพืชมงคล",
+    "2026-05-31": "วันวิสาขบูชา",
+    "2026-06-01": "ชดเชยวันวิสาขบูชา",
+    "2026-06-03": "วันเฉลิมพระชนมพรรษาพระราชินี",
+    "2026-07-28": "วันเฉลิมพระชนมพรรษา ร.10",
+    "2026-07-29": "วันอาสาฬหบูชา",
+    "2026-07-30": "วันเข้าพรรษา",
+    "2026-08-12": "วันแม่แห่งชาติ",
+    "2026-10-13": "วันนวมินทรมหาราช",
+    "2026-10-23": "วันปิยมหาราช",
+    "2026-12-05": "วันพ่อแห่งชาติ",
+    "2026-12-07": "ชดเชยวันพ่อแห่งชาติ",
+    "2026-12-10": "วันรัฐธรรมนูญ",
+    "2026-12-31": "วันสิ้นปี",
+    "2027-01-01": "วันขึ้นปีใหม่",
+    "2027-02-21": "วันมาฆบูชา",
+    "2027-02-22": "ชดเชยวันมาฆบูชา",
+    "2027-04-06": "วันจักรี",
+    "2027-04-13": "วันสงกรานต์",
+    "2027-04-14": "วันสงกรานต์",
+    "2027-04-15": "วันสงกรานต์",
+    "2027-05-04": "วันฉัตรมงคล",
+    "2027-05-20": "วันวิสาขบูชา",
+    "2027-06-03": "วันเฉลิมพระชนมพรรษาพระราชินี",
+    "2027-07-18": "วันอาสาฬหบูชา",
+    "2027-07-19": "วันเข้าพรรษา",
+    "2027-07-20": "ชดเชยวันอาสาฬหบูชา",
+    "2027-07-28": "วันเฉลิมพระชนมพรรษา ร.10",
+    "2027-08-12": "วันแม่แห่งชาติ",
+    "2027-10-13": "วันนวมินทรมหาราช",
+    "2027-10-23": "วันปิยมหาราช",
+    "2027-10-25": "ชดเชยวันปิยมหาราช",
+    "2027-12-05": "วันพ่อแห่งชาติ",
+    "2027-12-06": "ชดเชยวันพ่อแห่งชาติ",
+    "2027-12-10": "วันรัฐธรรมนูญ",
+    "2027-12-31": "วันสิ้นปี"
+  };
+
   // --- Academic Calendar (Google Calendar Style on Home Screen) ---
   function renderCalendarWidget() {
     const year = state.calYear;
@@ -774,25 +822,43 @@
     for (let i = 0; i < firstDay; i++) cells += `<div class="cal-day empty"></div>`;
     for (let d = 1; d <= daysInMonth; d++) {
       const ymd = `${monthPrefix}-${String(d).padStart(2, "0")}`;
+      const dow = (firstDay + d - 1) % 7;
+      const isWeekend = dow === 0 || dow === 6;
+      const holidayName = THAI_HOLIDAYS[ymd] || "";
       const dayEvents = state.events.filter((ev) => ev.date === ymd);
       const cls = [
         "cal-day",
+        isWeekend ? "weekend" : "",
+        holidayName ? "holiday" : "",
         ymd === todayStr ? "today" : "",
         ymd === state.calSelectedDate ? "selected" : ""
       ].filter(Boolean).join(" ");
-      const dots = dayEvents.slice(0, 3)
-        .map((ev) => `<span class="cal-dot" style="background:${EVENT_COLOR_HEX[ev.color] || "#007AFF"}"></span>`)
-        .join("");
-      cells += `<button type="button" class="${cls}" data-cal-day="${ymd}"><span>${d}</span><span class="cal-dots">${dots}</span></button>`;
+      const dots = [
+        ...(holidayName ? [`<span class="cal-dot" style="background:#EF4444"></span>`] : []),
+        ...dayEvents.slice(0, 3).map((ev) => `<span class="cal-dot" style="background:${EVENT_COLOR_HEX[ev.color] || "#007AFF"}"></span>`)
+      ].slice(0, 3).join("");
+      cells += `<button type="button" class="${cls}" data-cal-day="${ymd}" title="${holidayName}"><span>${d}</span><span class="cal-dots">${dots}</span></button>`;
     }
 
+    const selectedHoliday = THAI_HOLIDAYS[state.calSelectedDate] || "";
+    const monthHolidays = Object.entries(THAI_HOLIDAYS)
+      .filter(([k]) => k.startsWith(monthPrefix))
+      .sort(([a], [b]) => a.localeCompare(b));
     const selectedEvents = state.events.filter((ev) => ev.date === state.calSelectedDate);
     const displayEvents = selectedEvents.length
       ? selectedEvents
       : state.events.filter((ev) => ev.date && ev.date.startsWith(monthPrefix)).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
-    const agendaLabel = selectedEvents.length
-      ? `กิจกรรมวันที่ ${state.calSelectedDate.split("-").reverse().join("/")}`
-      : `กิจกรรมในเดือน ${THAI_MONTHS[month]} ${year + 543}`;
+    const agendaLabel = selectedHoliday
+      ? `วันหยุด: ${selectedHoliday}`
+      : selectedEvents.length
+        ? `กิจกรรมวันที่ ${state.calSelectedDate.split("-").reverse().join("/")}`
+        : `กิจกรรมในเดือน ${THAI_MONTHS[month]} ${year + 543}`;
+
+    const holidayBadgesHtml = selectedHoliday
+      ? `<div class="cal-holiday-pill">🏛️ วันหยุดราชการ (${state.calSelectedDate.split("-").reverse().join("/")}) • ${selectedHoliday}</div>`
+      : monthHolidays
+          .map(([dt, name]) => `<div class="cal-holiday-pill">🏛️ ${dt.split("-").reverse().join("/")} • ${name}</div>`)
+          .join("");
 
     return `
       <div class="section-header">
@@ -811,8 +877,9 @@
         <div class="cal-weekdays"><span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span></div>
         <div class="cal-days">${cells}</div>
         <div class="cal-agenda">
+          ${holidayBadgesHtml}
           ${
-            displayEvents.length === 0
+            displayEvents.length === 0 && !holidayBadgesHtml
               ? '<div style="text-align:center;font-size:12px;color:var(--ios-secondary);padding:6px 0">ยังไม่มีกิจกรรมในเดือนนี้ — กด "+ เพิ่มกิจกรรม" ได้เลย</div>'
               : displayEvents
                   .map(

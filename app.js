@@ -154,7 +154,14 @@
     main: document.getElementById("mainContent"),
     tabItems: document.querySelectorAll(".tab-item"),
     sheetBackdrop: document.getElementById("sheetBackdrop"),
-    sheetBody: document.getElementById("sheetBody")
+    sheetBody: document.getElementById("sheetBody"),
+    inAppOverlay: document.getElementById("inAppOverlay"),
+    inAppTitle: document.getElementById("inAppTitle"),
+    inAppFrame: document.getElementById("inAppFrame"),
+    inAppLoading: document.getElementById("inAppLoading"),
+    inAppBackBtn: document.getElementById("inAppBackBtn"),
+    inAppReloadBtn: document.getElementById("inAppReloadBtn"),
+    inAppExternalBtn: document.getElementById("inAppExternalBtn")
   };
 
   function applyTheme() {
@@ -534,14 +541,49 @@
     render();
   }
 
+  let activeInAppUrl = "";
+  function openInAppViewer(sys) {
+    haptic();
+    activeInAppUrl = sys.url;
+    els.inAppTitle.textContent = sys.name;
+    els.inAppLoading.classList.remove("done");
+    els.inAppFrame.src = sys.url;
+    els.inAppOverlay.classList.remove("hidden");
+    requestAnimationFrame(() => els.inAppOverlay.classList.add("open"));
+    notifyIsland(`เปิด ${sys.shortName} ในแอป`);
+  }
+
+  function closeInAppViewer() {
+    haptic();
+    els.inAppOverlay.classList.remove("open");
+    setTimeout(() => {
+      els.inAppOverlay.classList.add("hidden");
+      els.inAppFrame.src = "about:blank";
+      activeInAppUrl = "";
+    }, 340);
+  }
+
+  els.inAppFrame.addEventListener("load", () => {
+    if (activeInAppUrl) els.inAppLoading.classList.add("done");
+  });
+  els.inAppBackBtn.addEventListener("click", closeInAppViewer);
+  els.inAppReloadBtn.addEventListener("click", () => {
+    if (!activeInAppUrl) return;
+    haptic();
+    els.inAppLoading.classList.remove("done");
+    els.inAppFrame.src = activeInAppUrl;
+  });
+  els.inAppExternalBtn.addEventListener("click", () => {
+    if (activeInAppUrl) window.open(activeInAppUrl, "_blank", "noopener,noreferrer");
+  });
+
   function openSystem(sys) {
     const isDemo = !sys.url || sys.url.includes("REPLACE_WITH_");
     if (isDemo) {
       openSheet(sys);
       return;
     }
-    notifyIsland(`กำลังเปิด ${sys.shortName}`);
-    window.open(sys.url, "_blank", "noopener,noreferrer");
+    openInAppViewer(sys);
   }
 
   function currentRole() {

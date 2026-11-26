@@ -1042,6 +1042,111 @@ input, textarea {
 }
 .admin-mini-btn.del { color: #FF3B30; background: rgba(255, 59, 48, 0.12); }
 
+/* In-App Native iOS Viewer for GAS Systems */
+.inapp-overlay {
+  position: absolute;
+  inset: 46px 0 0;
+  z-index: 48;
+  display: flex;
+  flex-direction: column;
+  background: var(--ios-solid);
+  transform: translateX(100%);
+  transition: transform 0.34s var(--ease-ios);
+}
+.inapp-overlay.open {
+  transform: translateX(0);
+}
+.inapp-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: calc(8px + env(safe-area-inset-top)) 12px 10px;
+  background: var(--ios-header-bg);
+  backdrop-filter: saturate(180%) blur(22px);
+  border-bottom: 0.5px solid var(--ios-sep);
+  flex-shrink: 0;
+}
+.inapp-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  color: var(--ios-blue);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 4px 4px 4px 0;
+  cursor: pointer;
+}
+.inapp-title {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ios-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.inapp-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.inapp-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ios-fill);
+  color: var(--ios-text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.inapp-icon-btn:active { transform: scale(0.9); }
+.inapp-body {
+  position: relative;
+  flex: 1;
+  background: #FFFFFF;
+}
+.inapp-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: #FFFFFF;
+}
+.inapp-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--ios-bg);
+  color: var(--ios-secondary);
+  font-size: 13px;
+  transition: opacity 0.25s ease;
+}
+.inapp-loading.done {
+  opacity: 0;
+  pointer-events: none;
+}
+.ios-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--ios-fill);
+  border-top-color: var(--ios-blue);
+  animation: spin 0.75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* Floating Native Pill for Real Phones */
 .mobile-pill {
   position: fixed;
@@ -1109,7 +1214,8 @@ input, textarea {
     border-radius: 0;
     height: 100%;
   }
-  .login-overlay {
+  .login-overlay,
+  .inapp-overlay {
     inset: 0;
   }
   .ios-header {

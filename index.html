@@ -189,6 +189,32 @@
         <!-- iOS Home Indicator (Desktop Preview Only) -->
         <div class="ios-home-indicator" aria-hidden="true"><span></span></div>
 
+        <!-- In-App Native iOS Viewer for GAS Systems -->
+        <section class="inapp-overlay hidden" id="inAppOverlay" aria-label="หน้าต่างระบบงาน">
+          <div class="inapp-bar">
+            <button type="button" class="inapp-back" id="inAppBackBtn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              <span>กลับ</span>
+            </button>
+            <div class="inapp-title" id="inAppTitle">กำลังโหลด...</div>
+            <div class="inapp-actions">
+              <button type="button" class="inapp-icon-btn" id="inAppReloadBtn" aria-label="รีโหลด">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+              </button>
+              <button type="button" class="inapp-icon-btn" id="inAppExternalBtn" aria-label="เปิดในเบราว์เซอร์">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="inapp-body">
+            <div class="inapp-loading" id="inAppLoading">
+              <div class="ios-spinner"></div>
+              <span>กำลังเชื่อมต่อระบบ...</span>
+            </div>
+            <iframe id="inAppFrame" class="inapp-frame" title="ระบบงานโรงเรียน" allow="camera; microphone; geolocation; clipboard-write; fullscreen"></iframe>
+          </div>
+        </section>
+
         <!-- iOS Spring Bottom Sheet Modal -->
         <div class="sheet-backdrop" id="sheetBackdrop">
           <div class="ios-sheet" id="iosSheet" role="dialog" aria-modal="true">

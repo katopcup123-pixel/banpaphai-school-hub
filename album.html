@@ -1120,7 +1120,7 @@
             if (res && res.photo) {
               state.photos.unshift(res.photo);
               renderPhotos();
-              if (!firstCover) firstCover = await makeTinyCover(prepared.preview);
+              if (!firstCover) firstCover = res.photo.full || res.photo.thumb || "";
             }
             item.status = "สำเร็จ";
             item.cls = "done";

@@ -120,6 +120,16 @@
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   }
 
+  function formatNewsDate(raw) {
+    const s = String(raw || "");
+    const m = s.match(/^(?:[A-Z][a-z]{2}\s+){2}\d{1,2}\s+\d{4}\s+\d{2}:\d{2}:\d{2}\s+GMT[+-]\d{4}(?:\s*\([^)]*\))?(.*)$/);
+    if (!m) return s;
+    const d = new Date(s.split(" • ")[0]);
+    if (isNaN(d.getTime())) return s;
+    const thai = `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")} น.`;
+    return `${thai}${m[1] || ""}`;
+  }
+
   if (typeof module !== "undefined" && module.exports) {
     module.exports = { filterSystems, authenticateUser, canAccessExecutive, isAdminUser, canManageNews };
     return;
@@ -1766,9 +1776,9 @@
             (a, i) => `
             <div class="info-card ${a.urgent ? "urgent" : ""}" style="animation-delay:${i * 28}ms">
               <h3>${a.title}</h3>
-              <div class="info-meta">${a.date}</div>
+              <div class="info-meta">${formatNewsDate(a.date)}</div>
               <p>${a.body}</p>
-              ${a.image ? `<img class="news-thumb" src="${a.image}" data-img-preview="${a.id}" alt="" />` : ""}
+              ${a.image ? `<img class="news-thumb" src="${a.image}" data-img-preview="${a.id}" onerror="this.style.display='none'" alt="" />` : ""}
               ${
                 canManageNews(state.currentUser, a)
                   ? `<div class="news-card-foot">
@@ -1981,7 +1991,7 @@
             ${isUnread ? '<span class="balloon-unread-dot"></span>' : '<span style="width:8px;flex-shrink:0"></span>'}
             <div class="balloon-item-body">
               <strong>${a.urgent ? "🚨 " : ""}${a.title}</strong>
-              <span>${a.date} • ${a.body}</span>
+              <span>${formatNewsDate(a.date)} • ${a.body}</span>
             </div>
           </button>`;
       })

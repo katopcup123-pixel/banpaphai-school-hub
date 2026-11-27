@@ -377,7 +377,10 @@
           </div>
           <div class="period-controls">
             <div id="reportSubControls" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-            <button type="button" class="btn-primary" id="printNowBtn" style="margin-left:auto">🖨️ ปริ้น / บันทึก PDF (A4)</button>
+            <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
+              <button type="button" class="btn-primary" id="exportReportPdfBtn">📤 Export PDF ส่งธุรการ</button>
+              <button type="button" class="btn-soft" id="printNowBtn">🖨️ ปริ้น A4</button>
+            </div>
           </div>
         </div>
         <article class="report-paper" id="reportPaper"></article>
@@ -389,6 +392,7 @@
 
   <script src="./apps-config.js"></script>
   <script src="./students-data.js"></script>
+  <script src="./pdf-export.js"></script>
   <script>
     document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
     document.documentElement.style.setProperty("--accent", localStorage.getItem("bpp_connect_accent_v1") || "#007AFF");
@@ -1079,6 +1083,11 @@
     };
 
     $("printNowBtn").onclick = () => { window.print(); };
+    $("exportReportPdfBtn").onclick = () => {
+      const html = $("reportPaper").innerHTML;
+      const fname = `รายงานสถิตินักเรียน_${state.period}_${state.date}.pdf`;
+      window.BPP_PDF.exportOrShare(html, fname, { shareToAdmin: true, onStatus: showToast });
+    };
 
     render();
     syncFromCloud();

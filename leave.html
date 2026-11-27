@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>ระบบการลา & ออกนอกโรงเรียน — BPP Connect</title>
+  <title>ระบบการลา ออกนอกโรงเรียน & บันทึกชี้แจง — BPP Connect</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -20,6 +20,7 @@
       --red: #DC2626;
       --amber: #D97706;
       --purple: #7C3AED;
+      --teal: #0D9488;
       --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     [data-theme="dark"] {
@@ -47,136 +48,131 @@
       border-bottom: 0.5px solid var(--sep);
     }
     .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-    .title-wrap h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+    .title-wrap h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
     .user-sub { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary); margin-top: 2px; }
     .mini-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
 
-    .seg-tabs {
-      display: flex;
-      gap: 4px;
-      background: rgba(118, 118, 128, 0.14);
-      padding: 3px;
-      border-radius: 12px;
-    }
+    .seg-tabs { display: flex; gap: 4px; background: rgba(118, 118, 128, 0.14); padding: 3px; border-radius: 12px; }
     .seg-tab {
-      flex: 1;
-      border: none;
-      background: transparent;
-      color: var(--secondary);
-      font: inherit;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 7px 4px;
-      border-radius: 9px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      flex: 1; border: none; background: transparent; color: var(--secondary);
+      font: inherit; font-size: 12px; font-weight: 600; padding: 7px 4px; border-radius: 9px; cursor: pointer;
     }
     .seg-tab.active { background: var(--surface); color: var(--accent); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
 
     .body-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px 36px; }
 
-    /* Geofence Radar Card */
-    .geo-card {
-      background: var(--surface);
-      border-radius: 18px;
-      padding: 14px;
-      border: 1px solid var(--sep);
-      margin-bottom: 12px;
-      animation: popIn 0.35s var(--spring) both;
+    /* Form Picker Icon Grid (5 Official Thai School Forms) */
+    .form-grid-title { font-size: 12.5px; font-weight: 700; color: var(--secondary); margin: 2px 2px 8px; }
+    .form-icon-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
     }
-    .geo-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .form-tile {
+      background: var(--surface);
+      border: 1px solid var(--sep);
+      border-radius: 16px;
+      padding: 12px 6px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+      cursor: pointer;
+      color: var(--text);
+      font: inherit;
+      transition: transform 0.16s var(--spring), border-color 0.2s ease;
+      animation: popIn 0.34s var(--spring) both;
+    }
+    .form-tile:active { transform: scale(0.94); }
+    .form-ico {
+      width: 44px; height: 44px; border-radius: 13px;
+      display: grid; place-items: center; font-size: 21px;
+    }
+    .ico-purple { background: rgba(124, 58, 237, 0.14); }
+    .ico-amber  { background: rgba(217, 119, 6, 0.14); }
+    .ico-blue   { background: rgba(0, 122, 255, 0.14); }
+    .ico-teal   { background: rgba(13, 148, 136, 0.14); }
+    .ico-rose   { background: rgba(220, 38, 38, 0.14); }
+    .form-tile span { font-size: 11.5px; font-weight: 700; line-height: 1.25; }
+
+    /* Geofence Card */
+    .geo-card {
+      background: var(--surface); border-radius: 16px; padding: 12px 14px;
+      border: 1px solid var(--sep); margin-bottom: 12px;
+    }
+    .geo-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .geo-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 11.5px; font-weight: 700;
-      padding: 4px 10px; border-radius: 999px;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px;
       background: rgba(0, 122, 255, 0.12); color: var(--accent);
     }
     .geo-badge.ok { background: rgba(22, 163, 74, 0.14); color: var(--green); }
     .geo-badge.warn { background: rgba(220, 38, 38, 0.14); color: var(--red); }
     .geo-badge.perm { background: rgba(124, 58, 237, 0.14); color: var(--purple); }
-    .geo-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 1.6s infinite; }
-    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
-    .geo-detail { font-size: 12.5px; color: var(--secondary); margin: 8px 0 10px; line-height: 1.5; }
+    .geo-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .geo-detail { font-size: 12px; color: var(--secondary); margin: 6px 0 8px; line-height: 1.45; }
 
-    .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-    .btn-primary, .btn-soft, .btn-danger, .btn-green {
+    .btn-primary, .btn-soft, .btn-green {
       border: none; font: inherit; font-size: 13px; font-weight: 600;
-      border-radius: 12px; padding: 10px 12px; cursor: pointer;
+      border-radius: 12px; padding: 9px 12px; cursor: pointer;
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      transition: transform 0.14s ease, opacity 0.2s ease;
     }
-    .btn-primary { background: var(--accent); color: #FFF; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.24); }
+    .btn-primary { background: var(--accent); color: #FFF; }
     .btn-green { background: var(--green); color: #FFF; }
-    .btn-danger { background: rgba(220, 38, 38, 0.12); color: var(--red); }
     .btn-soft { background: var(--surface); color: var(--text); border: 1px solid var(--sep); }
-    .btn-primary:active, .btn-soft:active, .btn-green:active, .btn-danger:active { transform: scale(0.96); }
 
     /* Request Cards */
     .req-list { display: flex; flex-direction: column; gap: 10px; }
     .req-card {
-      background: var(--surface);
-      border-radius: 16px;
-      padding: 13px 14px;
-      border: 1px solid var(--sep);
-      animation: slideUp 0.28s ease both;
+      background: var(--surface); border-radius: 16px; padding: 13px 14px;
+      border: 1px solid var(--sep); animation: slideUp 0.25s ease both;
     }
     .req-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-    .type-pill {
-      font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
-      background: rgba(0, 122, 255, 0.12); color: var(--accent);
-    }
+    .type-pill { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: rgba(0, 122, 255, 0.12); color: var(--accent); }
     .type-pill.t-offcampus { background: rgba(124, 58, 237, 0.14); color: var(--purple); }
-    .type-pill.t-sick { background: rgba(217, 119, 6, 0.14); color: var(--amber); }
+    .type-pill.t-sick, .type-pill.t-maternity { background: rgba(217, 119, 6, 0.14); color: var(--amber); }
     .type-pill.t-personal { background: rgba(220, 38, 38, 0.12); color: var(--red); }
     .type-pill.t-duty { background: rgba(22, 163, 74, 0.14); color: var(--green); }
+    .type-pill.t-miss_in, .type-pill.t-miss_out { background: rgba(13, 148, 136, 0.14); color: var(--teal); }
 
     .st-pill { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
     .st-pending { background: rgba(217, 119, 6, 0.14); color: var(--amber); }
     .st-approved { background: rgba(22, 163, 74, 0.14); color: var(--green); }
     .st-rejected { background: rgba(220, 38, 38, 0.14); color: var(--red); }
 
-    .req-name { font-size: 14.5px; font-weight: 700; margin-bottom: 2px; }
+    .req-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
     .req-meta { font-size: 12px; color: var(--secondary); line-height: 1.5; }
     .req-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
     .mini-btn {
       border: 1px solid var(--sep); background: var(--bg); color: var(--text);
       font: inherit; font-size: 11.5px; font-weight: 600;
-      padding: 6px 10px; border-radius: 9px; cursor: pointer;
+      padding: 6px 9px; border-radius: 9px; cursor: pointer;
     }
+    .mini-btn.pdf { background: rgba(0, 122, 255, 0.12); color: var(--accent); border-color: rgba(0, 122, 255, 0.25); }
     .mini-btn.ok { background: var(--green); color: #FFF; border-color: var(--green); }
     .mini-btn.no { background: var(--red); color: #FFF; border-color: var(--red); }
 
-    /* Cards & Forms */
     .card-box { background: var(--surface); border-radius: 18px; padding: 14px; border: 1px solid var(--sep); margin-bottom: 12px; }
     .card-box h2 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
     .field, .select-field, .textarea-field {
       width: 100%; border: 1px solid var(--sep); background: var(--bg); color: var(--text);
-      border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 14px; margin-bottom: 10px; outline: none;
+      border-radius: 11px; padding: 9px 11px; font: inherit; font-size: 13.5px; margin-bottom: 9px; outline: none;
     }
-    .field:focus, .select-field:focus, .textarea-field:focus { border-color: var(--accent); }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .lbl { display: block; font-size: 12px; font-weight: 600; color: var(--secondary); margin-bottom: 4px; }
-
+    .lbl { display: block; font-size: 11.5px; font-weight: 600; color: var(--secondary); margin-bottom: 3px; }
     .day-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
-    .day-chip {
-      border: 1px solid var(--sep); background: var(--bg); color: var(--secondary);
-      font: inherit; font-size: 12px; font-weight: 600;
-      padding: 6px 10px; border-radius: 9px; cursor: pointer;
-    }
+    .day-chip { border: 1px solid var(--sep); background: var(--bg); color: var(--secondary); font: inherit; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 9px; cursor: pointer; }
     .day-chip.active { background: var(--accent); color: #FFF; border-color: var(--accent); }
 
-    table.stat-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-    table.stat-table th, table.stat-table td { padding: 8px 6px; border-bottom: 0.5px solid var(--sep); text-align: center; }
+    table.stat-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    table.stat-table th, table.stat-table td { padding: 8px 4px; border-bottom: 0.5px solid var(--sep); text-align: center; }
     table.stat-table th:first-child, table.stat-table td:first-child { text-align: left; font-weight: 600; }
-    table.stat-table thead th { font-size: 11.5px; color: var(--secondary); }
-
-    .webhook-row {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 8px 0; border-bottom: 0.5px solid var(--sep); font-size: 12.5px;
-    }
+    .webhook-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 0.5px solid var(--sep); font-size: 12.5px; }
     .webhook-row:last-child { border-bottom: none; }
 
-    /* Spring Bottom Sheet */
+    /* Bottom Sheet */
     .backdrop {
       position: fixed; inset: 0; background: rgba(0, 0, 0, 0.42);
       backdrop-filter: blur(4px); z-index: 60;
@@ -185,64 +181,50 @@
     }
     .backdrop.open { opacity: 1; pointer-events: auto; }
     .sheet {
-      width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+      width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
       background: var(--surface); border-radius: 24px 24px 0 0;
-      padding: 12px 18px calc(22px + env(safe-area-inset-bottom));
+      padding: 12px 16px calc(22px + env(safe-area-inset-bottom));
       transform: translateY(100%); transition: transform 0.34s var(--spring);
     }
     .backdrop.open .sheet { transform: translateY(0); }
-    .grabber { width: 38px; height: 4px; border-radius: 99px; background: rgba(120, 120, 128, 0.35); margin: 0 auto 12px; }
-    .sheet h3 { margin: 0 0 10px; font-size: 17px; }
+    .grabber { width: 38px; height: 4px; border-radius: 99px; background: rgba(120, 120, 128, 0.35); margin: 0 auto 10px; }
+    .sheet h3 { margin: 0 0 8px; font-size: 16.5px; }
 
     .toast {
       position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
       z-index: 90; background: rgba(15, 23, 42, 0.92); color: #FFF;
-      font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 999px;
-      display: none; max-width: 90vw; text-align: center;
+      font-size: 12.5px; font-weight: 600; padding: 10px 18px; border-radius: 999px;
+      display: none; max-width: 92vw; text-align: center;
     }
     .toast.show { display: block; }
     .hidden { display: none !important; }
 
-    /* Official Thai Government Memo Print Layout (A4 Portrait) */
+    /* Shared Official Thai Government Document Styles (used in BOTH Print & PDF Export) */
+    .doc-memo { font-family: "TH Sarabun New", "Sarabun", "Noto Sans Thai", serif; color: #000; font-size: 14.5pt; line-height: 1.38; }
+    .memo-stamp-wrap { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+    .memo-stamp { border: 1px solid #000; padding: 4px 10px; font-size: 11.5pt; line-height: 1.32; width: 205px; }
+    .memo-header { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 5px; }
+    .memo-garuda { width: 52px; height: auto; filter: grayscale(100%) contrast(220%) brightness(0.15); }
+    .memo-title { flex: 1; text-align: center; font-size: 24pt; font-weight: 700; margin-right: 52px; line-height: 1; }
+    .memo-meta-row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 4px; }
+    .memo-field-line { margin: 2px 0; }
+    .memo-indent { text-indent: 1.6cm; text-align: justify; margin: 5px 0 4px; }
+    .memo-table { width: 100%; border-collapse: collapse; margin: 6px 0 8px; font-size: 13pt; }
+    .memo-table th, .memo-table td { border: 1px solid #000; padding: 3px 5px; text-align: center; height: 23px; }
+    .memo-table td.left { text-align: left; }
+    .memo-sign-right { width: 56%; margin-left: auto; text-align: center; margin-top: 12px; line-height: 1.34; }
+    .memo-sign-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center; margin-top: 14px; }
+    .memo-box-2x2 { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13pt; }
+    .memo-box-2x2 td { border: 1px solid #000; width: 50%; vertical-align: top; padding: 6px 8px; line-height: 1.38; }
+    .chk-box { display: inline-block; width: 13px; height: 13px; border: 1px solid #000; text-align: center; line-height: 12px; font-size: 10.5pt; margin: 0 3px; vertical-align: middle; }
+    .memo-footnote { margin-top: 8px; font-size: 12.5pt; font-style: italic; }
+
     #printSlipArea { display: none; }
     @media print {
-      @page { size: A4 portrait; margin: 14mm 18mm 14mm 22mm; }
+      @page { size: A4 portrait; margin: 13mm 16mm 13mm 20mm; }
       html, body { height: auto; background: #FFF !important; color: #000 !important; }
       .app, .backdrop, .toast { display: none !important; }
-      #printSlipArea {
-        display: block !important;
-        font-family: "TH Sarabun New", "Sarabun", "Noto Sans Thai", serif;
-        color: #000;
-        font-size: 15.5pt;
-        line-height: 1.38;
-      }
-      .memo-stamp-wrap { display: flex; justify-content: flex-end; margin-bottom: 4px; }
-      .memo-stamp {
-        border: 1px solid #000;
-        padding: 4px 10px;
-        font-size: 12pt;
-        line-height: 1.35;
-        width: 205px;
-      }
-      .memo-header { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 6px; position: relative; }
-      .memo-garuda { width: 54px; height: auto; filter: grayscale(100%) contrast(220%) brightness(0.15); }
-      .memo-title { flex: 1; text-align: center; font-size: 25pt; font-weight: 700; margin-right: 54px; line-height: 1; }
-      .memo-meta-row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 4px; }
-      .memo-field-line { margin: 2px 0; }
-      .memo-indent { text-indent: 1.8cm; text-align: justify; margin: 6px 0 4px; }
-      .memo-table { width: 100%; border-collapse: collapse; margin: 6px 0 8px; font-size: 14pt; }
-      .memo-table th, .memo-table td { border: 1px solid #000; padding: 3px 6px; text-align: center; height: 24px; }
-      .memo-table td.left { text-align: left; }
-      .memo-sign-right { width: 56%; margin-left: auto; text-align: center; margin-top: 12px; line-height: 1.35; }
-      .memo-hr-box { margin-top: 10px; line-height: 1.35; }
-      .memo-sign-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center; margin-top: 14px; }
-      .memo-dir-box { margin-top: 12px; line-height: 1.35; }
-      .memo-footnote { margin-top: 10px; font-size: 13pt; font-style: italic; }
-      .chk-box { display: inline-block; width: 13px; height: 13px; border: 1px solid #000; text-align: center; line-height: 12px; font-size: 11pt; margin: 0 3px; vertical-align: middle; }
-      .slip-head { text-align: center; margin-bottom: 16px; }
-      .slip-head img { width: 54px; height: 54px; object-fit: contain; margin-bottom: 4px; }
-      .slip-head h2 { margin: 0; font-size: 19pt; }
-      .slip-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 38px; text-align: center; }
+      #printSlipArea { display: block !important; }
     }
 
     @keyframes popIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
@@ -254,70 +236,81 @@
     <header class="topbar">
       <div class="top-row">
         <div class="title-wrap">
-          <h1>การลา & ออกนอกโรงเรียน</h1>
+          <h1>การลา & เอกสารบุคคล</h1>
           <div class="user-sub" id="userSub">โรงเรียนบ้านป่าไผ่</div>
         </div>
-        <button type="button" class="btn-soft" id="refreshBtn" style="padding:7px 11px;font-size:12px">รีเฟรช</button>
+        <button type="button" class="btn-soft" id="refreshBtn" style="padding:6px 10px;font-size:12px">รีเฟรช</button>
       </div>
       <div class="seg-tabs" id="mainTabs">
-        <button type="button" class="seg-tab active" data-tab="requests">ยื่นขอ / รายการ</button>
+        <button type="button" class="seg-tab active" data-tab="requests">แบบฟอร์ม / รายการ</button>
         <button type="button" class="seg-tab" data-tab="stats">สถิติการลา</button>
         <button type="button" class="seg-tab hidden" id="adminGeoTab" data-tab="geofence">ตั้งค่า GPS 100ม.</button>
       </div>
     </header>
 
     <main class="body-scroll">
-      <!-- 1. Requests + Live Geofence View -->
+      <!-- 1. Official Forms Icon Picker + Requests -->
       <section id="viewRequests">
+        <div class="form-grid-title">เลือกแบบฟอร์มราชการ (กรอกแล้ว Export เป็น PDF ส่งธุรการปริ้นได้ทันที)</div>
+        <div class="form-icon-grid">
+          <button type="button" class="form-tile" data-open-form="offcampus">
+            <div class="form-ico ico-purple">🚗</div>
+            <span>ขอออกนอกโรงเรียน</span>
+          </button>
+          <button type="button" class="form-tile" data-open-form="leave">
+            <div class="form-ico ico-amber">📝</div>
+            <span>ใบลาป่วย / ลากิจ / คลอด</span>
+          </button>
+          <button type="button" class="form-tile" data-open-form="duty">
+            <div class="form-ico ico-blue">🏛️</div>
+            <span>ขออนุญาตไปราชการ</span>
+          </button>
+          <button type="button" class="form-tile" data-open-form="miss_in">
+            <div class="form-ico ico-teal">🕗</div>
+            <span>ชี้แจงไม่ลงเวลาเข้า 08.15</span>
+          </button>
+          <button type="button" class="form-tile" data-open-form="miss_out">
+            <div class="form-ico ico-rose">🕓</div>
+            <span>ชี้แจงไม่ลงเวลากลับ 16.30</span>
+          </button>
+        </div>
+
         <div class="geo-card">
           <div class="geo-top">
-            <strong style="font-size:14px">📍 ตรวจจับระยะรอบโรงเรียน</strong>
+            <strong style="font-size:13.5px">📍 ตรวจจับระยะรอบโรงเรียน</strong>
             <span class="geo-badge" id="geoStatusBadge"><span class="geo-dot"></span><span id="geoStatusText">พร้อมตรวจจับ</span></span>
           </div>
           <div class="geo-detail" id="geoDetailText">กำลังโหลดตั้งค่าพิกัดโรงเรียน...</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button type="button" class="btn-primary" id="toggleGpsBtn" style="flex:1">เปิดเช็คพิกัด GPS ตอนนี้</button>
-          </div>
+          <button type="button" class="btn-primary" id="toggleGpsBtn" style="width:100%">📡 เปิดเช็คพิกัด GPS ตอนนี้</button>
         </div>
 
-        <div class="quick-actions">
-          <button type="button" class="btn-primary" id="openOffcampusBtn">🚗 ขอออกนอกโรงเรียน</button>
-          <button type="button" class="btn-soft" id="openLeaveBtn">📝 ยื่นใบลา</button>
-        </div>
-
+        <div class="form-grid-title">รายการคำขอและบันทึกข้อความล่าสุด</div>
         <div class="req-list" id="reqList"></div>
       </section>
 
-      <!-- 2. Leave Statistics View -->
+      <!-- 2. Statistics View -->
       <section id="viewStats" class="hidden">
         <div class="card-box">
-          <h2>สรุปสถิติการลา & ออกนอกโรงเรียนของบุคลากร</h2>
+          <h2>สรุปสถิติการลา & บันทึกชี้แจงของบุคลากร</h2>
           <div style="overflow-x:auto" id="statsTableWrap"></div>
         </div>
       </section>
 
-      <!-- 3. Admin Geofence 100m + iPhone Shortcuts Settings -->
+      <!-- 3. Admin Geofence 100m + Permissions -->
       <section id="viewGeofence" class="hidden">
         <div class="card-box">
           <h2>📍 ตั้งค่าพิกัดโรงเรียนและช่วงเวลาแจ้งเตือน</h2>
-          <div style="font-size:12.5px;color:var(--secondary);margin-bottom:10px">
-            หากครูออกจากรัศมีที่กำหนดในช่วงเวลาราชการ <strong>โดยไม่ได้ยื่นขออนุญาตในระบบ</strong> จะแจ้งเตือนครูทุกคนทันที
-          </div>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:12px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:10px">
             <input type="checkbox" id="geoEnabled" /> เปิดใช้งานการแจ้งเตือนออกนอกโรงเรียน
           </label>
           <button type="button" class="btn-primary" id="pinCurrentLocBtn" style="width:100%;margin-bottom:10px">🎯 ปักหมุดพิกัดปัจจุบันเป็นโรงเรียนบ้านป่าไผ่</button>
           <div class="row-2">
-            <div><label class="lbl">ละติจูด (Latitude)</label><input class="field" id="geoLat" type="number" step="any" placeholder="เช่น 14.7025" /></div>
-            <div><label class="lbl">ลองจิจูด (Longitude)</label><input class="field" id="geoLng" type="number" step="any" placeholder="เช่น 101.4125" /></div>
+            <div><label class="lbl">ละติจูด</label><input class="field" id="geoLat" type="number" step="any" /></div>
+            <div><label class="lbl">ลองจิจูด</label><input class="field" id="geoLng" type="number" step="any" /></div>
           </div>
           <div class="row-2">
-            <div><label class="lbl">ระยะห่างแจ้งเตือน (เมตร)</label><input class="field" id="geoRadius" type="number" min="30" max="2000" value="100" /></div>
-            <div><label class="lbl">สถานะพิกัด</label><div id="geoPinHint" style="font-size:12px;color:var(--secondary);padding:10px 4px">ตั้งค่ารัศมี 100 ม.</div></div>
-          </div>
-          <div class="row-2">
-            <div><label class="lbl">เวลาเริ่มเฝ้าระวัง</label><input class="field" id="geoStart" type="time" value="08:00" /></div>
-            <div><label class="lbl">เวลาสิ้นสุดเฝ้าระวัง</label><input class="field" id="geoEnd" type="time" value="16:00" /></div>
+            <div><label class="lbl">รัศมีแจ้งเตือน (เมตร)</label><input class="field" id="geoRadius" type="number" value="100" /></div>
+            <div><label class="lbl">เวลาเริ่ม–สิ้นสุด</label><div class="row-2"><input class="field" id="geoStart" type="time" value="08:00" /><input class="field" id="geoEnd" type="time" value="16:00" /></div></div>
           </div>
           <label class="lbl">วันที่เฝ้าระวัง</label>
           <div class="day-chips" id="geoDayChips"></div>
@@ -327,20 +320,13 @@
         </div>
 
         <div class="card-box">
-          <h2>📱 เชื่อม iPhone "คำสั่งลัด (Shortcuts)" (ทำงานแม้ปิดหน้าจอ!)</h2>
-          <div style="font-size:12.5px;color:var(--secondary);line-height:1.6;margin-bottom:10px">
-            บน iPhone ของครูแต่ละคน ตั้งค่าครั้งเดียว:<br/>
-            1. เปิดแอป <strong>คำสั่งลัด (Shortcuts)</strong> → แท็บ <strong>การทำงานอัตโนมัติ (Automation)</strong> → กด <strong>+</strong><br/>
-            2. เลือก <strong>"ออกจากสถานที่" (Leave)</strong> → ปักหมุด <strong>โรงเรียนบ้านป่าไผ่ (100 ม.)</strong> → เลือก <strong>ทำงานทันที (Run Immediately)</strong><br/>
-            3. เพิ่มคำสั่ง <strong>"รับเนื้อหาของ URL" (Get Contents of URL)</strong> แล้ววางลิงก์ประจำตัวครูด้านล่างนี้ได้เลยครับ (ถ้าครูขออนุญาตในแอพไว้แล้ว ระบบจะเงียบไม่แจ้งเตือน!)
-          </div>
+          <h2>📱 ลิงก์ Webhook สำหรับ iPhone Shortcuts / Android MacroDroid</h2>
           <div id="shortcutLinksWrap"></div>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- Spring Bottom Sheet -->
   <div class="backdrop" id="sheetBackdrop">
     <div class="sheet">
       <div class="grabber"></div>
@@ -348,24 +334,27 @@
     </div>
   </div>
 
-  <!-- Official Printable Leave / Off-Campus Slip -->
   <section id="printSlipArea"></section>
   <div class="toast" id="toast"></div>
 
   <script src="./apps-config.js"></script>
+  <script src="./pdf-export.js"></script>
   <script>
     document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
     document.documentElement.style.setProperty("--accent", localStorage.getItem("bpp_connect_accent_v1") || "#007AFF");
 
     const STORAGE_LEAVES = "bpp_connect_leaves_v1";
     const STORAGE_GEO = "bpp_connect_geofence_v1";
+    const THAI_MONTHS_FULL = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
     const THAI_DAYS_SHORT = [{ d: 1, l: "จ." }, { d: 2, l: "อ." }, { d: 3, l: "พ." }, { d: 4, l: "พฤ." }, { d: 5, l: "ศ." }, { d: 6, l: "ส." }, { d: 0, l: "อา." }];
     const TYPE_MAP = {
       offcampus: { label: "ขอออกนอกโรงเรียน", cls: "t-offcampus" },
       sick: { label: "ลาป่วย", cls: "t-sick" },
       personal: { label: "ลากิจส่วนตัว", cls: "t-personal" },
-      duty: { label: "ไปราชการ", cls: "t-duty" },
-      maternity: { label: "ลาคลอดบุตร", cls: "t-sick" }
+      maternity: { label: "ลาคลอดบุตร", cls: "t-maternity" },
+      duty: { label: "ขออนุญาตไปราชการ", cls: "t-duty" },
+      miss_in: { label: "ชี้แจงไม่ลงเวลาเข้า 08.15", cls: "t-miss_in" },
+      miss_out: { label: "ชี้แจงไม่ลงเวลากลับ 16.30", cls: "t-miss_out" }
     };
     const STATUS_MAP = {
       pending: { label: "รออนุมัติ", cls: "st-pending" },
@@ -377,31 +366,47 @@
       let users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
       try {
         const raw = localStorage.getItem("bpp_connect_users_v3");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length) users = parsed;
-        }
+        if (raw) { const p = JSON.parse(raw); if (Array.isArray(p) && p.length) users = p; }
       } catch (_) {}
       return users;
     }
-
     function getLoggedInTeacher() {
       const uid = localStorage.getItem("bpp_connect_user_v1");
       const users = getAllUsers();
       return users.find((u) => u.id === uid) || users[0] || { id: "", name: "บุคลากรโรงเรียนบ้านป่าไผ่", shortName: "คุณครู", position: "ครู", role: "teacher", avatar: "" };
     }
-
     function todayYmd() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     }
-
+    function toThaiDigits(str) { return String(str || "").replace(/\d/g, (d) => "๐๑๒๓๔๕๖๗๘๙"[Number(d)]); }
+    function parseYmdParts(ymd) {
+      if (!ymd || !ymd.includes("-")) return { d: "........", m: "....................", y: "........" };
+      const [y, m, d] = ymd.split("-").map(Number);
+      return { d: String(d), m: THAI_MONTHS_FULL[m - 1] || "", y: String(y + 543) };
+    }
+    function formatThaiDate(ymd, thaiNum = false) {
+      if (!ymd || !ymd.includes("-")) return ".............................................";
+      const p = parseYmdParts(ymd);
+      const s = `${p.d} ${p.m} ${p.y}`;
+      return thaiNum ? toThaiDigits(s) : s;
+    }
+    function calcDaysInclusive(s, e) {
+      if (!s || !e) return 1;
+      const d1 = new Date(s + "T00:00:00"), d2 = new Date(e + "T00:00:00");
+      return Math.max(1, Math.round((d2 - d1) / 86400000) + 1);
+    }
+    function calcHoursText(st, et) {
+      if (!st || !et) return "............";
+      const [sh, sm] = st.split(":").map(Number), [eh, em] = et.split(":").map(Number);
+      const diff = (eh * 60 + em) - (sh * 60 + sm);
+      if (diff <= 0) return "............";
+      const hrs = diff / 60;
+      return toThaiDigits(Number.isInteger(hrs) ? String(hrs) : hrs.toFixed(1));
+    }
     function haversineMeters(lat1, lng1, lat2, lng2) {
-      const R = 6371000;
-      const toRad = (v) => (v * Math.PI) / 180;
-      const dLat = toRad(lat2 - lat1);
-      const dLng = toRad(lng2 - lng1);
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+      const R = 6371000, rad = (v) => (v * Math.PI) / 180;
+      const a = Math.sin(rad(lat2 - lat1) / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lng2 - lng1) / 2) ** 2;
       return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
@@ -411,45 +416,47 @@
     const backendUrl = ((window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
     const $ = (id) => document.getElementById(id);
 
-    const DEFAULT_GEO = {
-      enabled: true,
-      lat: "",
-      lng: "",
-      radiusMeters: 100,
-      startTime: "08:00",
-      endTime: "16:00",
-      activeDays: [1, 2, 3, 4, 5],
-      exemptUserIds: ["napaporn"]
-    };
-
+    const DEFAULT_GEO = { enabled: true, lat: "", lng: "", radiusMeters: 100, startTime: "08:00", endTime: "16:00", activeDays: [1, 2, 3, 4, 5], exemptUserIds: ["napaporn"] };
     const state = {
       tab: "requests",
       leaves: (() => { try { return JSON.parse(localStorage.getItem(STORAGE_LEAVES) || "[]"); } catch (_) { return []; } })(),
       geofence: (() => { try { return { ...DEFAULT_GEO, ...JSON.parse(localStorage.getItem(STORAGE_GEO) || "{}") }; } catch (_) { return { ...DEFAULT_GEO }; } })(),
-      watchId: null,
-      lastDistance: null,
-      lastAlertAt: 0
+      watchId: null, lastDistance: null, lastAlertAt: 0
     };
 
     function showToast(msg) {
-      const el = $("toast");
-      el.textContent = msg;
-      el.classList.add("show");
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => el.classList.remove("show"), 2600);
+      const el = $("toast"); el.textContent = msg; el.classList.add("show");
+      clearTimeout(showToast._t); showToast._t = setTimeout(() => el.classList.remove("show"), 2600);
     }
-
     function openSheet(html) { $("sheetContent").innerHTML = html; $("sheetBackdrop").classList.add("open"); }
     function closeSheet() { $("sheetBackdrop").classList.remove("open"); }
     $("sheetBackdrop").addEventListener("click", (e) => { if (e.target === $("sheetBackdrop")) closeSheet(); });
 
     function saveLocal() {
+      try { localStorage.setItem(STORAGE_LEAVES, JSON.stringify(state.leaves)); localStorage.setItem(STORAGE_GEO, JSON.stringify(state.geofence)); } catch (_) {}
+    }
+    function postBackend(payload) {
+      if (!backendUrl) return;
+      fetch(backendUrl, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(payload) }).catch(() => {});
+    }
+    async function syncFromCloud() {
+      if (!backendUrl) { render(); return; }
       try {
-        localStorage.setItem(STORAGE_LEAVES, JSON.stringify(state.leaves));
-        localStorage.setItem(STORAGE_GEO, JSON.stringify(state.geofence));
+        const res = await fetch(`${backendUrl}?action=leaves`, { cache: "no-store" });
+        const json = await res.json();
+        if (json && json.ok) {
+          if (Array.isArray(json.leaves)) state.leaves = json.leaves;
+          if (json.geofence && Object.keys(json.geofence).length) state.geofence = { ...DEFAULT_GEO, ...json.geofence };
+          saveLocal();
+        }
       } catch (_) {}
+      render();
     }
 
+    function isUserExemptFromGeo(uid) {
+      const list = Array.isArray(state.geofence.exemptUserIds) ? state.geofence.exemptUserIds : ["napaporn"];
+      return list.includes(uid);
+    }
     function isWithinMonitorWindow(now = new Date()) {
       const g = state.geofence;
       if (!g.enabled) return false;
@@ -460,61 +467,22 @@
       const [eh, em] = String(g.endTime || "16:00").split(":").map(Number);
       return curMin >= (sh * 60 + sm) && curMin <= (eh * 60 + em);
     }
-
-    function getActivePermission(userId, now = new Date()) {
+    function getActivePermission(uid, now = new Date()) {
       const today = todayYmd();
       const curHm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       return state.leaves.find((r) => {
-        if (r.userId !== userId || r.status === "rejected") return false;
-        const start = r.startDate || "";
-        const end = r.endDate || start;
+        if (r.userId !== uid || r.status === "rejected" || r.type === "miss_in" || r.type === "miss_out") return false;
+        const start = r.startDate || "", end = r.endDate || start;
         if (today < start || today > end) return false;
-        if (r.type === "offcampus" && r.startTime && r.endTime) {
-          return curHm >= r.startTime && curHm <= r.endTime;
-        }
-        return true; // ลาป่วย / ลากิจ / ไปราชการ ครอบคลุมทั้งวัน
+        if (r.type === "offcampus" && r.startTime && r.endTime) return curHm >= r.startTime && curHm <= r.endTime;
+        return true;
       }) || null;
-    }
-
-    async function syncFromCloud() {
-      if (!backendUrl) { render(); return; }
-      try {
-        const res = await fetch(`${backendUrl}?action=leaves`, { cache: "no-store" });
-        const json = await res.json();
-        if (json && json.ok) {
-          if (Array.isArray(json.leaves)) state.leaves = json.leaves;
-          if (json.geofence && Object.keys(json.geofence).length) {
-            state.geofence = { ...DEFAULT_GEO, ...json.geofence };
-          }
-          saveLocal();
-        }
-      } catch (_) {}
-      render();
-    }
-
-    function postBackend(payload) {
-      if (!backendUrl) return;
-      fetch(backendUrl, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(payload)
-      }).catch(() => {});
-    }
-
-    function isUserExemptFromGeo(userId) {
-      const list = Array.isArray(state.geofence.exemptUserIds) ? state.geofence.exemptUserIds : ["napaporn"];
-      return list.includes(userId);
     }
 
     function updateGeoBanner() {
       const g = state.geofence;
       const hasPin = g.lat !== "" && g.lng !== "" && !Number.isNaN(Number(g.lat));
-      const perm = getActivePermission(teacher.id);
-      const badge = $("geoStatusBadge");
-      const badgeTxt = $("geoStatusText");
-      const detail = $("geoDetailText");
-
+      const badge = $("geoStatusBadge"), badgeTxt = $("geoStatusText"), detail = $("geoDetailText");
       badge.className = "geo-badge";
       if (isUserExemptFromGeo(teacher.id)) {
         badge.classList.add("perm");
@@ -524,37 +492,32 @@
         return;
       }
       $("toggleGpsBtn").classList.remove("hidden");
+      const perm = getActivePermission(teacher.id);
       if (!hasPin) {
         badgeTxt.textContent = "ยังไม่ปักหมุดโรงเรียน";
-        detail.textContent = isAdmin
-          ? "ไปที่แท็บ 'ตั้งค่า GPS 100ม.' เพื่อปักหมุดพิกัดโรงเรียนบ้านป่าไผ่"
-          : "รอแอดมินปักหมุดพิกัดโรงเรียนในระบบ";
+        detail.textContent = isAdmin ? "ไปที่แท็บ 'ตั้งค่า GPS 100ม.' เพื่อปักหมุดโรงเรียน" : "รอแอดมินปักหมุดพิกัดโรงเรียน";
         return;
       }
-
       if (perm) {
         badge.classList.add("perm");
         badgeTxt.textContent = "ได้รับอนุญาตออกนอกสถานที่";
-        detail.textContent = `มีรายการ "${(TYPE_MAP[perm.type] || {}).label || perm.type}" ${perm.endTime ? `ถึงเวลา ${perm.endTime} น.` : "วันนี้"} — ระบบจะไม่ส่งแจ้งเตือน`;
+        detail.textContent = `มีรายการ "${(TYPE_MAP[perm.type] || {}).label}" ${perm.endTime ? `ถึง ${perm.endTime} น.` : "วันนี้"} — ไม่แจ้งเตือน GPS`;
         return;
       }
-
       const radius = Number(g.radiusMeters) || 100;
       if (state.lastDistance !== null) {
         if (state.lastDistance <= radius) {
           badge.classList.add("ok");
           badgeTxt.textContent = `อยู่ในโรงเรียน (${state.lastDistance} ม.)`;
-          detail.textContent = `ช่วงเวลาเฝ้าระวัง ${g.startTime}–${g.endTime} น. • รัศมี ${radius} เมตร`;
+          detail.textContent = `ช่วงเฝ้าระวัง ${g.startTime}–${g.endTime} น. • รัศมี ${radius} ม.`;
         } else {
           badge.classList.add("warn");
           badgeTxt.textContent = `นอกพื้นที่ (${state.lastDistance} ม.)`;
-          detail.textContent = isWithinMonitorWindow()
-            ? `อยู่นอกรัศมี ${radius} ม. โดยยังไม่ได้ขออนุญาต — ระบบแจ้งเตือนครูทุกคนแล้ว`
-            : `อยู่นอกรัศมี ${radius} ม. (นอกช่วงเวลาเฝ้าระวัง ${g.startTime}–${g.endTime} น.)`;
+          detail.textContent = isWithinMonitorWindow() ? `อยู่นอกรัศมี ${radius} ม. โดยยังไม่ได้ขออนุญาต` : `นอกช่วงเวลาเฝ้าระวัง (${g.startTime}–${g.endTime} น.)`;
         }
       } else {
         badgeTxt.textContent = state.watchId ? "กำลังจับพิกัด..." : `รัศมี ${radius} ม. (${g.startTime}–${g.endTime})`;
-        detail.textContent = `หากออกนอกโรงเรียนเกิน ${radius} ม. ช่วง ${g.startTime}–${g.endTime} น. โดยไม่ยื่นขออนุญาต ระบบจะแจ้งเตือนครูทุกคน`;
+        detail.textContent = `ออกนอกโรงเรียนเกิน ${radius} ม. โดยไม่ขออนุญาตจะแจ้งเตือนครูทุกคน`;
       }
       $("toggleGpsBtn").textContent = state.watchId ? "⏹ หยุดตรวจจับ GPS" : "📡 เปิดเช็คพิกัด GPS ตอนนี้";
     }
@@ -565,324 +528,475 @@
       const dist = haversineMeters(Number(g.lat), Number(g.lng), pos.coords.latitude, pos.coords.longitude);
       state.lastDistance = dist;
       const radius = Number(g.radiusMeters) || 100;
-
       if (dist > radius && isWithinMonitorWindow() && !getActivePermission(teacher.id)) {
-        const nowMs = Date.now();
-        if (nowMs - state.lastAlertAt > 30 * 60 * 1000) {
-          state.lastAlertAt = nowMs;
-          postBackend({
-            action: "geofence_alert",
-            userId: teacher.id,
-            userName: teacher.name,
-            distance: dist,
-            radius
-          });
+        if (Date.now() - state.lastAlertAt > 30 * 60 * 1000) {
+          state.lastAlertAt = Date.now();
+          postBackend({ action: "geofence_alert", userId: teacher.id, userName: teacher.name, distance: dist, radius });
           showToast(`แจ้งเตือนแล้ว: ออกนอกโรงเรียน ${dist} ม. โดยไม่ได้ขออนุญาต`);
         }
       }
       updateGeoBanner();
     }
-
     function toggleGpsWatch() {
-      if (state.watchId !== null) {
-        navigator.geolocation.clearWatch(state.watchId);
-        state.watchId = null;
-        state.lastDistance = null;
-        updateGeoBanner();
-        return;
-      }
-      if (!navigator.geolocation) { showToast("เบราว์เซอร์นี้ไม่รองรับ GPS"); return; }
-      if (!state.geofence.lat || !state.geofence.lng) {
-        showToast("แอดมินยังไม่ได้ปักหมุดพิกัดโรงเรียน");
-        return;
-      }
-      state.watchId = navigator.geolocation.watchPosition(
-        handleGpsPosition,
-        () => showToast("กรุณาอนุญาตสิทธิ์เข้าถึงตำแหน่ง (Location)"),
-        { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
-      );
+      if (state.watchId !== null) { navigator.geolocation.clearWatch(state.watchId); state.watchId = null; state.lastDistance = null; updateGeoBanner(); return; }
+      if (!navigator.geolocation || !state.geofence.lat) { showToast("ยังไม่ได้ปักหมุดโรงเรียนหรือไม่รองรับ GPS"); return; }
+      state.watchId = navigator.geolocation.watchPosition(handleGpsPosition, () => showToast("กรุณาอนุญาตสิทธิ์ Location"), { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 });
       updateGeoBanner();
     }
 
-    function openRequestSheet(mode) {
-      const isOff = mode === "offcampus";
+    // --- 5 Official Form Input Sheets ---
+    function openFormSheet(mode) {
       const today = todayYmd();
       const nowH = String(new Date().getHours()).padStart(2, "0");
       const nextH = String(Math.min(23, new Date().getHours() + 1)).padStart(2, "0");
 
-      openSheet(`
-        <h3>${isOff ? "🚗 ขออนุญาตออกนอกโรงเรียน" : "📝 ยื่นใบลาออนไลน์"}</h3>
-        <div style="font-size:12.5px;color:var(--secondary);margin-bottom:10px">ผู้ยื่นคำขอ: <strong>${teacher.name}</strong></div>
-        ${!isOff ? `
-          <label class="lbl">ประเภทการลา</label>
-          <select class="select-field" id="fType">
-            <option value="sick">ลาป่วย</option>
-            <option value="personal">ลากิจส่วนตัว</option>
-            <option value="duty">ไปราชการ</option>
-            <option value="maternity">ลาคลอดบุตร</option>
-          </select>` : ""}
-        <div class="row-2">
-          <div><label class="lbl">${isOff ? "วันที่" : "ตั้งแต่วันที่"}</label><input class="field" id="fStartDate" type="date" value="${today}" /></div>
-          ${isOff
-            ? `<div><label class="lbl">วิทยฐานะ (ถ้ามี)</label><input class="field" id="fRank" placeholder="เช่น ชำนาญการ / -" /></div>`
-            : `<div><label class="lbl">ถึงวันที่</label><input class="field" id="fEndDate" type="date" value="${today}" /></div>`}
-        </div>
-        ${isOff ? `
-          <label class="lbl">สถานที่ที่จะไป</label>
-          <input class="field" id="fDest" placeholder="เช่น ธนาคารกรุงไทย สาขาปากช่อง / สพป.นม.4" />
+      if (mode === "offcampus") {
+        openSheet(`
+          <h3>🚗 ขออนุญาตออกนอกบริเวณโรงเรียน</h3>
+          <div class="row-2">
+            <div><label class="lbl">วันที่</label><input class="field" id="fStartDate" type="date" value="${today}" /></div>
+            <div><label class="lbl">วิทยฐานะ</label><input class="field" id="fRank" placeholder="เช่น ชำนาญการ / -" /></div>
+          </div>
+          <label class="lbl">ไปที่ (สถานที่)</label>
+          <input class="field" id="fDest" placeholder="เช่น ธนาคาร / สพป.นครราชสีมา เขต 4" />
           <div class="row-2">
             <div><label class="lbl">ตั้งแต่เวลา</label><input class="field" id="fStartTime" type="time" value="${nowH}:00" /></div>
             <div><label class="lbl">ถึงเวลา</label><input class="field" id="fEndTime" type="time" value="${nextH}:00" /></div>
           </div>
-          <label class="lbl">ภาระงานการเรียนการสอน</label>
-          <div style="display:flex;gap:16px;margin-bottom:10px;font-size:13.5px">
-            <label><input type="radio" name="fWorkload" value="no" checked /> ไม่มีภาระงาน</label>
-            <label><input type="radio" name="fWorkload" value="yes" /> มีภาระงาน (มอบหมายสอนแทน)</label>
+          <label class="lbl">มีความจำเป็นเนื่องจาก (ระบุ)</label>
+          <textarea class="textarea-field" id="fReason" rows="2"></textarea>
+          <label class="lbl">ภาระงาน</label>
+          <div style="display:flex;gap:14px;margin-bottom:8px;font-size:13px">
+            <label><input type="radio" name="fWL" value="no" checked /> ไม่มี</label>
+            <label><input type="radio" name="fWL" value="yes" /> มี (มอบหมายงานสอน)</label>
           </div>
-          <div id="workloadBox" class="hidden" style="margin-bottom:8px">
-            <label class="lbl">รายการมอบหมายงานสอน (กรอกได้สูงสุด 4 คาบ)</label>
+          <div id="wlBox" class="hidden" style="margin-bottom:8px">
             ${[1, 2, 3, 4].map((n) => `
-              <div style="display:grid;grid-template-columns:52px 1fr 56px 1fr;gap:4px;margin-bottom:5px">
-                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlPeriod${n}" placeholder="คาบ" />
-                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlTask${n}" placeholder="วิชา/งาน" />
-                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlGrade${n}" placeholder="ชั้น" />
-                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlSub${n}" placeholder="ผู้สอนแทน" />
+              <div style="display:grid;grid-template-columns:46px 1fr 50px 1fr;gap:4px;margin-bottom:4px">
+                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlP${n}" placeholder="คาบ" />
+                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlT${n}" placeholder="งานสอน" />
+                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlG${n}" placeholder="ชั้น" />
+                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlS${n}" placeholder="ผู้สอนแทน" />
               </div>`).join("")}
-          </div>` : ""}
-        <label class="lbl">มีความจำเป็นเนื่องจาก (ระบุ)</label>
-        <textarea class="textarea-field" id="fReason" rows="2" placeholder="ระบุเหตุผล/ภารกิจ..."></textarea>
-        <button type="button" class="btn-primary" id="fSubmitBtn" style="width:100%;margin-bottom:8px">ยืนยันส่งคำขอ</button>
-        <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
-      `);
-
-      if (isOff) {
-        document.querySelectorAll('input[name="fWorkload"]').forEach((r) => {
-          r.onchange = () => $("workloadBox").classList.toggle("hidden", r.value !== "yes");
-        });
+          </div>
+          <button type="button" class="btn-primary" id="fSaveBtn" style="width:100%;margin-bottom:7px">บันทึกคำขอ</button>
+          <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
+        `);
+        document.querySelectorAll('input[name="fWL"]').forEach((r) => { r.onchange = () => $("wlBox").classList.toggle("hidden", r.value !== "yes"); });
+        $("fCancelBtn").onclick = closeSheet;
+        $("fSaveBtn").onclick = () => {
+          const reason = $("fReason").value.trim();
+          if (!reason) { showToast("กรุณาระบุเหตุผล"); return; }
+          const hasWorkload = document.querySelector('input[name="fWL"]:checked')?.value === "yes";
+          const workloadRows = [];
+          if (hasWorkload) {
+            for (let n = 1; n <= 4; n++) {
+              const period = $("wlP" + n).value.trim(), task = $("wlT" + n).value.trim(), grade = $("wlG" + n).value.trim(), sub = $("wlS" + n).value.trim();
+              if (period || task || grade || sub) workloadRows.push({ period, task, grade, sub });
+            }
+          }
+          saveNewRequest({
+            type: "offcampus",
+            startDate: $("fStartDate").value || today,
+            endDate: $("fStartDate").value || today,
+            startTime: $("fStartTime").value,
+            endTime: $("fEndTime").value,
+            destination: $("fDest").value.trim(),
+            reason,
+            meta: { academicRank: $("fRank").value.trim() || "-", hasWorkload, workloadRows }
+          });
+        };
+        return;
       }
 
+      if (mode === "leave") {
+        openSheet(`
+          <h3>📝 แบบใบลาป่วย ลากิจส่วนตัว ลาคลอดบุตร</h3>
+          <label class="lbl">ประเภทการลา</label>
+          <select class="select-field" id="fType">
+            <option value="sick">ลาป่วย</option>
+            <option value="personal">ลากิจส่วนตัว</option>
+            <option value="maternity">ลาคลอดบุตร</option>
+          </select>
+          <div class="row-2">
+            <div><label class="lbl">ตั้งแต่วันที่</label><input class="field" id="fStartDate" type="date" value="${today}" /></div>
+            <div><label class="lbl">ถึงวันที่</label><input class="field" id="fEndDate" type="date" value="${today}" /></div>
+          </div>
+          <label class="lbl">เนื่องจาก</label>
+          <textarea class="textarea-field" id="fReason" rows="2"></textarea>
+          <label class="lbl">ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่</label>
+          <input class="field" id="fContactAddr" placeholder="บ้านเลขที่ / หมู่ / ตำบล / อำเภอ / จังหวัด" />
+          <label class="lbl">เบอร์โทรศัพท์</label>
+          <input class="field" id="fPhone" placeholder="เช่น 08x-xxx-xxxx" value="${teacher.phone || ""}" />
+          <button type="button" class="btn-primary" id="fSaveBtn" style="width:100%;margin-bottom:7px">บันทึกใบลา</button>
+          <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
+        `);
+        $("fCancelBtn").onclick = closeSheet;
+        $("fSaveBtn").onclick = () => {
+          const reason = $("fReason").value.trim();
+          if (!reason) { showToast("กรุณาระบุเหตุผลการลา"); return; }
+          const startDate = $("fStartDate").value || today, endDate = $("fEndDate").value || startDate;
+          saveNewRequest({
+            type: $("fType").value,
+            startDate, endDate,
+            reason,
+            meta: { contactAddr: $("fContactAddr").value.trim(), phone: $("fPhone").value.trim() }
+          });
+        };
+        return;
+      }
+
+      if (mode === "duty") {
+        openSheet(`
+          <h3>🏛️ บันทึกข้อความ ขออนุญาตไปราชการ</h3>
+          <div class="row-2">
+            <div><label class="lbl">กลุ่มสาระการเรียนรู้</label><input class="field" id="fDept" placeholder="เช่น วิทยาศาสตร์ฯ / ปฐมวัย" /></div>
+            <div><label class="lbl">พาหนะเดินทาง</label><input class="field" id="fVehicle" placeholder="รถยนต์ส่วนตัว" value="รถยนต์ส่วนตัว" /></div>
+          </div>
+          <label class="lbl">ไปราชการเพื่อ</label>
+          <select class="select-field" id="fDutyKind">
+            <option value="ฝึกอบรม">ฝึกอบรม</option>
+            <option value="สัมมนา">สัมมนา</option>
+            <option value="ศึกษาดูงาน">ศึกษาดูงาน</option>
+            <option value="เข้าร่วมประชุม">เข้าร่วมประชุม</option>
+            <option value="ไปราชการตามคำสั่งของสำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4">ไปราชการตามคำสั่ง สพป.นม.4</option>
+            <option value="แข่งขันทักษะวิชาการของนักเรียน">แข่งขันทักษะวิชาการของนักเรียน</option>
+            <option value="เป็นวิทยากร">เป็นวิทยากร</option>
+            <option value="อื่น ๆ">อื่น ๆ (ระบุในวัตถุประสงค์)</option>
+          </select>
+          <label class="lbl">หน่วยงานที่จัด (จำเป็นต้องกรอก)</label>
+          <input class="field" id="fOrg" placeholder="เช่น สพป.นครราชสีมา เขต 4" />
+          <label class="lbl">เรื่อง</label>
+          <input class="field" id="fDutySubject" placeholder="ชื่อโครงการ/ประชุม/อบรม" />
+          <label class="lbl">วัตถุประสงค์ของการไปราชการเพื่อ (จำเป็นต้องกรอก)</label>
+          <textarea class="textarea-field" id="fReason" rows="2"></textarea>
+          <label class="lbl">สถานที่</label>
+          <input class="field" id="fDest" placeholder="ชื่อสถานที่/โรงแรม/โรงเรียน" />
+          <div class="row-2">
+            <div><label class="lbl">อำเภอ</label><input class="field" id="fAmphoe" value="ปากช่อง" /></div>
+            <div><label class="lbl">จังหวัด</label><input class="field" id="fProvince" value="นครราชสีมา" /></div>
+          </div>
+          <div class="row-2">
+            <div><label class="lbl">ตั้งแต่วันที่</label><input class="field" id="fStartDate" type="date" value="${today}" /></div>
+            <div><label class="lbl">ถึงวันที่</label><input class="field" id="fEndDate" type="date" value="${today}" /></div>
+          </div>
+          <div class="row-2">
+            <div><label class="lbl">ตั้งแต่เวลา</label><input class="field" id="fStartTime" type="time" value="08:30" /></div>
+            <div><label class="lbl">ถึงเวลา</label><input class="field" id="fEndTime" type="time" value="16:30" /></div>
+          </div>
+          <div class="row-2">
+            <div><label class="lbl">ขออนุมัติค่าใช้จ่าย (บาท)</label><input class="field" id="fBudget" placeholder="เช่น - หรือ 500" /></div>
+            <div><label class="lbl">จำนวนเงิน (ตัวอักษร)</label><input class="field" id="fBudgetText" placeholder="เช่น ห้าร้อยบาทถ้วน" /></div>
+          </div>
+          <label class="lbl">ผู้ร่วมเดินทาง (ไม่บังคับ — คั่นด้วยบรรทัดใหม่ ชื่อ,ตำแหน่ง)</label>
+          <textarea class="textarea-field" id="fCompanions" rows="2" placeholder="เช่น นางสาวน้ำเพชร ชมประเสริฐ,ครู"></textarea>
+          <button type="button" class="btn-primary" id="fSaveBtn" style="width:100%;margin-bottom:7px">บันทึกขออนุญาตไปราชการ</button>
+          <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
+        `);
+        $("fCancelBtn").onclick = closeSheet;
+        $("fSaveBtn").onclick = () => {
+          const org = $("fOrg").value.trim(), reason = $("fReason").value.trim();
+          if (!org || !reason) { showToast("กรุณากรอกหน่วยงานที่จัดและวัตถุประสงค์"); return; }
+          const companions = $("fCompanions").value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 10).map((l) => {
+            const [n, p] = l.split(",");
+            return { name: (n || "").trim(), pos: (p || "ครู").trim() };
+          });
+          saveNewRequest({
+            type: "duty",
+            startDate: $("fStartDate").value || today,
+            endDate: $("fEndDate").value || $("fStartDate").value || today,
+            startTime: $("fStartTime").value,
+            endTime: $("fEndTime").value,
+            destination: $("fDest").value.trim(),
+            reason,
+            meta: {
+              dept: $("fDept").value.trim(),
+              vehicle: $("fVehicle").value.trim(),
+              dutyKind: $("fDutyKind").value,
+              org,
+              dutySubject: $("fDutySubject").value.trim(),
+              amphoe: $("fAmphoe").value.trim(),
+              province: $("fProvince").value.trim(),
+              budget: $("fBudget").value.trim(),
+              budgetText: $("fBudgetText").value.trim(),
+              companions
+            }
+          });
+        };
+        return;
+      }
+
+      // miss_in (08.15) or miss_out (16.30)
+      const isIn = mode === "miss_in";
+      openSheet(`
+        <h3>${isIn ? "🕗 ชี้แจงการมาลงเวลาปฏิบัติราชการ (08.15 น.)" : "🕓 ชี้แจงการไม่ลงเวลากลับ (16.30 น.)"}</h3>
+        <div class="row-2">
+          <div><label class="lbl">เมื่อวันที่</label><input class="field" id="fStartDate" type="date" value="${today}" /></div>
+          <div><label class="lbl">วิทยฐานะ</label><input class="field" id="fRank" placeholder="เช่น ชำนาญการ / -" /></div>
+        </div>
+        ${isIn ? `
+          <div class="row-2">
+            <div><label class="lbl">มาปฏิบัติงานตั้งแต่เวลา</label><input class="field" id="fStartTime" type="time" value="08:00" /></div>
+            <div><label class="lbl">ผู้ร่วมปฏิบัติงาน (พยาน)</label><input class="field" id="fWitness" placeholder="ชื่อ-สกุล ครูผู้ร่วมงาน" /></div>
+          </div>` : ""}
+        <label class="lbl">เนื่องจาก (ระบุเหตุผล/ความจำเป็น)</label>
+        <textarea class="textarea-field" id="fReason" rows="2"></textarea>
+        <button type="button" class="btn-primary" id="fSaveBtn" style="width:100%;margin-bottom:7px">บันทึกข้อความชี้แจง</button>
+        <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
+      `);
       $("fCancelBtn").onclick = closeSheet;
-      $("fSubmitBtn").onclick = () => {
-        const type = isOff ? "offcampus" : $("fType").value;
-        const startDate = $("fStartDate").value || today;
-        const endDate = isOff ? startDate : ($("fEndDate").value || startDate);
-        const startTime = isOff ? $("fStartTime").value : "";
-        const endTime = isOff ? $("fEndTime").value : "";
-        const destination = isOff ? $("fDest").value.trim() : "";
-        const academicRank = isOff ? ($("fRank").value.trim() || "-") : "";
-        const hasWorkload = isOff ? (document.querySelector('input[name="fWorkload"]:checked')?.value === "yes") : false;
-        const workloadRows = [];
-        if (isOff && hasWorkload) {
-          for (let n = 1; n <= 4; n++) {
-            const period = $("wlPeriod" + n).value.trim();
-            const task = $("wlTask" + n).value.trim();
-            const grade = $("wlGrade" + n).value.trim();
-            const sub = $("wlSub" + n).value.trim();
-            if (period || task || grade || sub) workloadRows.push({ period, task, grade, sub });
-          }
-        }
+      $("fSaveBtn").onclick = () => {
         const reason = $("fReason").value.trim();
         if (!reason) { showToast("กรุณาระบุเหตุผล"); return; }
-
-        const item = {
-          id: "lv-" + Date.now(),
-          type,
-          userId: teacher.id,
-          userName: teacher.name,
-          position: teacher.position || "ครู",
-          academicRank,
-          startDate,
-          endDate,
-          startTime,
-          endTime,
+        saveNewRequest({
+          type: mode,
+          startDate: $("fStartDate").value || today,
+          endDate: $("fStartDate").value || today,
+          startTime: isIn ? $("fStartTime").value : "16:30",
+          endTime: "",
           reason,
-          destination,
-          hasWorkload,
-          workloadRows,
-          status: "pending",
-          approvedBy: "",
-          createdAt: new Date().toLocaleString("th-TH")
-        };
-        state.leaves = [item, ...state.leaves];
-        saveLocal();
-        postBackend({ action: "save_leave", leave: item });
-        closeSheet();
-        showToast(isOff ? "บันทึกขอออกนอกโรงเรียนแล้ว (ระบบจะไม่แจ้งเตือน GPS)" : "ส่งใบลาเรียบร้อยแล้ว");
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: "BPP_DOC_UPLOADED", title: `${(TYPE_MAP[type] || {}).label} - ${teacher.shortName}` }, location.origin);
-        }
-        render();
+          meta: { academicRank: $("fRank").value.trim() || "-", witness: isIn ? $("fWitness").value.trim() : "" }
+        });
       };
     }
 
-    const THAI_MONTHS_FULL = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-    function toThaiDigits(str) {
-      return String(str || "").replace(/\d/g, (d) => "๐๑๒๓๔๕๖๗๘๙"[Number(d)]);
-    }
-    function formatThaiMemoDate(ymd) {
-      if (!ymd || !ymd.includes("-")) return ".............................................";
-      const [y, m, d] = ymd.split("-").map(Number);
-      return toThaiDigits(`${d} ${THAI_MONTHS_FULL[m - 1] || ""} ${y + 543}`);
-    }
-    function calcHoursText(st, et) {
-      if (!st || !et) return "............";
-      const [sh, sm] = st.split(":").map(Number);
-      const [eh, em] = et.split(":").map(Number);
-      const diffMin = (eh * 60 + em) - (sh * 60 + sm);
-      if (diffMin <= 0) return "............";
-      const hrs = diffMin / 60;
-      return toThaiDigits(Number.isInteger(hrs) ? String(hrs) : hrs.toFixed(1));
+    function saveNewRequest({ type, startDate, endDate, startTime = "", endTime = "", destination = "", reason = "", meta = {} }) {
+      const item = {
+        id: "lv-" + Date.now(),
+        type,
+        userId: teacher.id,
+        userName: teacher.name,
+        position: teacher.position || "ครู",
+        academicRank: meta.academicRank || "",
+        hasWorkload: Boolean(meta.hasWorkload),
+        workloadRows: Array.isArray(meta.workloadRows) ? meta.workloadRows : [],
+        meta,
+        startDate, endDate, startTime, endTime, reason, destination,
+        status: "pending",
+        approvedBy: "",
+        createdAt: new Date().toLocaleString("th-TH")
+      };
+      state.leaves = [item, ...state.leaves];
+      saveLocal();
+      postBackend({ action: "save_leave", leave: item });
+      closeSheet();
+      showToast(`บันทึก ${(TYPE_MAP[type] || {}).label} เรียบร้อย! กดปุ่ม PDF เพื่อส่งธุรการได้เลย`);
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "BPP_DOC_UPLOADED", title: `${(TYPE_MAP[type] || {}).label} - ${teacher.shortName}` }, location.origin);
+      }
+      render();
     }
 
-    function printLeaveSlip(item) {
+    // --- Exact Official Government HTML Builders for all 5 Forms ---
+    function getFiscalHalf(ymd) {
+      const m = Number((ymd || todayYmd()).split("-")[1]);
+      return (m >= 10 || m <= 3) ? 1 : 2; // 1 = 1 ต.ค.-31 มี.ค., 2 = 1 เม.ย.-30 ก.ย.
+    }
+
+    function buildOfficialDocHtml(item) {
+      const m = item.meta || {};
+      const rank = item.academicRank || m.academicRank || "..................";
+
+      // 1. บันทึกข้อความ ขออนุญาตออกนอกบริเวณโรงเรียน
       if (item.type === "offcampus") {
-        const rows = Array.isArray(item.workloadRows) ? item.workloadRows : [];
+        const rows = Array.isArray(item.workloadRows) ? item.workloadRows : (m.workloadRows || []);
         const tableRowsHtml = [0, 1, 2, 3].map((i) => {
           const r = rows[i] || {};
           return `<tr><td>${toThaiDigits(r.period || "")}</td><td class="left">${r.task || ""}</td><td>${r.grade || ""}</td><td>${r.sub || ""}</td></tr>`;
         }).join("");
-        const hasWL = Boolean(item.hasWorkload || rows.length > 0);
-        const dateThai = formatThaiMemoDate(item.startDate);
+        const hasWL = Boolean(item.hasWorkload || m.hasWorkload || rows.length > 0);
+        const dateThai = formatThaiDate(item.startDate, true);
         const startT = item.startTime ? toThaiDigits(item.startTime) : "...............";
         const endT = item.endTime ? toThaiDigits(item.endTime) : "...............";
         const totalHrs = calcHoursText(item.startTime, item.endTime);
 
-        $("printSlipArea").innerHTML = `
-          <div class="memo-stamp-wrap">
-            <div class="memo-stamp">
-              <div><strong>กลุ่มบริหารงานบุคคล</strong></div>
-              <div>รับที่………………………………….</div>
-              <div>วันที่.....................................</div>
-              <div>เวลา...................................น.</div>
-            </div>
-          </div>
-
-          <div class="memo-header">
-            <img class="memo-garuda" src="./icons/garuda.svg" alt="ตราครุฑ" />
-            <div class="memo-title">บันทึกข้อความ</div>
-          </div>
-
-          <div class="memo-field-line">
-            <strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่&nbsp;&nbsp;&nbsp;&nbsp;อำเภอปากช่อง&nbsp;&nbsp;สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔
-          </div>
-          <div class="memo-meta-row">
-            <div><strong>ที่</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-            <div><strong>วันที่</strong>&nbsp;&nbsp;${dateThai}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-          </div>
+        return `<div class="doc-memo">
+          <div class="memo-stamp-wrap"><div class="memo-stamp"><div><strong>กลุ่มบริหารงานบุคคล</strong></div><div>รับที่………………………………….</div><div>วันที่.....................................</div><div>เวลา...................................น.</div></div></div>
+          <div class="memo-header"><img class="memo-garuda" src="./icons/garuda.svg" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
+          <div class="memo-field-line"><strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่&nbsp;&nbsp;&nbsp;&nbsp;อำเภอปากช่อง&nbsp;&nbsp;สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
+          <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong>&nbsp;&nbsp;${dateThai}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
           <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;ขออนุญาตออกนอกบริเวณโรงเรียน</div>
-          <div class="memo-field-line" style="margin-top:4px"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
-
-          <div class="memo-indent">
-            ด้วยข้าพเจ้า&nbsp;${item.userName || "....................................................................."}&nbsp;
-            ตำแหน่ง&nbsp;${item.position || "........................"}&nbsp;
-            วิทยฐานะ&nbsp;${item.academicRank || ".........................."}&nbsp;
-            โรงเรียนบ้านป่าไผ่ มีความจำเป็นเนื่องจาก (ระบุ)&nbsp;${item.reason || "........................................................................"}&nbsp;
-            จึงขออนุญาตออกนอกบริเวณโรงเรียน ไปที่&nbsp;${item.destination || "...................................................................."}&nbsp;
-            ในวันที่&nbsp;${dateThai}&nbsp;ตั้งแต่เวลา&nbsp;${startT}&nbsp;ถึงเวลา&nbsp;${endT}&nbsp;น. รวม&nbsp;${totalHrs}&nbsp;ชั่วโมง
-          </div>
-
-          <div class="memo-field-line" style="margin-top:4px">
-            <strong>ภาระงาน</strong>&nbsp;&nbsp;&nbsp;
-            <span class="chk-box">${hasWL ? "✓" : ""}</span> มี&nbsp;&nbsp;&nbsp;&nbsp;
-            <span class="chk-box">${!hasWL ? "✓" : ""}</span> ไม่มี
-          </div>
+          <div class="memo-field-line"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          <div class="memo-indent">ด้วยข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${item.position || "ครู"}&nbsp;วิทยฐานะ&nbsp;${rank}&nbsp;โรงเรียนบ้านป่าไผ่ มีความจำเป็นเนื่องจาก (ระบุ)&nbsp;${item.reason}&nbsp;จึงขออนุญาตออกนอกบริเวณโรงเรียน ไปที่&nbsp;${item.destination || ".........................."}&nbsp;ในวันที่&nbsp;${dateThai}&nbsp;ตั้งแต่เวลา&nbsp;${startT}&nbsp;ถึงเวลา&nbsp;${endT}&nbsp;น. รวม&nbsp;${totalHrs}&nbsp;ชั่วโมง</div>
+          <div class="memo-field-line"><strong>ภาระงาน</strong>&nbsp;&nbsp;<span class="chk-box">${hasWL ? "✓" : ""}</span> มี&nbsp;&nbsp;&nbsp;<span class="chk-box">${!hasWL ? "✓" : ""}</span> ไม่มี</div>
           <div class="memo-field-line">โดยได้มอบหมายภาระงานการเรียนการสอน/งานพิเศษ ดังนี้</div>
-
-          <table class="memo-table">
-            <thead>
-              <tr>
-                <th style="width:12%">คาบ</th>
-                <th style="width:42%">งานสอน/ภาระงาน</th>
-                <th style="width:14%">ชั้น</th>
-                <th style="width:32%">ผู้สอนแทน (ลงชื่อ)</th>
-              </tr>
-            </thead>
-            <tbody>${tableRowsHtml}</tbody>
-          </table>
-
-          <div class="memo-indent" style="margin-top:4px">จึงเรียนมาเพื่อโปรดทราบและพิจารณา</div>
-
-          <div class="memo-sign-right">
-            <div>ลงชื่อ...................................................ผู้ขออนุญาต</div>
-            <div>(${item.userName || "................................................................"})</div>
-            <div>ตำแหน่ง ${item.position || "………………………………………………"}</div>
+          <table class="memo-table"><thead><tr><th style="width:12%">คาบ</th><th style="width:42%">งานสอน/ภาระงาน</th><th style="width:14%">ชั้น</th><th style="width:32%">ผู้สอนแทน (ลงชื่อ)</th></tr></thead><tbody>${tableRowsHtml}</tbody></table>
+          <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบและพิจารณา</div>
+          <div class="memo-sign-right"><div>ลงชื่อ...................................................ผู้ขออนุญาต</div><div>(${item.userName})</div><div>ตำแหน่ง ${item.position || "ครู"}</div></div>
+          <div style="margin-top:8px"><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong><div style="text-indent:0.8cm">- เพื่อโปรดทราบ</div><div>………………………………………………………………………………</div></div>
+          <div class="memo-sign-2col">
+            <div><div>ลงชื่อ.........................................................</div><div>(นางสาวนริศรา พืชผักหวาน)</div><div>เจ้าหน้าที่ทะเบียนและสถิติ</div></div>
+            <div><div>ลงชื่อ............................................................</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>หัวหน้ากลุ่มบริหารงานบุคคล</div></div>
           </div>
-
-          <div class="memo-hr-box">
-            <div><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong></div>
-            <div style="text-indent:0.8cm">- เพื่อโปรดทราบ</div>
-            <div>………………………………………………………………………………</div>
-            <div>………………………………………………………………………………</div>
-            <div class="memo-sign-2col">
-              <div>
-                <div>ลงชื่อ.........................................................</div>
-                <div>(นางสาวนริศรา พืชผักหวาน)</div>
-                <div>เจ้าหน้าที่ทะเบียนและสถิติ</div>
-              </div>
-              <div>
-                <div>ลงชื่อ............................................................</div>
-                <div>(นายธานครินทร์ สุเมธาลังการ)</div>
-                <div>หัวหน้ากลุ่มบริหารงานบุคคล</div>
-              </div>
-            </div>
+          <div style="margin-top:10px"><strong>ความเห็นของผู้อำนวยการโรงเรียน</strong>
+            <div>&nbsp;&nbsp;&nbsp;<span class="chk-box">${item.status === "approved" ? "✓" : ""}</span> อนุญาต&nbsp;&nbsp;&nbsp;<span class="chk-box">${item.status === "rejected" ? "✓" : ""}</span> ไม่อนุญาต เนื่องจาก........................................................................</div>
+            <div class="memo-sign-right" style="margin-top:10px"><div>ลงชื่อ............................................................</div><div>(นางสาวนภาพร คงแสนคำ)</div><div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div></div>
           </div>
-
-          <div class="memo-dir-box">
-            <div><strong>ความเห็นของผู้อำนวยการโรงเรียน</strong></div>
-            <div style="margin-top:2px">
-              &nbsp;&nbsp;&nbsp;&nbsp;<span class="chk-box">${item.status === "approved" ? "✓" : ""}</span> อนุญาต&nbsp;&nbsp;&nbsp;&nbsp;
-              <span class="chk-box">${item.status === "rejected" ? "✓" : ""}</span> ไม่อนุญาต เนื่องจาก..................................................................................
-            </div>
-            <div class="memo-sign-right" style="margin-top:14px">
-              <div>ลงชื่อ............................................................</div>
-              <div>(นางสาวนภาพร คงแสนคำ)</div>
-              <div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
-            </div>
-          </div>
-
           <div class="memo-footnote">*หมายเหตุ ให้ผู้อำนวยการอนุญาตก่อนออกนอกบริเวณโรงเรียน</div>
-        `;
-        window.print();
-        return;
+        </div>`;
       }
 
-      const tLabel = (TYPE_MAP[item.type] || {}).label || item.type;
-      const dateRange = item.startDate === item.endDate ? formatThaiMemoDate(item.startDate) : `${formatThaiMemoDate(item.startDate)} ถึง ${formatThaiMemoDate(item.endDate)}`;
-      $("printSlipArea").innerHTML = `
-        <div class="slip-head">
-          <img src="./icons/school-logo.png" alt="" />
-          <h2>แบบ${tLabel}</h2>
-          <div>โรงเรียนบ้านป่าไผ่ สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
-        </div>
-        <p style="text-align:right">วันที่เขียนแบบฟอร์ม: ${formatThaiMemoDate(item.startDate)}</p>
-        <p><strong>เรียน</strong> ผู้อำนวยการโรงเรียนบ้านป่าไผ่</p>
-        <p class="memo-indent">
-          ข้าพเจ้า <strong>${item.userName}</strong> ตำแหน่ง ${item.position || "ครู"} โรงเรียนบ้านป่าไผ่
-          มีความประสงค์ขออนุญาต <strong>${tLabel}</strong>
-          ในวันที่ <strong>${dateRange}</strong>
-          เนื่องจาก ${item.reason}
-        </p>
-        <p class="memo-indent">จึงเรียนมาเพื่อโปรดพิจารณาอนุญาต</p>
-        <div class="slip-sign">
-          <div>
-            <div>ลงชื่อ..............................................ผู้ขออนุญาต</div>
-            <div style="margin-top:24px">(${item.userName})</div>
-            <div>${item.position || "ครูโรงเรียนบ้านป่าไผ่"}</div>
+      // 2. แบบใบลาป่วย ลากิจส่วนตัว ลาคลอดบุตร (ตรงตาม media_1795747022149_77e605ab.doc)
+      if (item.type === "sick" || item.type === "personal" || item.type === "maternity") {
+        const sp = parseYmdParts(item.startDate), ep = parseYmdParts(item.endDate || item.startDate);
+        const days = calcDaysInclusive(item.startDate, item.endDate || item.startDate);
+        const half = getFiscalHalf(item.startDate);
+        const prevMine = state.leaves.filter((x) => x.userId === item.userId && x.id !== item.id && x.status !== "rejected" && (x.type === "sick" || x.type === "personal" || x.type === "maternity"));
+        const statRow = (t) => {
+          const prev = prevMine.filter((x) => x.type === t);
+          const pc = prev.length, pd = prev.reduce((a, x) => a + calcDaysInclusive(x.startDate, x.endDate || x.startDate), 0);
+          const cc = item.type === t ? 1 : 0, cd = item.type === t ? days : 0;
+          return `<tr><td class="left">${t === "sick" ? "ป่วย" : t === "personal" ? "กิจส่วนตัว" : "คลอดบุตร"}</td><td>${pc}</td><td>${pd}</td><td>${cc}</td><td>${cd}</td><td>${pc + cc}</td><td>${pd + cd}</td></tr>`;
+        };
+        const lastSame = prevMine.find((x) => x.type === item.type);
+        const lp1 = lastSame ? parseYmdParts(lastSame.startDate) : null;
+        const lp2 = lastSame ? parseYmdParts(lastSame.endDate || lastSame.startDate) : null;
+        const lastDays = lastSame ? calcDaysInclusive(lastSame.startDate, lastSame.endDate || lastSame.startDate) : "........";
+        const subj = item.type === "sick" ? "ขอลาป่วย" : item.type === "personal" ? "ขอลากิจส่วนตัว" : "ขอลาคลอดบุตร";
+
+        return `<div class="doc-memo">
+          <div style="text-align:center;font-size:18pt;font-weight:700;margin-bottom:6px">แบบใบลาป่วย ลากิจส่วนตัว ลาคลอดบุตร</div>
+          <div style="text-align:right">เขียนที่&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่</div>
+          <div style="text-align:right">วันที่&nbsp;${sp.d}&nbsp;เดือน&nbsp;${sp.m}&nbsp;พ.ศ.&nbsp;${sp.y}</div>
+          <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;${subj}</div>
+          <div class="memo-field-line"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          <div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${item.position || "ครู"}&nbsp;โรงเรียนบ้านป่าไผ่ สังกัดสำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4 สังกัดสำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน กระทรวงศึกษาธิการ</div>
+          <div style="margin-left:1.2cm">
+            <div>ขอลา&nbsp;&nbsp;( ${item.type === "sick" ? "✓" : "&nbsp;&nbsp;"} ) ป่วย&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;เนื่องจาก ${item.type === "sick" ? item.reason : "................................................................................."}</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( ${item.type === "personal" ? "✓" : "&nbsp;&nbsp;"} ) กิจส่วนตัว&nbsp;&nbsp;&nbsp;เนื่องจาก ${item.type === "personal" ? item.reason : "................................................................................."}</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( ${item.type === "maternity" ? "✓" : "&nbsp;&nbsp;"} ) ลาคลอดบุตร&nbsp;เนื่องจาก ${item.type === "maternity" ? item.reason : "................................................................................."}</div>
           </div>
-          <div>
-            <div>ความเห็นผู้อำนวยการ: <span class="chk-box">${item.status === "approved" ? "✓" : ""}</span> อนุญาต &nbsp;<span class="chk-box">${item.status === "rejected" ? "✓" : ""}</span> ไม่อนุญาต</div>
-            <div style="margin-top:24px">ลงชื่อ..............................................</div>
-            <div>(นางสาวนภาพร คงแสนคำ)</div>
-            <div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          <div class="memo-field-line">ตั้งแต่วันที่&nbsp;${sp.d}&nbsp;เดือน&nbsp;${sp.m}&nbsp;พ.ศ.&nbsp;${sp.y}&nbsp;ถึงวันที่&nbsp;${ep.d}&nbsp;เดือน&nbsp;${ep.m}&nbsp;พ.ศ.&nbsp;${ep.y}&nbsp;มีกำหนด&nbsp;${days}&nbsp;วัน</div>
+          <div class="memo-field-line">ข้าพเจ้าได้ลา ( ${lastSame && lastSame.type === "sick" ? "✓" : "&nbsp;"} ) ป่วย ( ${lastSame && lastSame.type === "personal" ? "✓" : "&nbsp;"} ) กิจส่วนตัว ( ${lastSame && lastSame.type === "maternity" ? "✓" : "&nbsp;"} ) คลอดบุตร ครั้งสุดท้ายตั้งแต่วันที่ ${lp1 ? `${lp1.d} เดือน ${lp1.m} พ.ศ. ${lp1.y}` : "...... เดือน ............ พ.ศ. ......"} ถึงวันที่ ${lp2 ? `${lp2.d} เดือน ${lp2.m} พ.ศ. ${lp2.y}` : "...... เดือน ............ พ.ศ. ......"} กำหนด ${lastDays} วัน</div>
+          <div class="memo-field-line">ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่&nbsp;${m.contactAddr || "...................................................................................................."}</div>
+          <div class="memo-field-line">โทร&nbsp;${m.phone || "........................................................................"}</div>
+          <div class="memo-sign-right"><div>ขอแสดงความนับถือ</div><div style="margin-top:16px">............................................................</div><div>(${item.userName})</div><div>ตำแหน่ง ${item.position || "ครู"}</div></div>
+          <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:14px;margin-top:12px;align-items:start">
+            <div>
+              <div><strong>สถิติการลา</strong> ( ${half === 1 ? "✓" : "&nbsp;"} ) 1 ต.ค. - 31 มี.ค. ( ${half === 2 ? "✓" : "&nbsp;"} ) 1 เม.ย. - 30 ก.ย.</div>
+              <table class="memo-table">
+                <thead>
+                  <tr><th rowspan="2">ประเภทการลา</th><th colspan="2">ลามาแล้ว</th><th colspan="2">ลาครั้งนี้</th><th colspan="2">รวมเป็น</th></tr>
+                  <tr><th>ครั้ง</th><th>วัน</th><th>ครั้ง</th><th>วัน</th><th>ครั้ง</th><th>วัน</th></tr>
+                </thead>
+                <tbody>${statRow("sick")}${statRow("personal")}${statRow("maternity")}</tbody>
+              </table>
+              <div style="text-align:center;margin-top:12px"><div>ลงชื่อ..............................................ผู้บันทึกข้อมูล</div><div>(นางสาวนริศรา พืชผักหวาน)</div><div>หัวหน้างานทะเบียนและสถิติ</div></div>
+            </div>
+            <div style="padding-top:14px;line-height:1.45">
+              <div><strong>ความเห็นผู้บังคับบัญชา</strong></div>
+              <div>....................................................................</div>
+              <div style="text-align:center;margin:10px 0"><div>ลงชื่อ.................................................</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>หัวหน้ากลุ่มบริหารงานบุคคล</div></div>
+              <div><strong>คำสั่ง</strong>&nbsp;&nbsp;( ${item.status === "approved" ? "✓" : "&nbsp;"} ) อนุญาต&nbsp;&nbsp;( ${item.status === "rejected" ? "✓" : "&nbsp;"} ) ไม่อนุญาต</div>
+              <div style="text-align:center;margin-top:14px"><div>ลงชื่อ.................................................</div><div>(นางสาวนภาพร คงแสนคำ)</div><div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div></div>
+            </div>
           </div>
         </div>`;
+      }
+
+      // 3. บันทึกข้อความ ขออนุญาตไปราชการ (ตรงตาม media_1795747022147_cbbe95b0.doc)
+      if (item.type === "duty") {
+        const sp = parseYmdParts(item.startDate), ep = parseYmdParts(item.endDate || item.startDate);
+        const days = calcDaysInclusive(item.startDate, item.endDate || item.startDate);
+        const comps = Array.isArray(m.companions) ? m.companions : [];
+        const compRows = [0, 1, 2, 3, 4].map((i) => {
+          const L = comps[i] || {}, R = comps[i + 5] || {};
+          return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13pt">
+            <div>${i + 1}. ${L.name || "......................................."} ตำแหน่ง ${L.pos || "..............."}</div>
+            <div>${i + 6}. ${R.name || "......................................."} ตำแหน่ง ${R.pos || "..............."}</div>
+          </div>`;
+        }).join("");
+        const kinds = ["ฝึกอบรม", "สัมมนา", "ศึกษาดูงาน", "เข้าร่วมประชุม", "ไปราชการตามคำสั่งของสำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4", "แข่งขันทักษะวิชาการของนักเรียน", "เป็นวิทยากร", "อื่น ๆ"];
+        const isK = (k) => m.dutyKind === k ? "✓" : "";
+
+        return `<div class="doc-memo">
+          <div class="memo-header"><img class="memo-garuda" src="./icons/garuda.svg" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
+          <div class="memo-field-line"><strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่&nbsp;&nbsp;สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</div>
+          <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong>&nbsp;&nbsp;${formatThaiDate(item.startDate)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
+          <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;ขออนุญาตไปราชการ</div>
+          <div class="memo-field-line"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          <div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${item.position || "ครู"}&nbsp;ข้าราชการครูและบุคลากรทางการศึกษากลุ่มสาระการเรียนรู้&nbsp;${m.dept || "........................"}&nbsp;พร้อมด้วยข้าราชการครูและบุคลากรทางการศึกษา จำนวน&nbsp;${comps.length || "......"}&nbsp;คน ได้แก่</div>
+          ${compRows}
+          <div style="margin-top:4px;font-size:13.5pt">
+            มีความประสงค์ขออนุญาตไปราชการเพื่อ&nbsp;
+            <span class="chk-box">${isK(kinds[0])}</span> ฝึกอบรม&nbsp;
+            <span class="chk-box">${isK(kinds[1])}</span> สัมมนา&nbsp;
+            <span class="chk-box">${isK(kinds[2])}</span> ศึกษาดูงาน&nbsp;
+            <span class="chk-box">${isK(kinds[3])}</span> เข้าร่วมประชุม<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="chk-box">${isK(kinds[4])}</span> ไปราชการตามคำสั่งของสำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="chk-box">${isK(kinds[5])}</span> แข่งขันทักษะวิชาการของนักเรียน&nbsp;&nbsp;<span class="chk-box">${isK(kinds[6])}</span> เป็นวิทยากร&nbsp;&nbsp;<span class="chk-box">${isK(kinds[7])}</span> อื่น ๆ
+          </div>
+          <div class="memo-field-line"><strong>หน่วยงานที่จัด (จำเป็นต้องกรอก)</strong>&nbsp;${m.org || "................................................................"}</div>
+          <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;${m.dutySubject || "................................................................................"}</div>
+          <div class="memo-field-line"><strong>วัตถุประสงค์ของการไปราชการเพื่อ (จำเป็นต้องกรอก)</strong>&nbsp;${item.reason}</div>
+          <div class="memo-field-line"><strong>สถานที่</strong>&nbsp;${item.destination || ".........................."}&nbsp;<strong>อำเภอ</strong>&nbsp;${m.amphoe || "ปากช่อง"}&nbsp;<strong>จังหวัด</strong>&nbsp;${m.province || "นครราชสีมา"}</div>
+          <div class="memo-field-line">โดยขออนุญาตเดินทางไปราชการระหว่างวันที่&nbsp;${sp.d}&nbsp;เดือน&nbsp;${sp.m}&nbsp;พ.ศ.&nbsp;${sp.y}&nbsp;ถึงวันที่&nbsp;${ep.d}&nbsp;เดือน&nbsp;${ep.m}&nbsp;พ.ศ.&nbsp;${ep.y}&nbsp;จำนวน&nbsp;${days}&nbsp;วัน เดินทางโดยพาหนะ&nbsp;${m.vehicle || "รถยนต์ส่วนตัว"}&nbsp;ตั้งแต่เวลา&nbsp;${item.startTime || "08:30"}&nbsp;น. ถึงเวลา&nbsp;${item.endTime || "16:30"}&nbsp;น. โดยขออนุมัติค่าใช้จ่ายไปราชการจำนวน&nbsp;${m.budget || "-"}&nbsp;บาท (${m.budgetText || "-"}) จึงขอความอนุเคราะห์ผู้อำนวยการโรงเรียนพิจารณามอบหมายฝ่ายธุรการดำเนินการออกคำสั่งให้ข้าพเจ้าได้ไปปฏิบัติราชการตามความประสงค์</div>
+          <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบและพิจารณา</div>
+          <div class="memo-sign-right"><div>ลงชื่อ………………………………………………..</div><div>(${item.userName})</div><div>ตำแหน่ง ${item.position || "ครู"}</div></div>
+          <table class="memo-box-2x2">
+            <tr>
+              <td><strong>ความเห็นของหัวหน้างานพัฒนาบุคลากร</strong><br/>......................................................................<div style="text-align:center;margin-top:12px">ลงชื่อ................................................<br/>(นางสาวนริศรา พืชผักหวาน)<br/>........../................../..........</div></td>
+              <td><strong>ความเห็นหัวหน้ากลุ่มบริหารงานบุคคล</strong><br/>......................................................................<div style="text-align:center;margin-top:12px">ลงชื่อ................................................<br/>(นายธานครินทร์ สุเมธาลังการ)<br/>........../................../..........</div></td>
+            </tr>
+            <tr>
+              <td><strong>ความเห็นหัวหน้ากลุ่มบริหารงานงบประมาณ</strong><br/>......................................................................<div style="text-align:center;margin-top:12px">ลงชื่อ................................................<br/>(นางสาวน้ำเพชร ชมประเสริฐ)<br/>........../................../..........</div></td>
+              <td><strong>ความเห็นของผู้อำนวยการโรงเรียน/ผู้รักษาการ</strong><br/><span class="chk-box">${item.status === "approved" ? "✓" : ""}</span> อนุญาต &nbsp;<span class="chk-box">${item.status === "rejected" ? "✓" : ""}</span> ไม่อนุญาต เพราะ....................<div style="text-align:center;margin-top:12px">ลงชื่อ................................................<br/>(นางสาวนภาพร คงแสนคำ)<br/>........../................../..........</div></td>
+            </tr>
+          </table>
+        </div>`;
+      }
+
+      // 4 & 5. บันทึกข้อความ ชี้แจงการมาลงเวลา (08.15 น.) / ชี้แจงการไม่ลงเวลากลับ (16.30 น.)
+      const isIn = item.type === "miss_in";
+      const sp = parseYmdParts(item.startDate);
+      const half = getFiscalHalf(item.startDate);
+      const prevMiss = state.leaves.filter((x) => x.userId === item.userId && x.id !== item.id && x.type === item.type).length;
+      return `<div class="doc-memo">
+        <div class="memo-stamp-wrap"><div class="memo-stamp"><div><strong>กลุ่มบริหารงานบุคคล</strong></div><div>รับที่………………………………….</div><div>วันที่.....................................</div><div>เวลา...................................น.</div></div></div>
+        <div class="memo-header"><img class="memo-garuda" src="./icons/garuda.svg" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
+        <div class="memo-field-line"><strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่&nbsp;&nbsp;&nbsp;&nbsp;อำเภอปากช่อง&nbsp;&nbsp;สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
+        <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong>&nbsp;&nbsp;${formatThaiDate(item.startDate, true)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
+        <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;${isIn ? "ชี้แจงการมาลงเวลาปฏิบัติราชการ" : "ชี้แจงการไม่ลงเวลากลับจากการปฏิบัติราชการ"}</div>
+        <div class="memo-field-line"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+        ${isIn
+          ? `<div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${item.position || "ครู"}&nbsp;วิทยฐานะ&nbsp;${rank}&nbsp;โรงเรียนบ้านป่าไผ่ ไม่ได้มาลงเวลาปฏิบัติราชการภายในเวลา 08.15 น. เมื่อวันที่&nbsp;${formatThaiDate(item.startDate)}&nbsp;เนื่องจาก (ระบุความจำเป็น)&nbsp;${item.reason}&nbsp;ทั้งนี้ ข้าพเจ้าได้มาปฏิบัติงานในวันดังกล่าว ตั้งแต่เวลา&nbsp;${item.startTime || "08:00"}&nbsp;น. ซึ่งมี&nbsp;${m.witness || ".........................................."}&nbsp;เป็นผู้ร่วมปฏิบัติงานกับข้าพเจ้า</div>`
+          : `<div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${item.position || "ครู"}&nbsp;วิทยฐานะ&nbsp;${rank}&nbsp;โรงเรียนบ้านป่าไผ่ ได้จัดทำบันทึกข้อความชี้แจงเหตุผลการไม่ลงเวลากลับจากการปฏิบัติราชการ เวลา 16.30 น. เมื่อวันที่&nbsp;${sp.d}&nbsp;เดือน&nbsp;${sp.m}&nbsp;พ.ศ.&nbsp;${sp.y}&nbsp;เนื่องจาก&nbsp;${item.reason}</div>`}
+        <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบ</div>
+        <div class="memo-sign-right"><div>ลงชื่อ............................................................</div><div>(${item.userName})</div><div>ตำแหน่ง ${item.position || "ครู"}</div></div>
+        <div style="margin-top:12px"><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong></div>
+        <div class="memo-indent">ด้วย ${item.userName} ${isIn ? "บันทึกชี้แจงการมาลงเวลาปฏิบัติราชการ และขออนุญาตลงเวลาภายหลัง โดยถือว่ามาปฏิบัติงานในเวลาราชการ" : `บันทึกชี้แจงการไม่ลงเวลากลับจากการปฏิบัติราชการ เวลา 16.30 น. เมื่อวันที่ ${formatThaiDate(item.startDate)}`}</div>
+        <div style="margin-top:6px"><strong>สถิติการบันทึกชี้แจง</strong>&nbsp;&nbsp;[ ${half === 1 ? "✓" : "&nbsp;"} ] 1 ต.ค. – 31 มี.ค. &nbsp;[ ${half === 2 ? "✓" : "&nbsp;"} ] 1 เม.ย. – 30 ก.ย.</div>
+        <table class="memo-table">
+          <thead>
+            <tr><th colspan="2">บันทึกฯ มาแล้ว</th><th colspan="2">บันทึกฯ ครั้งนี้</th><th colspan="2">รวม</th></tr>
+            <tr><th>ครั้ง</th><th>วัน</th><th>ครั้ง</th><th>วัน</th><th>ครั้ง</th><th>วัน</th></tr>
+          </thead>
+          <tbody><tr><td>${prevMiss}</td><td>${prevMiss}</td><td>1</td><td>1</td><td>${prevMiss + 1}</td><td>${prevMiss + 1}</td></tr></tbody>
+        </table>
+        <div style="text-align:center;margin-top:10px"><div>เพื่อโปรดทราบและพิจารณา</div><div style="margin-top:12px">ลงชื่อ...................................................ผู้ตรวจสอบ</div><div>(นางสาวนริศรา พืชผักหวาน)</div><div>เจ้าหน้าที่ทะเบียนและสถิติ</div></div>
+        <div class="memo-sign-2col" style="margin-top:18px">
+          <div><div>ลงชื่อ............................................................</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>หัวหน้ากลุ่มบริหารงานบุคคล</div></div>
+          <div><div>ลงชื่อ............................................................</div><div>(นางสาวนภาพร คงแสนคำ)</div><div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div></div>
+        </div>
+      </div>`;
+    }
+
+    function printOfficialDoc(item) {
+      $("printSlipArea").innerHTML = buildOfficialDocHtml(item);
       window.print();
+    }
+
+    function exportOfficialPdf(item, shareToAdmin) {
+      const html = buildOfficialDocHtml(item);
+      const tName = (TYPE_MAP[item.type] || {}).label || item.type;
+      const safeName = `${tName}_${item.userName}_${item.startDate}.pdf`.replace(/\s+/g, "_");
+      window.BPP_PDF.exportOrShare(html, safeName, { shareToAdmin, onStatus: showToast });
     }
 
     function renderRequests() {
       updateGeoBanner();
       if (state.leaves.length === 0) {
-        $("reqList").innerHTML = `<div style="text-align:center;padding:30px 12px;font-size:13.5px;color:var(--secondary)">ยังไม่มีรายการขอลา หรือขอออกนอกโรงเรียน</div>`;
+        $("reqList").innerHTML = `<div style="text-align:center;padding:24px 12px;font-size:13px;color:var(--secondary)">แตะไอคอนแบบฟอร์มด้านบนเพื่อกรอกและส่ง PDF ให้ธุรการปริ้นได้เลย</div>`;
         return;
       }
       $("reqList").innerHTML = state.leaves.map((r, i) => {
@@ -890,19 +1004,20 @@
         const sm = STATUS_MAP[r.status] || STATUS_MAP.pending;
         const isMine = r.userId === teacher.id;
         return `
-          <article class="req-card" style="animation-delay:${Math.min(i, 8) * 24}ms">
+          <article class="req-card" style="animation-delay:${Math.min(i, 8) * 20}ms">
             <div class="req-head">
               <span class="type-pill ${tm.cls}">${tm.label}</span>
               <span class="st-pill ${sm.cls}">${sm.label}</span>
             </div>
             <div class="req-name">${r.userName}</div>
             <div class="req-meta">
-              📅 ${r.startDate}${r.endDate && r.endDate !== r.startDate ? ` ถึง ${r.endDate}` : ""}${r.startTime ? ` • ⏰ ${r.startTime}–${r.endTime} น.` : ""}<br/>
+              📅 ${r.startDate}${r.endDate && r.endDate !== r.startDate ? ` ถึง ${r.endDate}` : ""}${r.startTime ? ` • ⏰ ${r.startTime}${r.endTime ? `–${r.endTime}` : ""} น.` : ""}<br/>
               ${r.destination ? `📍 ${r.destination} • ` : ""}💬 ${r.reason}
             </div>
             <div class="req-actions">
-              <button type="button" class="mini-btn" data-print="${r.id}">🖨️ ปริ้นใบลา A4</button>
-              ${canApprove && r.status === "pending" ? `<button type="button" class="mini-btn ok" data-approve="${r.id}">✓ อนุมัติ</button><button type="button" class="mini-btn no" data-reject="${r.id}">✕ ไม่อนุมัติ</button>` : ""}
+              <button type="button" class="mini-btn pdf" data-pdf-share="${r.id}">📤 Export PDF ส่งธุรการ</button>
+              <button type="button" class="mini-btn" data-print="${r.id}">🖨️ ปริ้น A4</button>
+              ${canApprove && r.status === "pending" ? `<button type="button" class="mini-btn ok" data-approve="${r.id}">✓ อนุมัติ</button><button type="button" class="mini-btn no" data-reject="${r.id}">✕</button>` : ""}
               ${(isMine || isAdmin) ? `<button type="button" class="mini-btn" data-del="${r.id}">ลบ</button>` : ""}
             </div>
           </article>`;
@@ -913,56 +1028,33 @@
       const users = getAllUsers();
       const rows = users.map((u) => {
         const mine = state.leaves.filter((r) => r.userId === u.id && r.status !== "rejected");
-        const count = (t) => mine.filter((r) => r.type === t).length;
-        return { name: u.shortName || u.name, sick: count("sick"), personal: count("personal"), duty: count("duty"), off: count("offcampus"), total: mine.length };
+        const c = (t) => mine.filter((r) => r.type === t).length;
+        return { name: u.shortName || u.name, sick: c("sick"), personal: c("personal"), duty: c("duty"), off: c("offcampus"), miss: c("miss_in") + c("miss_out") };
       });
       $("statsTableWrap").innerHTML = `
         <table class="stat-table">
-          <thead><tr><th>บุคลากร</th><th>ป่วย</th><th>กิจ</th><th>ราชการ</th><th>ออกนอก</th><th>รวม</th></tr></thead>
-          <tbody>
-            ${rows.map((r) => `<tr><td>${r.name}</td><td>${r.sick}</td><td>${r.personal}</td><td>${r.duty}</td><td>${r.off}</td><td><strong>${r.total}</strong></td></tr>`).join("")}
-          </tbody>
+          <thead><tr><th>บุคลากร</th><th>ป่วย</th><th>กิจ</th><th>ราชการ</th><th>ออกนอก</th><th>ชี้แจงเวลา</th></tr></thead>
+          <tbody>${rows.map((r) => `<tr><td>${r.name}</td><td>${r.sick}</td><td>${r.personal}</td><td>${r.duty}</td><td>${r.off}</td><td>${r.miss}</td></tr>`).join("")}</tbody>
         </table>`;
     }
 
     function renderGeofenceAdmin() {
       const g = state.geofence;
       $("geoEnabled").checked = Boolean(g.enabled);
-      $("geoLat").value = g.lat;
-      $("geoLng").value = g.lng;
+      $("geoLat").value = g.lat; $("geoLng").value = g.lng;
       $("geoRadius").value = g.radiusMeters || 100;
-      $("geoStart").value = g.startTime || "08:00";
-      $("geoEnd").value = g.endTime || "16:00";
+      $("geoStart").value = g.startTime || "08:00"; $("geoEnd").value = g.endTime || "16:00";
       const days = Array.isArray(g.activeDays) ? g.activeDays : [1, 2, 3, 4, 5];
-      $("geoDayChips").innerHTML = THAI_DAYS_SHORT.map((x) =>
-        `<button type="button" class="day-chip ${days.includes(x.d) ? "active" : ""}" data-gday="${x.d}">${x.l}</button>`
-      ).join("");
-
+      $("geoDayChips").innerHTML = THAI_DAYS_SHORT.map((x) => `<button type="button" class="day-chip ${days.includes(x.d) ? "active" : ""}" data-gday="${x.d}">${x.l}</button>`).join("");
       const users = getAllUsers();
       const exemptSet = new Set(Array.isArray(g.exemptUserIds) ? g.exemptUserIds : ["napaporn"]);
       $("geoMonitorUsersWrap").innerHTML = users.map((u) => {
-        const monitored = !exemptSet.has(u.id);
-        return `
-          <label class="webhook-row" style="cursor:pointer">
-            <span><strong>${u.shortName}</strong> <span style="color:var(--secondary);font-size:11.5px">(${u.position || "ครู"})</span></span>
-            <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:${monitored ? "var(--accent)" : "var(--secondary)"}">
-              <input type="checkbox" data-geo-mon="${u.id}" ${monitored ? "checked" : ""} />
-              ${monitored ? "แจ้งเตือน" : "ยกเว้น"}
-            </span>
-          </label>`;
+        const mon = !exemptSet.has(u.id);
+        return `<label class="webhook-row" style="cursor:pointer"><span><strong>${u.shortName}</strong> <span style="color:var(--secondary);font-size:11.5px">(${u.position || "ครู"})</span></span><span style="font-size:12px;font-weight:600;color:${mon ? "var(--accent)" : "var(--secondary)"}"><input type="checkbox" data-geo-mon="${u.id}" ${mon ? "checked" : ""} /> ${mon ? "แจ้งเตือน" : "ยกเว้น"}</span></label>`;
       }).join("");
-
       $("shortcutLinksWrap").innerHTML = users.map((u) => {
-        const isExempt = exemptSet.has(u.id);
-        const url = backendUrl ? `${backendUrl}?action=geofence_exit&userId=${encodeURIComponent(u.id)}` : "(ยังไม่ได้ตั้งค่า newsBackendUrl)";
-        return `
-          <div class="webhook-row">
-            <div style="min-width:0;flex:1">
-              <strong>${u.shortName}</strong> ${isExempt ? `<span style="font-size:11px;color:var(--purple);font-weight:600">(ยกเว้น)</span>` : ""}
-              <div style="font-size:11px;color:var(--secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${url}</div>
-            </div>
-            <button type="button" class="mini-btn" data-copy-url="${url}">คัดลอกลิงก์</button>
-          </div>`;
+        const url = backendUrl ? `${backendUrl}?action=geofence_exit&userId=${encodeURIComponent(u.id)}` : "(ยังไม่ตั้งค่า)";
+        return `<div class="webhook-row"><div style="min-width:0;flex:1"><strong>${u.shortName}</strong> ${exemptSet.has(u.id) ? `<span style="font-size:11px;color:var(--purple)">(ยกเว้น)</span>` : ""}<div style="font-size:11px;color:var(--secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${url}</div></div><button type="button" class="mini-btn" data-copy-url="${url}">คัดลอก</button></div>`;
       }).join("");
     }
 
@@ -970,112 +1062,71 @@
       const av = teacher.avatar ? `<img class="mini-avatar" src="${teacher.avatar}" alt="" />` : "";
       $("userSub").innerHTML = `${av}<span>${teacher.shortName} • ${teacher.position || "ครู"}</span>`;
       $("adminGeoTab").classList.toggle("hidden", !isAdmin);
-
       $("viewRequests").classList.toggle("hidden", state.tab !== "requests");
       $("viewStats").classList.toggle("hidden", state.tab !== "stats");
       $("viewGeofence").classList.toggle("hidden", state.tab !== "geofence");
       document.querySelectorAll("#mainTabs .seg-tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === state.tab));
-
       if (state.tab === "requests") renderRequests();
       else if (state.tab === "stats") renderStats();
       else if (isAdmin) renderGeofenceAdmin();
     }
 
-    // --- Event Listeners ---
-    document.querySelectorAll("#mainTabs .seg-tab").forEach((b) => {
-      b.onclick = () => { state.tab = b.dataset.tab; render(); };
-    });
+    document.querySelectorAll("#mainTabs .seg-tab").forEach((b) => { b.onclick = () => { state.tab = b.dataset.tab; render(); }; });
+    document.querySelectorAll("[data-open-form]").forEach((b) => { b.onclick = () => openFormSheet(b.dataset.openForm); });
     $("refreshBtn").onclick = () => { syncFromCloud(); showToast("อัปเดตข้อมูลล่าสุดแล้ว"); };
     $("toggleGpsBtn").onclick = toggleGpsWatch;
-    $("openOffcampusBtn").onclick = () => openRequestSheet("offcampus");
-    $("openLeaveBtn").onclick = () => openRequestSheet("leave");
 
     $("reqList").addEventListener("click", (e) => {
+      const pdfBtn = e.target.closest("[data-pdf-share]");
+      if (pdfBtn) { const it = state.leaves.find((x) => x.id === pdfBtn.dataset.pdfShare); if (it) exportOfficialPdf(it, true); return; }
       const pBtn = e.target.closest("[data-print]");
-      if (pBtn) {
-        const item = state.leaves.find((x) => x.id === pBtn.dataset.print);
-        if (item) printLeaveSlip(item);
-        return;
-      }
+      if (pBtn) { const it = state.leaves.find((x) => x.id === pBtn.dataset.print); if (it) printOfficialDoc(it); return; }
       const apBtn = e.target.closest("[data-approve], [data-reject]");
       if (apBtn && canApprove) {
-        const id = apBtn.dataset.approve || apBtn.dataset.reject;
-        const newSt = apBtn.dataset.approve ? "approved" : "rejected";
-        state.leaves = state.leaves.map((x) => x.id === id ? { ...x, status: newSt, approvedBy: teacher.name } : x);
-        saveLocal();
-        postBackend({ action: "update_leave_status", id, status: newSt, approvedBy: teacher.name });
-        showToast(newSt === "approved" ? "อนุมัติคำขอแล้ว" : "ไม่อนุมัติคำขอแล้ว");
-        render();
-        return;
+        const id = apBtn.dataset.approve || apBtn.dataset.reject, st = apBtn.dataset.approve ? "approved" : "rejected";
+        state.leaves = state.leaves.map((x) => x.id === id ? { ...x, status: st, approvedBy: teacher.name } : x);
+        saveLocal(); postBackend({ action: "update_leave_status", id, status: st, approvedBy: teacher.name });
+        showToast(st === "approved" ? "อนุมัติแล้ว" : "ไม่อนุมัติแล้ว"); render(); return;
       }
       const dBtn = e.target.closest("[data-del]");
       if (dBtn) {
         state.leaves = state.leaves.filter((x) => x.id !== dBtn.dataset.del);
-        saveLocal();
-        postBackend({ action: "delete_leave", id: dBtn.dataset.del });
-        showToast("ลบรายการแล้ว");
-        render();
+        saveLocal(); postBackend({ action: "delete_leave", id: dBtn.dataset.del });
+        showToast("ลบรายการแล้ว"); render();
       }
     });
 
     $("geoDayChips").addEventListener("click", (e) => {
-      const b = e.target.closest("[data-gday]");
-      if (!b) return;
-      const d = Number(b.dataset.gday);
-      const set = new Set(state.geofence.activeDays || [1, 2, 3, 4, 5]);
+      const b = e.target.closest("[data-gday]"); if (!b) return;
+      const d = Number(b.dataset.gday), set = new Set(state.geofence.activeDays || [1, 2, 3, 4, 5]);
       if (set.has(d)) set.delete(d); else set.add(d);
-      state.geofence.activeDays = [...set];
-      renderGeofenceAdmin();
+      state.geofence.activeDays = [...set]; renderGeofenceAdmin();
     });
-
+    $("geoMonitorUsersWrap").addEventListener("change", (e) => {
+      const cb = e.target.closest("[data-geo-mon]"); if (!cb) return;
+      const set = new Set(Array.isArray(state.geofence.exemptUserIds) ? state.geofence.exemptUserIds : ["napaporn"]);
+      if (cb.checked) set.delete(cb.dataset.geoMon); else set.add(cb.dataset.geoMon);
+      state.geofence.exemptUserIds = [...set]; renderGeofenceAdmin();
+    });
     $("pinCurrentLocBtn").onclick = () => {
-      if (!navigator.geolocation) { showToast("ไม่รองรับ GPS"); return; }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          $("geoLat").value = pos.coords.latitude.toFixed(6);
-          $("geoLng").value = pos.coords.longitude.toFixed(6);
-          showToast("ดึงพิกัดปัจจุบันเรียบร้อย กดบันทึกได้เลย");
-        },
-        () => showToast("กรุณาอนุญาตสิทธิ์ Location ก่อนปักหมุด"),
-        { enableHighAccuracy: true, timeout: 12000 }
+      navigator.geolocation?.getCurrentPosition(
+        (pos) => { $("geoLat").value = pos.coords.latitude.toFixed(6); $("geoLng").value = pos.coords.longitude.toFixed(6); showToast("ดึงพิกัดปัจจุบันแล้ว"); },
+        () => showToast("กรุณาอนุญาต Location"), { enableHighAccuracy: true, timeout: 12000 }
       );
     };
-
-    $("geoMonitorUsersWrap").addEventListener("change", (e) => {
-      const cb = e.target.closest("[data-geo-mon]");
-      if (!cb) return;
-      const uid = cb.dataset.geoMon;
-      const set = new Set(Array.isArray(state.geofence.exemptUserIds) ? state.geofence.exemptUserIds : ["napaporn"]);
-      if (cb.checked) set.delete(uid);
-      else set.add(uid);
-      state.geofence.exemptUserIds = [...set];
-      renderGeofenceAdmin();
-    });
-
     $("saveGeoBtn").onclick = () => {
       state.geofence = {
-        enabled: $("geoEnabled").checked,
-        lat: $("geoLat").value.trim(),
-        lng: $("geoLng").value.trim(),
-        radiusMeters: Number($("geoRadius").value) || 100,
-        startTime: $("geoStart").value || "08:00",
-        endTime: $("geoEnd").value || "16:00",
+        enabled: $("geoEnabled").checked, lat: $("geoLat").value.trim(), lng: $("geoLng").value.trim(),
+        radiusMeters: Number($("geoRadius").value) || 100, startTime: $("geoStart").value || "08:00", endTime: $("geoEnd").value || "16:00",
         activeDays: state.geofence.activeDays || [1, 2, 3, 4, 5],
         exemptUserIds: Array.isArray(state.geofence.exemptUserIds) ? state.geofence.exemptUserIds : ["napaporn"]
       };
-      saveLocal();
-      postBackend({ action: "save_geofence", geofence: state.geofence });
-      showToast("บันทึกพิกัดและช่วงเวลาเฝ้าระวังเรียบร้อย!");
-      render();
+      saveLocal(); postBackend({ action: "save_geofence", geofence: state.geofence });
+      showToast("บันทึกการตั้งค่า GPS แล้ว"); render();
     };
-
     $("shortcutLinksWrap").addEventListener("click", (e) => {
-      const b = e.target.closest("[data-copy-url]");
-      if (!b) return;
-      navigator.clipboard?.writeText(b.dataset.copyUrl).then(
-        () => showToast("คัดลอกลิงก์ Shortcut แล้ว"),
-        () => showToast("คัดลอกไม่สำเร็จ")
-      );
+      const b = e.target.closest("[data-copy-url]"); if (!b) return;
+      navigator.clipboard?.writeText(b.dataset.copyUrl).then(() => showToast("คัดลอกลิงก์แล้ว"));
     });
 
     render();

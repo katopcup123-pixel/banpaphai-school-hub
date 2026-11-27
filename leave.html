@@ -574,6 +574,45 @@
       updateGeoBanner();
     }
 
+    // สถานที่ที่ขอออกไปบ่อย (เขตพื้นที่ / ธนาคารใน อ.ปากช่อง และ จ.นครราชสีมา)
+    const COMMON_DESTINATIONS = [
+      { group: "สำนักงานเขตพื้นที่การศึกษา", items: [
+        { label: "สพป.นครราชสีมา เขต 4 (อ.สีคิ้ว)", value: "สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4 อำเภอสีคิ้ว จังหวัดนครราชสีมา", amphoe: "สีคิ้ว", province: "นครราชสีมา" },
+        { label: "สพม.นครราชสีมา (อ.เมืองฯ)", value: "สำนักงานเขตพื้นที่การศึกษามัธยมศึกษานครราชสีมา อำเภอเมืองนครราชสีมา จังหวัดนครราชสีมา", amphoe: "เมืองนครราชสีมา", province: "นครราชสีมา" },
+        { label: "ศึกษาธิการจังหวัดนครราชสีมา (อ.เมืองฯ)", value: "สำนักงานศึกษาธิการจังหวัดนครราชสีมา อำเภอเมืองนครราชสีมา จังหวัดนครราชสีมา", amphoe: "เมืองนครราชสีมา", province: "นครราชสีมา" }
+      ]},
+      { group: "ธนาคารและสหกรณ์ครู (นครราชสีมา)", items: [
+        { label: "ธนาคารกรุงไทย สาขาปากช่อง", value: "ธนาคารกรุงไทย สาขาปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "ธนาคารกรุงไทย สาขาโลตัส ปากช่อง", value: "ธนาคารกรุงไทย สาขาโลตัส ปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "ธนาคารกรุงไทย สาขาสีคิ้ว", value: "ธนาคารกรุงไทย สาขาสีคิ้ว อำเภอสีคิ้ว จังหวัดนครราชสีมา", amphoe: "สีคิ้ว", province: "นครราชสีมา" },
+        { label: "ธนาคารออมสิน สาขาปากช่อง", value: "ธนาคารออมสิน สาขาปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "ธนาคาร ธ.ก.ส. สาขาปากช่อง", value: "ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร (ธ.ก.ส.) สาขาปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "ธนาคารกสิกรไทย สาขาปากช่อง", value: "ธนาคารกสิกรไทย สาขาปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "ธนาคารไทยพาณิชย์ สาขาปากช่อง", value: "ธนาคารไทยพาณิชย์ สาขาปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "ธนาคารกรุงเทพ สาขาปากช่อง", value: "ธนาคารกรุงเทพ สาขาปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "ธนาคารกรุงศรีอยุธยา สาขาปากช่อง", value: "ธนาคารกรุงศรีอยุธยา สาขาปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "ธนาคารทหารไทยธนชาต (ttb) สาขาปากช่อง", value: "ธนาคารทหารไทยธนชาต (ttb) สาขาปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "สหกรณ์ออมทรัพย์ครูนครราชสีมา สาขาปากช่อง", value: "สหกรณ์ออมทรัพย์ครูนครราชสีมา จำกัด สาขาปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "สหกรณ์ออมทรัพย์ครูนครราชสีมา สำนักงานใหญ่", value: "สหกรณ์ออมทรัพย์ครูนครราชสีมา จำกัด สำนักงานใหญ่ อำเภอเมืองนครราชสีมา จังหวัดนครราชสีมา", amphoe: "เมืองนครราชสีมา", province: "นครราชสีมา" }
+      ]},
+      { group: "หน่วยงานในพื้นที่ อ.ปากช่อง", items: [
+        { label: "ที่ว่าการอำเภอปากช่อง", value: "ที่ว่าการอำเภอปากช่อง อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "โรงพยาบาลปากช่องนานา", value: "โรงพยาบาลปากช่องนานา อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" },
+        { label: "เทศบาลตำบลจันทึก", value: "เทศบาลตำบลจันทึก อำเภอปากช่อง จังหวัดนครราชสีมา", amphoe: "ปากช่อง", province: "นครราชสีมา" }
+      ]}
+    ];
+
+    function buildDestinationSelectHtml(id) {
+      return `
+        <select class="select-field" id="${id}">
+          ${COMMON_DESTINATIONS.map((g) => `
+            <optgroup label="${g.group}">
+              ${g.items.map((it) => `<option value="${it.value}" data-amphoe="${it.amphoe}" data-province="${it.province}">${it.label}</option>`).join("")}
+            </optgroup>`).join("")}
+          <option value="__other__">อื่น ๆ (โปรดระบุสถานที่เอง...)</option>
+        </select>`;
+    }
+
     // --- 5 Official Form Input Sheets ---
     function openFormSheet(mode) {
       const today = todayYmd();
@@ -587,8 +626,9 @@
             <div><label class="lbl">วันที่</label><input class="field" id="fStartDate" type="date" value="${today}" /></div>
             <div><label class="lbl">วิทยฐานะ</label><input class="field" id="fRank" placeholder="เช่น ชำนาญการ / -" /></div>
           </div>
-          <label class="lbl">ไปที่ (สถานที่)</label>
-          <input class="field" id="fDest" placeholder="เช่น ธนาคาร / สพป.นครราชสีมา เขต 4" />
+          <label class="lbl">ไปที่ (เลือกสถานที่ที่ใช้บ่อย หรือเลือก อื่น ๆ)</label>
+          ${buildDestinationSelectHtml("fDestSelect")}
+          <input class="field hidden" id="fDestOther" placeholder="ระบุชื่อสถานที่ อำเภอ จังหวัด..." />
           <div class="row-2">
             <div><label class="lbl">ตั้งแต่เวลา</label><input class="field" id="fStartTime" type="time" value="${nowH}:00" /></div>
             <div><label class="lbl">ถึงเวลา</label><input class="field" id="fEndTime" type="time" value="${nextH}:00" /></div>
@@ -612,10 +652,15 @@
           <button type="button" class="btn-primary" id="fSaveBtn" style="width:100%;margin-bottom:7px">บันทึกคำขอ</button>
           <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
         `);
+        $("fDestSelect").onchange = () => {
+          $("fDestOther").classList.toggle("hidden", $("fDestSelect").value !== "__other__");
+        };
         document.querySelectorAll('input[name="fWL"]').forEach((r) => { r.onchange = () => $("wlBox").classList.toggle("hidden", r.value !== "yes"); });
         $("fCancelBtn").onclick = closeSheet;
         $("fSaveBtn").onclick = () => {
           const reason = $("fReason").value.trim();
+          const destVal = $("fDestSelect").value === "__other__" ? $("fDestOther").value.trim() : $("fDestSelect").value;
+          if (!destVal) { showToast("กรุณาระบุสถานที่ที่จะไป"); return; }
           if (!reason) { showToast("กรุณาระบุเหตุผล"); return; }
           const hasWorkload = document.querySelector('input[name="fWL"]:checked')?.value === "yes";
           const workloadRows = [];
@@ -631,7 +676,7 @@
             endDate: $("fStartDate").value || today,
             startTime: $("fStartTime").value,
             endTime: $("fEndTime").value,
-            destination: $("fDest").value.trim(),
+            destination: destVal,
             reason,
             meta: { academicRank: $("fRank").value.trim() || "-", hasWorkload, workloadRows }
           });
@@ -700,10 +745,11 @@
           <input class="field" id="fDutySubject" placeholder="ชื่อโครงการ/ประชุม/อบรม" />
           <label class="lbl">วัตถุประสงค์ของการไปราชการเพื่อ (จำเป็นต้องกรอก)</label>
           <textarea class="textarea-field" id="fReason" rows="2"></textarea>
-          <label class="lbl">สถานที่</label>
-          <input class="field" id="fDest" placeholder="ชื่อสถานที่/โรงแรม/โรงเรียน" />
+          <label class="lbl">สถานที่ (เลือกที่ใช้บ่อย หรือเลือก อื่น ๆ)</label>
+          ${buildDestinationSelectHtml("fDutyDestSelect")}
+          <input class="field hidden" id="fDest" placeholder="ระบุชื่อสถานที่ / โรงแรม / โรงเรียน..." />
           <div class="row-2">
-            <div><label class="lbl">อำเภอ</label><input class="field" id="fAmphoe" value="ปากช่อง" /></div>
+            <div><label class="lbl">อำเภอ</label><input class="field" id="fAmphoe" value="สีคิ้ว" /></div>
             <div><label class="lbl">จังหวัด</label><input class="field" id="fProvince" value="นครราชสีมา" /></div>
           </div>
           <div class="row-2">
@@ -723,10 +769,22 @@
           <button type="button" class="btn-primary" id="fSaveBtn" style="width:100%;margin-bottom:7px">บันทึกขออนุญาตไปราชการ</button>
           <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
         `);
+        $("fDutyDestSelect").onchange = () => {
+          const sel = $("fDutyDestSelect");
+          const isOther = sel.value === "__other__";
+          $("fDest").classList.toggle("hidden", !isOther);
+          const opt = sel.options[sel.selectedIndex];
+          if (!isOther && opt) {
+            if (opt.dataset.amphoe) $("fAmphoe").value = opt.dataset.amphoe;
+            if (opt.dataset.province) $("fProvince").value = opt.dataset.province;
+          }
+        };
         $("fCancelBtn").onclick = closeSheet;
         $("fSaveBtn").onclick = () => {
           const org = $("fOrg").value.trim(), reason = $("fReason").value.trim();
+          const dutyDest = $("fDutyDestSelect").value === "__other__" ? $("fDest").value.trim() : $("fDutyDestSelect").value;
           if (!org || !reason) { showToast("กรุณากรอกหน่วยงานที่จัดและวัตถุประสงค์"); return; }
+          if (!dutyDest) { showToast("กรุณาระบุสถานที่ไปราชการ"); return; }
           const companions = $("fCompanions").value.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 10).map((l) => {
             const [n, p] = l.split(",");
             return { name: (n || "").trim(), pos: (p || "ครู").trim() };
@@ -737,7 +795,7 @@
             endDate: $("fEndDate").value || $("fStartDate").value || today,
             startTime: $("fStartTime").value,
             endTime: $("fEndTime").value,
-            destination: $("fDest").value.trim(),
+            destination: dutyDest,
             reason,
             meta: {
               dept: $("fDept").value.trim(),

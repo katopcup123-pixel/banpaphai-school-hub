@@ -2,7 +2,7 @@
 // Merging both prevents scope conflict on GitHub Pages (/banpaphai-school-hub/)
 importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
-const CACHE_NAME = "bpp-connect-v45";
+const CACHE_NAME = "bpp-connect-v46";
 const ASSETS = [
   "./",
   "./index.html",

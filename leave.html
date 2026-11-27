@@ -820,7 +820,7 @@
 
         return `<div class="doc-memo">
           <div class="memo-stamp-wrap"><div class="memo-stamp"><div><strong>กลุ่มบริหารงานบุคคล</strong></div><div>รับที่………………………………….</div><div>วันที่.....................................</div><div>เวลา...................................น.</div></div></div>
-          <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-bw.svg" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
+          <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-official.png" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
           <div class="memo-field-line"><strong>ส่วนราชการ</strong> โรงเรียนบ้านป่าไผ่ อำเภอปากช่อง สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
           <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong> ${dateThai}</div></div>
           <div class="memo-field-line"><strong>เรื่อง</strong> ขออนุญาตออกนอกบริเวณโรงเรียน</div>
@@ -831,7 +831,7 @@
           <table class="memo-table"><thead><tr><th style="width:12%">คาบ</th><th style="width:42%">งานสอน/ภาระงาน</th><th style="width:14%">ชั้น</th><th style="width:32%">ผู้สอนแทน (ลงชื่อ)</th></tr></thead><tbody>${tableRowsHtml}</tbody></table>
           <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบและพิจารณา</div>
           <div class="memo-sign-right"><div>ลงชื่อ...................................................ผู้ขออนุญาต</div><div>(${item.userName})</div><div>ตำแหน่ง ${item.position || "ครู"}</div></div>
-          <div style="margin-top:8px"><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong><div style="text-indent:0.8cm">- เพื่อโปรดทราบ</div><div>………………………………………………………………………………</div></div>
+          <div style="margin-top:8px"><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong><div style="text-indent:0.8cm">- เพื่อโปรดทราบ</div><div>………………………………………………………………………………</div><div>………………………………………………………………………………</div></div>
           <div class="memo-sign-2col">
             <div><div>ลงชื่อ.........................................................</div><div>(นางสาวนริศรา พืชผักหวาน)</div><div>เจ้าหน้าที่ทะเบียนและสถิติ</div></div>
             <div><div>ลงชื่อ............................................................</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>หัวหน้ากลุ่มบริหารงานบุคคล</div></div>
@@ -918,7 +918,7 @@
         const isK = (k) => m.dutyKind === k ? "✓" : "";
 
         return `<div class="doc-memo">
-          <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-bw.svg" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
+          <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-official.png" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
           <div class="memo-field-line"><strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่&nbsp;&nbsp;สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</div>
           <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong>&nbsp;&nbsp;${formatThaiDate(item.startDate)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
           <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;ขออนุญาตไปราชการ</div>
@@ -961,7 +961,7 @@
       const prevMiss = state.leaves.filter((x) => x.userId === item.userId && x.id !== item.id && x.type === item.type).length;
       return `<div class="doc-memo">
         <div class="memo-stamp-wrap"><div class="memo-stamp"><div><strong>กลุ่มบริหารงานบุคคล</strong></div><div>รับที่………………………………….</div><div>วันที่.....................................</div><div>เวลา...................................น.</div></div></div>
-        <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-bw.svg" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
+        <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-official.png" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
         <div class="memo-field-line"><strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่&nbsp;&nbsp;&nbsp;&nbsp;อำเภอปากช่อง&nbsp;&nbsp;สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
         <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong>&nbsp;&nbsp;${formatThaiDate(item.startDate, true)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
         <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;${isIn ? "ชี้แจงการมาลงเวลาปฏิบัติราชการ" : "ชี้แจงการไม่ลงเวลากลับจากการปฏิบัติราชการ"}</div>

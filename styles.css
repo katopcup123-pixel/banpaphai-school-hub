@@ -1600,6 +1600,20 @@ input, textarea {
   transition: transform 0.22s var(--spring);
 }
 .staff-pill:active .staff-avatar-ring { transform: scale(0.9); }
+.staff-avatar-ring.st-green  { border-color: #10B981; }
+.staff-avatar-ring.st-red    { border-color: #EF4444; }
+.staff-avatar-ring.st-gray   { border-color: #94A3B8; opacity: 0.72; }
+.staff-avatar-ring.st-gray .user-avatar { filter: grayscale(65%); }
+.staff-gps-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2.2px solid var(--ios-solid);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+}
 .staff-avatar-ring.st-duty   { border-color: #F59E0B; }
 .staff-avatar-ring.st-leave  { border-color: #EF4444; }
 .staff-avatar-ring.st-remote { border-color: #007AFF; }

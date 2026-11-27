@@ -516,6 +516,7 @@
     state.currentUser = res.user;
     try { localStorage.setItem(STORAGE_USER, res.user.id); } catch (_) {}
     syncOneSignalUser(res.user.id);
+    setTimeout(() => syncStaffGpsPresence(false), 600);
 
     els.unlockName.textContent = res.user.name;
     els.unlockPosition.textContent = res.user.position;
@@ -692,7 +693,110 @@
     }).catch(() => {});
   }
 
-  // --- Smart Greeting Card + Staff Live Status & Quick Contact ---
+  const STORAGE_STAFF_GPS = "bpp_staff_gps_v1";
+  const STORAGE_GEOFENCE = "bpp_connect_geofence_v1";
+
+  function haversineMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const rad = (d) => (d * Math.PI) / 180;
+    const dLat = rad(lat2 - lat1);
+    const dLng = rad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  }
+
+  function loadStaffGpsMap() {
+    try {
+      const raw = localStorage.getItem(STORAGE_STAFF_GPS);
+      if (raw) return JSON.parse(raw) || {};
+    } catch (_) {}
+    return {};
+  }
+
+  function getStaffPresenceInfo(userId) {
+    const map = state.staffGps || {};
+    const rec = map[userId];
+    if (!rec || !rec.updatedAt) {
+      return { status: "not_installed", label: "ยังไม่ได้ติดตั้งแอป", cls: "st-gray", dotColor: "#94A3B8", distText: "ยังไม่เคยเปิดใช้งานบนมือถือ", timeStr: "" };
+    }
+    const dist = typeof rec.dist === "number" ? rec.dist : null;
+    const distText = dist === null ? "" : dist >= 1000 ? `ห่าง ร.ร. ${(dist / 1000).toFixed(2)} กม.` : `ห่าง ร.ร. ${dist} ม.`;
+    if (rec.status === "at_school") {
+      return { status: "at_school", label: "อยู่โรงเรียน", cls: "st-green", dotColor: "#10B981", distText: distText || "อยู่ในเขตโรงเรียน", timeStr: rec.timeStr || "" };
+    }
+    return { status: "away", label: "ไม่อยู่โรงเรียน", cls: "st-red", dotColor: "#EF4444", distText: distText || "อยู่นอกเขตโรงเรียน", timeStr: rec.timeStr || "" };
+  }
+
+  async function syncStaffGpsPresence(manualTrigger = false) {
+    const apiUrl = (state.newsBackendUrl || (config && config.newsBackendUrl) || "").trim();
+    // 1) ดึงพิกัดโรงเรียน + แผนที่สถานะ GPS ของบุคลากรทุกคนจากคลาวด์
+    let geo = null;
+    try { geo = JSON.parse(localStorage.getItem(STORAGE_GEOFENCE) || "null"); } catch (_) {}
+    if (apiUrl) {
+      try {
+        const [gpsRes, lvRes] = await Promise.all([
+          fetch(`${apiUrl}?action=get_kv&key=${encodeURIComponent(STORAGE_STAFF_GPS)}`, { cache: "no-store" }).then((r) => r.json()).catch(() => null),
+          fetch(`${apiUrl}?action=leaves`, { cache: "no-store" }).then((r) => r.json()).catch(() => null)
+        ]);
+        if (gpsRes && gpsRes.ok && gpsRes.value && typeof gpsRes.value === "object") {
+          state.staffGps = { ...(state.staffGps || {}), ...gpsRes.value };
+          try { localStorage.setItem(STORAGE_STAFF_GPS, JSON.stringify(state.staffGps)); } catch (_) {}
+        }
+        if (lvRes && lvRes.ok && lvRes.geofence && lvRes.geofence.lat) {
+          geo = lvRes.geofence;
+          try { localStorage.setItem(STORAGE_GEOFENCE, JSON.stringify(geo)); } catch (_) {}
+        }
+      } catch (_) {}
+    }
+    if (state.tab === "home") render();
+
+    // 2) จับพิกัด GPS ของผู้ใช้ที่กำลังเปิดแอปอยู่ แล้วอัปเดตขึ้นคลาวด์ให้ทุกคนเห็น
+    const u = state.currentUser;
+    if (!u || !navigator.geolocation) {
+      if (manualTrigger) notifyIsland("อุปกรณ์นี้ไม่รองรับการจับพิกัด GPS");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const hasSchoolPin = geo && geo.lat !== "" && geo.lng !== "" && !Number.isNaN(Number(geo.lat));
+        const radius = Number((geo && geo.radiusMeters) || 150);
+        const dist = hasSchoolPin ? haversineMeters(Number(geo.lat), Number(geo.lng), lat, lng) : 0;
+        const atSchool = !hasSchoolPin || dist <= radius;
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")} น.`;
+        const nextMap = {
+          ...(state.staffGps || {}),
+          [u.id]: {
+            status: atSchool ? "at_school" : "away",
+            dist: hasSchoolPin ? dist : null,
+            lat: Number(lat.toFixed(5)),
+            lng: Number(lng.toFixed(5)),
+            updatedAt: Date.now(),
+            timeStr
+          }
+        };
+        state.staffGps = nextMap;
+        try { localStorage.setItem(STORAGE_STAFF_GPS, JSON.stringify(nextMap)); } catch (_) {}
+        if (apiUrl) {
+          fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({ action: "save_kv", key: STORAGE_STAFF_GPS, value: nextMap })
+          }).catch(() => {});
+        }
+        if (manualTrigger) notifyIsland(atSchool ? `🟢 อยู่โรงเรียน (${dist} ม.)` : `🔴 ไม่อยู่โรงเรียน (ห่าง ${dist} ม.)`);
+        if (state.tab === "home") render();
+      },
+      () => {
+        if (manualTrigger) notifyIsland("กรุณาอนุญาตการเข้าถึงตำแหน่ง GPS เพื่ออัปเดตสถานะ");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
+  // --- Smart Greeting Card + Staff Live Status (GPS Green / Red / Gray) ---
   function renderGreetingAndStaff() {
     const u = state.currentUser;
     const now = new Date();
@@ -704,15 +808,19 @@
     const todayCount = state.events.filter((ev) => ev.date === todayStr).length;
     const urgentCount = state.announcements.filter((a) => a.urgent).length;
 
+    let countGreen = 0, countRed = 0, countGray = 0;
     const staffHtml = state.users
       .map((usr) => {
-        const st = STAFF_STATUSES.find((x) => x.id === (usr.status || "school")) || STAFF_STATUSES[0];
+        const gps = getStaffPresenceInfo(usr.id);
+        if (gps.status === "at_school") countGreen++;
+        else if (gps.status === "away") countRed++;
+        else countGray++;
         const isMe = u && usr.id === u.id;
         return `
           <button type="button" class="staff-pill" data-staff-id="${usr.id}">
-            <div class="staff-avatar-ring ${st.cls}">
+            <div class="staff-avatar-ring ${gps.cls}">
               ${renderAvatarHtml(usr)}
-              <span class="staff-status-ico">${st.icon}</span>
+              <span class="staff-gps-dot" style="background:${gps.dotColor}" title="${gps.label}"></span>
             </div>
             <span class="staff-name">${isMe ? "ฉัน" : usr.shortName}</span>
           </button>`;
@@ -734,8 +842,8 @@
         </div>
       </div>
       <div class="section-header">
-        <h2 class="section-title">สถานะบุคลากรวันนี้</h2>
-        <span class="section-sub">แตะที่รูปเพื่อเปลี่ยนสถานะ / โทรด่วน</span>
+        <h2 class="section-title">สถานะบุคลากร (GPS)</h2>
+        <span class="section-sub">🟢${countGreen} 🔴${countRed} ⚪${countGray}</span>
       </div>
       <div class="staff-strip">${staffHtml}</div>`;
   }
@@ -746,49 +854,37 @@
     haptic();
     playSound("tap");
     const isMe = state.currentUser && state.currentUser.id === target.id;
-    const st = STAFF_STATUSES.find((x) => x.id === (target.status || "school")) || STAFF_STATUSES[0];
+    const gps = getStaffPresenceInfo(target.id);
+    const badgeEmoji = gps.status === "at_school" ? "🟢" : gps.status === "away" ? "🔴" : "⚪";
 
     els.sheetBody.innerHTML = `
       <div class="sheet-head">
         ${renderAvatarHtml(target)}
         <div>
           <h3>${target.name}</h3>
-          <p>${target.position} • ${st.icon} ${st.label}</p>
+          <p>${target.position}</p>
         </div>
       </div>
-      ${
-        isMe
-          ? `<div style="font-size:13px;font-weight:600;margin-bottom:4px">เปลี่ยนสถานะของฉันวันนี้</div>
-             <div class="status-option-grid">
-               ${STAFF_STATUSES.map(
-                 (opt) => `<button type="button" class="status-opt-btn ${(target.status || "school") === opt.id ? "active" : ""}" data-set-status="${opt.id}">${opt.icon} ${opt.label}</button>`
-               ).join("")}
-             </div>`
-          : `<div class="sheet-note">
-               <div><strong>สถานะวันนี้:</strong> ${st.icon} ${st.label}</div>
-               <div><strong>เบอร์ติดต่อ:</strong> ${target.phone || "ยังไม่ได้เพิ่มเบอร์ในโปรไฟล์"}</div>
-             </div>
-             ${target.phone ? `<a href="tel:${target.phone.replace(/[^0-9+]/g, "")}" class="btn-primary" style="display:block;text-align:center;text-decoration:none">📞 โทรออก (${target.phone})</a>` : ""}`
-      }
+      <div class="sheet-note">
+        <div><strong>สถานะ GPS ปัจจุบัน:</strong> ${badgeEmoji} ${gps.label}</div>
+        ${gps.distText ? `<div><strong>ระยะห่าง:</strong> ${gps.distText}</div>` : ""}
+        ${gps.timeStr ? `<div><strong>อัปเดตล่าสุด:</strong> ${gps.timeStr}</div>` : ""}
+        <div><strong>เบอร์ติดต่อ:</strong> ${target.phone || "ยังไม่ได้เพิ่มเบอร์ในโปรไฟล์"}</div>
+      </div>
+      ${isMe ? `<button type="button" class="btn-primary" id="refreshMyGpsBtn">📍 อัปเดตพิกัด GPS ของฉันตอนนี้</button>` : ""}
+      ${!isMe && target.phone ? `<a href="tel:${target.phone.replace(/[^0-9+]/g, "")}" class="btn-primary" style="display:block;text-align:center;text-decoration:none">📞 โทรออก (${target.phone})</a>` : ""}
       <button type="button" class="btn-secondary" id="staffCloseBtn">ปิด</button>
     `;
     els.sheetBackdrop.classList.add("open");
     document.getElementById("staffCloseBtn").onclick = closeSheet;
-    els.sheetBody.querySelectorAll("[data-set-status]").forEach((btn) => {
-      btn.onclick = () => {
-        const newSt = btn.dataset.setStatus;
-        const updated = { ...target, status: newSt };
-        state.users = state.users.map((x) => (x.id === target.id ? updated : x));
-        state.currentUser = updated;
-        try { localStorage.setItem(STORAGE_USERS, JSON.stringify(state.users)); } catch (_) {}
-        postToBackend({ action: "save_user", user: updated });
-        playSound("success");
-        const chosen = STAFF_STATUSES.find((x) => x.id === newSt);
-        notifyIsland(`อัปเดตสถานะ: ${chosen ? chosen.label : newSt}`);
+    const gpsBtn = document.getElementById("refreshMyGpsBtn");
+    if (gpsBtn) {
+      gpsBtn.onclick = () => {
         closeSheet();
-        render();
+        notifyIsland("กำลังตรวจสอบพิกัด GPS...");
+        syncStaffGpsPresence(true);
       };
-    });
+    }
   }
 
   // วันหยุดราชการ / นักขัตฤกษ์ไทย (พ.ศ. 2569–2570 / 2026–2027)
@@ -2921,8 +3017,10 @@
   }
 
   initOneSignal();
+  state.staffGps = loadStaffGpsMap();
   syncRemoteConfig(true);
   loadLiveNews(false);
   setTimeout(prefetchDocsCache, 800);
+  setTimeout(() => syncStaffGpsPresence(false), 1800);
   playSplashThenLogin();
 })();

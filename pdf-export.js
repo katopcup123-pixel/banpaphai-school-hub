@@ -15,31 +15,68 @@ window.BPP_PDF = {
     return this._loading;
   },
 
+  async waitImages(rootEl) {
+    const imgs = [...rootEl.querySelectorAll("img")];
+    await Promise.all(
+      imgs.map((img) => {
+        if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+        return new Promise((res) => {
+          img.onload = res;
+          img.onerror = res;
+          setTimeout(res, 1500);
+        });
+      })
+    );
+  },
+
   async exportOrShare(htmlContent, fileName, { shareToAdmin = false, onStatus } = {}) {
     const notify = (m) => { if (typeof onStatus === "function") onStatus(m); };
     notify("กำลังสร้างไฟล์ PDF (A4)...");
 
-    // Create hidden off-screen A4 render container with exact print styling
-    const host = document.createElement("div");
-    host.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;background:#fff;color:#000;padding:34px 44px;font-family:'TH Sarabun New','Sarabun','Noto Sans Thai',sans-serif;font-size:15pt;line-height:1.42;z-index:-1;";
-    host.innerHTML = htmlContent;
-    document.body.appendChild(host);
+    // Render ON-SCREEN (never left:-9999px) so html2canvas & iOS Safari capture every pixel crisply
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.72);overflow:auto;display:flex;flex-direction:column;align-items:center;padding:16px;";
+
+    const statusBar = document.createElement("div");
+    statusBar.style.cssText = "position:sticky;top:0;background:#1C1C1E;color:#fff;font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;margin-bottom:12px;z-index:2;";
+    statusBar.textContent = "⏳ กำลังสร้างไฟล์ PDF ขนาด A4...";
+
+    const pageEl = document.createElement("div");
+    pageEl.style.cssText = "width:794px;min-height:1123px;background:#ffffff;color:#000000;padding:36px 46px;box-sizing:border-box;font-family:'TH Sarabun New','Sarabun','Noto Sans Thai',sans-serif;font-size:14.5pt;line-height:1.38;box-shadow:0 8px 30px rgba(0,0,0,0.3);";
+    pageEl.innerHTML = htmlContent;
+
+    overlay.appendChild(statusBar);
+    overlay.appendChild(pageEl);
+    document.body.appendChild(overlay);
 
     try {
       const html2pdf = await this.ensureLib();
-      // Wait briefly for fonts & images (e.g. garuda.svg / school-logo.png)
-      await new Promise((r) => setTimeout(r, 260));
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch (_) {}
+      }
+      await this.waitImages(pageEl);
+      await new Promise((r) => setTimeout(r, 220));
 
       const worker = html2pdf().set({
-        margin: [8, 8, 8, 8],
+        margin: [6, 6, 6, 6],
         filename: fileName,
         image: { type: "jpeg", quality: 0.96 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 820
+        },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-      }).from(host);
+      }).from(pageEl);
 
       const blob = await worker.outputPdf("blob");
       const pdfFile = new File([blob], fileName, { type: "application/pdf" });
+
+      overlay.remove();
 
       if (shareToAdmin && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
         notify("เลือกส่งไปที่ LINE ธุรการ หรือ AirDrop ได้เลย");
@@ -60,10 +97,9 @@ window.BPP_PDF = {
         notify(`ดาวน์โหลด ${fileName} เรียบร้อย ส่งต่อให้ธุรการได้เลย`);
       }
     } catch (err) {
+      overlay.remove();
       notify("ไม่สามารถสร้าง PDF อัตโนมัติได้ กำลังเปิดหน้าต่างปริ้น/บันทึก PDF แทน...");
       window.print();
-    } finally {
-      host.remove();
     }
   }
 };

@@ -43,9 +43,9 @@ window.BPP_PDF = {
     statusBar.style.cssText = "position:sticky;top:0;background:#1C1C1E;color:#fff;font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;margin-bottom:10px;z-index:2;";
     statusBar.textContent = "⏳ กำลังสร้างไฟล์ PDF ขนาด A4...";
 
-    // 794px = exact A4 width (210mm at 96dpi) with official Thai government margins (left 22mm, right 16mm, top/bottom 14mm)
+    // 794px = exact A4 width (210mm at 96dpi) with official Thai government margins & embedded TH SarabunIT9 16pt
     const pageEl = document.createElement("div");
-    pageEl.style.cssText = "width:794px;background:#ffffff;color:#000000;padding:42px 54px 42px 68px;box-sizing:border-box;font-family:'Sarabun','TH Sarabun New','Noto Sans Thai',sans-serif;font-size:14px;line-height:1.5;text-align:left;";
+    pageEl.style.cssText = "width:794px;background:#ffffff;color:#000000;padding:38px 52px 38px 66px;box-sizing:border-box;font-family:'TH SarabunIT9','TH Sarabun New',serif;font-size:16pt;line-height:1.3;text-align:left;";
     pageEl.innerHTML = htmlContent;
 
     overlay.appendChild(statusBar);
@@ -54,8 +54,15 @@ window.BPP_PDF = {
 
     try {
       await this.ensureLibs();
-      if (document.fonts && document.fonts.ready) {
-        try { await document.fonts.ready; } catch (_) {}
+      if (document.fonts) {
+        try {
+          await Promise.all([
+            document.fonts.load('400 16pt "TH SarabunIT9"'),
+            document.fonts.load('700 16pt "TH SarabunIT9"'),
+            document.fonts.load('italic 16pt "TH SarabunIT9"')
+          ]);
+          await document.fonts.ready;
+        } catch (_) {}
       }
       await this.waitImages(pageEl);
       await new Promise((r) => setTimeout(r, 200));

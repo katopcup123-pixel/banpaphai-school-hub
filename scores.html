@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>ระบบบันทึกคะแนนนักเรียน (50+50) — BPP Connect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    @font-face { font-family: "TH SarabunIT9"; src: url("./fonts/THSarabunIT9.ttf") format("truetype"); font-weight: 400; }
+    @font-face { font-family: "TH SarabunIT9"; src: url("./fonts/THSarabunIT9-Bold.ttf") format("truetype"); font-weight: 700; }
+    :root {
+      --bg: #F2F4F8; --surface: #FFFFFF; --surface-soft: rgba(255,255,255,0.88);
+      --text: #1C1C1E; --secondary: #6C6C70; --sep: rgba(60,60,67,0.12);
+      --accent: #007AFF; --green: #16A34A; --red: #DC2626; --amber: #D97706; --purple: #7C3AED;
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    [data-theme="dark"] {
+      --bg: #0B0D12; --surface: #1C1C1E; --surface-soft: rgba(28,28,32,0.88);
+      --text: #F2F2F7; --secondary: #98989F; --sep: rgba(255,255,255,0.1);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
+      background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+    }
+    .app { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    .topbar {
+      flex-shrink: 0; padding: 12px 14px 10px;
+      background: var(--surface-soft); backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border-bottom: 0.5px solid var(--sep);
+    }
+    .top-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .title-wrap h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+    .user-sub { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--secondary); margin-top: 2px; }
+    .mini-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
+
+    .seg-tabs { display: flex; gap: 3px; background: rgba(118,118,128,0.14); padding: 3px; border-radius: 12px; }
+    .seg-tab {
+      flex: 1; border: none; background: transparent; color: var(--secondary);
+      font: inherit; font-size: 12px; font-weight: 600; padding: 7px 4px; border-radius: 9px; cursor: pointer;
+    }
+    .seg-tab.active { background: var(--surface); color: var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+
+    .body-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px 36px; }
+
+    .grade-bar { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 10px; scrollbar-width: none; }
+    .grade-bar::-webkit-scrollbar { display: none; }
+    .grade-pill {
+      flex-shrink: 0; border: 1px solid var(--sep); background: var(--surface); color: var(--text);
+      font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 13px; border-radius: 999px; cursor: pointer;
+    }
+    .grade-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .ctrl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .select-field {
+      width: 100%; border: 1px solid var(--sep); background: var(--surface); color: var(--text);
+      border-radius: 12px; padding: 9px 10px; font: inherit; font-size: 13px; font-weight: 600; outline: none;
+    }
+
+    .card {
+      background: var(--surface); border-radius: 16px; padding: 11px 12px;
+      border: 1px solid var(--sep); margin-bottom: 8px; animation: slideUp 0.22s ease both;
+    }
+    .stu-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+    .stu-name { font-size: 14px; font-weight: 700; }
+    .stu-sub { font-size: 11px; color: var(--secondary); }
+    .score-grid { display: grid; grid-template-columns: 1fr 1fr 78px; gap: 7px; align-items: end; }
+    .sc-lbl { font-size: 11px; color: var(--secondary); font-weight: 600; margin-bottom: 2px; display: block; }
+    .sc-in {
+      width: 100%; border: 1px solid var(--sep); background: var(--bg); color: var(--text);
+      border-radius: 10px; padding: 7px 9px; font: inherit; font-size: 14px; font-weight: 700; text-align: center; outline: none;
+    }
+    .sc-in:focus { border-color: var(--accent); }
+    .sc-total {
+      background: rgba(0,122,255,0.1); color: var(--accent); border-radius: 10px;
+      padding: 7px 4px; text-align: center; font-size: 14px; font-weight: 800;
+    }
+    .sc-total.over { background: rgba(220,38,38,0.14); color: var(--red); }
+
+    .btn-primary, .btn-soft, .btn-green {
+      border: none; font: inherit; font-size: 13px; font-weight: 600;
+      border-radius: 12px; padding: 9px 13px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-soft { background: var(--surface); color: var(--text); border: 1px solid var(--sep); }
+
+    .table-wrap { overflow-x: auto; }
+    table.sum-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+    table.sum-table th, table.sum-table td { padding: 7px 5px; border-bottom: 0.5px solid var(--sep); text-align: center; white-space: nowrap; }
+    table.sum-table th:nth-child(2), table.sum-table td:nth-child(2) { text-align: left; font-weight: 600; }
+    table.sum-table thead th { color: var(--secondary); font-size: 11px; }
+    .grade-badge { display: inline-block; min-width: 30px; padding: 2px 6px; border-radius: 999px; font-weight: 700; font-size: 11.5px; }
+    .g-hi { background: rgba(22,163,74,0.14); color: var(--green); }
+    .g-mid { background: rgba(0,122,255,0.13); color: var(--accent); }
+    .g-low { background: rgba(217,119,6,0.14); color: var(--amber); }
+    .g-fail { background: rgba(220,38,38,0.14); color: var(--red); }
+
+    /* Official A4 Individual Report Paper (TH SarabunIT9 16pt) */
+    .report-paper {
+      background: #fff; color: #000; border-radius: 12px; padding: 20px 18px;
+      border: 1px solid #E5E7EB; box-shadow: 0 6px 24px rgba(15,23,42,0.08);
+      font-family: "TH SarabunIT9", serif; font-size: 16pt; line-height: 1.24;
+    }
+    .report-paper, .report-paper * { font-size: 16pt !important; -webkit-text-size-adjust: 100% !important; color: #000; }
+    .rep-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+    .rep-table th, .rep-table td { border: 1px solid #000; padding: 2px 5px; text-align: center; }
+    .rep-table td.left { text-align: left; }
+
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 90; background: rgba(15,23,42,0.92); color: #fff;
+      font-size: 12.5px; font-weight: 600; padding: 9px 16px; border-radius: 999px; display: none;
+    }
+    .toast.show { display: block; }
+    .hidden { display: none !important; }
+
+    @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @media print {
+      @page { size: A4 portrait; margin: 10mm 14mm 10mm 18mm; }
+      html, body { height: auto; background: #fff !important; }
+      .app { display: block; height: auto; overflow: visible; }
+      .topbar, .no-print, .toast, #viewEntry, #viewSummary { display: none !important; }
+      .body-scroll { overflow: visible; padding: 0 !important; }
+      #viewReport { display: block !important; }
+      .report-paper { box-shadow: none; border: none; padding: 0; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="top-row">
+        <div class="title-wrap">
+          <h1>บันทึกคะแนนนักเรียน (50+50)</h1>
+          <div class="user-sub" id="userSub">โรงเรียนบ้านป่าไผ่ • DMC หลัก</div>
+        </div>
+        <button type="button" class="btn-green" id="saveScoresBtn" style="padding:7px 12px;font-size:12px">💾 บันทึก</button>
+      </div>
+      <div class="seg-tabs">
+        <button type="button" class="seg-tab active" data-tab="entry">กรอกคะแนน</button>
+        <button type="button" class="seg-tab" data-tab="summary">สรุป 100 / เกรด</button>
+        <button type="button" class="seg-tab" data-tab="report">ใบรายงาน A4</button>
+      </div>
+    </header>
+
+    <main class="body-scroll">
+      <div class="no-print" id="gradeBarWrap"></div>
+
+      <!-- 1. Score Entry View -->
+      <section id="viewEntry">
+        <div class="ctrl-row">
+          <select class="select-field" id="termSelect">
+            <option value="t2">ภาคเรียนที่ 2 (เต็ม 50)</option>
+            <option value="t1">ภาคเรียนที่ 1 (เต็ม 50)</option>
+          </select>
+          <select class="select-field" id="subjectSelect"></select>
+        </div>
+        <div id="entryList"></div>
+      </section>
+
+      <!-- 2. Full-Year 100-Point & Grade Summary View -->
+      <section id="viewSummary" class="hidden">
+        <div class="ctrl-row">
+          <select class="select-field" id="sumSubjectSelect"></select>
+          <button type="button" class="btn-primary" id="exportSumPdfBtn">📤 Export PDF ตารางสรุป</button>
+        </div>
+        <div class="card table-wrap" id="summaryTableWrap"></div>
+      </section>
+
+      <!-- 3. Official Individual Report A4 (แบบที่ 1) -->
+      <section id="viewReport" class="hidden">
+        <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <select class="select-field" id="repStuSelect" style="flex:1;min-width:170px"></select>
+          <select class="select-field" id="repModeSelect" style="width:170px">
+            <option value="year">สรุปทั้งปี (100 + เกรด)</option>
+            <option value="t2">ภาคเรียนที่ 2 (เต็ม 50)</option>
+            <option value="t1">ภาคเรียนที่ 1 (เต็ม 50)</option>
+          </select>
+        </div>
+        <div class="no-print" style="display:flex;gap:8px;margin-bottom:10px">
+          <button type="button" class="btn-primary" id="exportOnePdfBtn" style="flex:1">📤 Export PDF ส่งธุรการ</button>
+          <button type="button" class="btn-soft" id="printOneBtn">🖨️ ปริ้น A4</button>
+        </div>
+        <article class="report-paper" id="reportPaper"></article>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="./apps-config.js"></script>
+  <script src="./students-data.js"></script>
+  <script src="./scores-seed.js"></script>
+  <script src="./pdf-export.js"></script>
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
+    document.documentElement.style.setProperty("--accent", localStorage.getItem("bpp_connect_accent_v1") || "#007AFF");
+
+    const STORAGE_KEY = "bpp_scores_2569_v1";
+    const PRIMARY_GRADES = ["ป.1", "ป.2", "ป.3", "ป.4", "ป.5", "ป.6"];
+    const HOMEROOM_PRIMARY = {
+      namphet: "ป.1",
+      pacharasaran: "ป.2",
+      thanakarin: "ป.4",
+      nantaphat: "ป.6"
+    };
+
+    const BASE_SUBJECTS = [
+      { key: "th", prefix: "ท", num: "101", name: "ภาษาไทย", type: "พื้นฐาน", hrs: 200 },
+      { key: "ma", prefix: "ค", num: "101", name: "คณิตศาสตร์", type: "พื้นฐาน", hrs: 200 },
+      { key: "sc", prefix: "ว", num: "101", name: "วิทยาศาสตร์และเทคโนโลยี", type: "พื้นฐาน", hrs: 80 },
+      { key: "so", prefix: "ส", num: "101", name: "สังคมศึกษา ศาสนาและวัฒนธรรม", type: "พื้นฐาน", hrs: 80 },
+      { key: "hi", prefix: "ส", num: "102", name: "ประวัติศาสตร์", type: "พื้นฐาน", hrs: 40 },
+      { key: "pe", prefix: "พ", num: "101", name: "สุขศึกษาและพลศึกษา", type: "พื้นฐาน", hrs: 40 },
+      { key: "ar", prefix: "ศ", num: "101", name: "ศิลปะ", type: "พื้นฐาน", hrs: 40 },
+      { key: "oc", prefix: "ง", num: "101", name: "การงานอาชีพ", type: "พื้นฐาน", hrs: 40 },
+      { key: "en", prefix: "อ", num: "101", name: "ภาษาอังกฤษ", type: "พื้นฐาน", hrs: 120 },
+      { key: "cv", prefix: "ส", num: "231", name: "หน้าที่พลเมือง", type: "เพิ่มเติม", hrs: 40 }
+    ];
+
+    function getSubjectsForGrade(grade) {
+      const gNum = Number(String(grade).replace(/\D/g, "")) || 1;
+      const custom = window.BPP_SUBJECTS_BY_GRADE && window.BPP_SUBJECTS_BY_GRADE[grade];
+      if (Array.isArray(custom) && custom.length) return custom;
+      return BASE_SUBJECTS.map((s, idx) => ({
+        idx,
+        code: `${s.prefix}1${gNum}${s.num}`,
+        name: s.name,
+        type: s.type,
+        hrs: s.hrs
+      }));
+    }
+
+    function calcThaiGrade(score100) {
+      const n = Number(score100);
+      if (n >= 80) return { g: "4", cls: "g-hi" };
+      if (n >= 75) return { g: "3.5", cls: "g-hi" };
+      if (n >= 70) return { g: "3", cls: "g-mid" };
+      if (n >= 65) return { g: "2.5", cls: "g-mid" };
+      if (n >= 60) return { g: "2", cls: "g-mid" };
+      if (n >= 55) return { g: "1.5", cls: "g-low" };
+      if (n >= 50) return { g: "1", cls: "g-low" };
+      return { g: "0", cls: "g-fail" };
+    }
+
+    function getTeacher() {
+      const uid = localStorage.getItem("bpp_connect_user_v1");
+      let users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+      try { const r = localStorage.getItem("bpp_connect_users_v3"); if (r) { const p = JSON.parse(r); if (p.length) users = p; } } catch (_) {}
+      return users.find((u) => u.id === uid) || users[0] || { id: "", name: "ครูประจำชั้น", shortName: "คุณครู", avatar: "" };
+    }
+
+    const teacher = getTeacher();
+    const backendUrl = ((window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
+    const $ = (id) => document.getElementById(id);
+
+    function loadInitialScores() {
+      const seed = window.BPP_TERM1_SCORES || {};
+      let local = { t1: {}, t2: {} };
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) local = { t1: {}, t2: {}, ...JSON.parse(raw) };
+      } catch (_) {}
+      // Merge Term 1 seed scores cleanly without overwriting user edits
+      const mergedT1 = { ...seed };
+      Object.keys(local.t1 || {}).forEach((code) => {
+        mergedT1[code] = { ...(mergedT1[code] || {}), ...(local.t1[code] || {}) };
+      });
+      return { t1: mergedT1, t2: local.t2 || {} };
+    }
+
+    const state = {
+      tab: "entry",
+      grade: HOMEROOM_PRIMARY[teacher.id] || "ป.1",
+      term: "t2",
+      subjIdx: 0,
+      repStuId: "",
+      repMode: "year",
+      students: window.BPP_STUDENTS_HELPER.loadStudents().filter((s) => PRIMARY_GRADES.includes(s.grade)),
+      scores: loadInitialScores()
+    };
+
+    function showToast(m) {
+      const el = $("toast"); el.textContent = m; el.classList.add("show");
+      clearTimeout(showToast._t); showToast._t = setTimeout(() => el.classList.remove("show"), 2400);
+    }
+
+    function getCell(termKey, stuCode, subjIdx) {
+      const row = (state.scores[termKey] && state.scores[termKey][stuCode]) || {};
+      const cell = row[subjIdx] || {};
+      return { k: cell.k ?? "", s: cell.s ?? "" };
+    }
+
+    function getSubjTotal(termKey, stuCode, subjIdx) {
+      const c = getCell(termKey, stuCode, subjIdx);
+      const k = Number(c.k) || 0, s = Number(c.s) || 0;
+      return Math.round((k + s) * 10) / 10;
+    }
+
+    function setCell(termKey, stuCode, subjIdx, field, val) {
+      if (!state.scores[termKey]) state.scores[termKey] = {};
+      if (!state.scores[termKey][stuCode]) state.scores[termKey][stuCode] = {};
+      const prev = state.scores[termKey][stuCode][subjIdx] || { k: "", s: "" };
+      state.scores[termKey][stuCode][subjIdx] = { ...prev, [field]: val === "" ? "" : Number(val) };
+    }
+
+    function saveAll(notify = true) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.scores)); } catch (_) {}
+      if (backendUrl) {
+        fetch(backendUrl, {
+          method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "save_kv", key: "scores_2569_v1", value: state.scores })
+        }).catch(() => {});
+      }
+      if (notify) showToast("บันทึกคะแนนนักเรียนเรียบร้อย!");
+    }
+
+    async function syncCloud() {
+      if (!backendUrl) return;
+      try {
+        const res = await fetch(`${backendUrl}?action=get_kv&key=scores_2569_v1`, { cache: "no-store" });
+        const json = await res.json();
+        if (json && json.ok && json.value && typeof json.value === "object") {
+          const v = json.value;
+          if (v.t1) state.scores.t1 = { ...state.scores.t1, ...v.t1 };
+          if (v.t2) state.scores.t2 = { ...state.scores.t2, ...v.t2 };
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.scores)); } catch (_) {}
+          render();
+        }
+      } catch (_) {}
+    }
+
+    function getGradeStudents() {
+      return state.students.filter((s) => s.grade === state.grade);
+    }
+
+    function renderGradeBar() {
+      $("gradeBarWrap").innerHTML = `<div class="grade-bar">${PRIMARY_GRADES.map((g) => {
+        const c = state.students.filter((s) => s.grade === g).length;
+        return `<button type="button" class="grade-pill ${state.grade === g ? "active" : ""}" data-g="${g}">${g} (${c})</button>`;
+      }).join("")}</div>`;
+    }
+
+    function renderEntry() {
+      const subjs = getSubjectsForGrade(state.grade);
+      $("termSelect").value = state.term;
+      $("subjectSelect").innerHTML = subjs.map((s) => `<option value="${s.idx}" ${state.subjIdx === s.idx ? "selected" : ""}>${s.code} ${s.name}</option>`).join("");
+
+      const list = getGradeStudents();
+      $("entryList").innerHTML = list.map((s, i) => {
+        const c = getCell(state.term, s.code, state.subjIdx);
+        const tot = getSubjTotal(state.term, s.code, state.subjIdx);
+        const t1Tot = getSubjTotal("t1", s.code, state.subjIdx);
+        return `
+          <div class="card">
+            <div class="stu-head">
+              <div>
+                <div class="stu-name">${i + 1}. ${s.prefix}${s.firstName} ${s.lastName}</div>
+                <div class="stu-sub">รหัส ${s.code} • เทอม 1 ได้ ${t1Tot}/50</div>
+              </div>
+            </div>
+            <div class="score-grid">
+              <div>
+                <label class="sc-lbl">คะแนนเก็บ</label>
+                <input class="sc-in" type="number" step="0.5" min="0" max="50" data-code="${s.code}" data-f="k" value="${c.k}" placeholder="0" />
+              </div>
+              <div>
+                <label class="sc-lbl">คะแนนสอบ</label>
+                <input class="sc-in" type="number" step="0.5" min="0" max="50" data-code="${s.code}" data-f="s" value="${c.s}" placeholder="0" />
+              </div>
+              <div>
+                <label class="sc-lbl" style="text-align:center">รวม/50</label>
+                <div class="sc-total ${tot > 50 ? "over" : ""}" id="tot_${s.code}">${tot}</div>
+              </div>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    function renderSummary() {
+      const subjs = getSubjectsForGrade(state.grade);
+      $("sumSubjectSelect").innerHTML = subjs.map((s) => `<option value="${s.idx}" ${state.subjIdx === s.idx ? "selected" : ""}>${s.code} ${s.name}</option>`).join("");
+      const list = getGradeStudents();
+      const rows = list.map((s) => {
+        const t1 = getSubjTotal("t1", s.code, state.subjIdx);
+        const t2 = getSubjTotal("t2", s.code, state.subjIdx);
+        const yr = Math.round((t1 + t2) * 10) / 10;
+        return { s, t1, t2, yr, gr: calcThaiGrade(yr) };
+      });
+      const sorted = [...rows].sort((a, b) => b.yr - a.yr);
+      rows.forEach((r) => { r.rank = sorted.findIndex((x) => x.yr === r.yr) + 1; });
+
+      $("summaryTableWrap").innerHTML = `
+        <table class="sum-table">
+          <thead><tr><th>ที่</th><th>ชื่อ-นามสกุล</th><th>เทอม 1</th><th>เทอม 2</th><th>รวม 100</th><th>เกรด</th><th>อันดับ</th></tr></thead>
+          <tbody>
+            ${rows.map((r, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td>${r.s.prefix}${r.s.firstName} ${r.s.lastName}</td>
+                <td>${r.t1}</td><td>${r.t2}</td><td><strong>${r.yr}</strong></td>
+                <td><span class="grade-badge ${r.gr.cls}">${r.gr.g}</span></td>
+                <td>${r.rank}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>`;
+    }
+
+    function buildIndividualReportHtml(stu) {
+      const subjs = getSubjectsForGrade(state.grade);
+      const isYear = state.repMode === "year";
+      const termTitle = isYear
+        ? "ปีการศึกษา 2569 (รวมภาคเรียนที่ 1 และ 2)"
+        : state.repMode === "t1"
+          ? "ภาคเรียนที่ 1 ปีการศึกษา 2569"
+          : "ภาคเรียนที่ 2 ปีการศึกษา 2569";
+      const fullPerSubj = isYear ? 100 : 50;
+
+      let sumGot = 0, sumFull = 0;
+      const rowsHtml = subjs.map((s, i) => {
+        const t1 = getSubjTotal("t1", stu.code, s.idx);
+        const t2 = getSubjTotal("t2", stu.code, s.idx);
+        const got = isYear ? Math.round((t1 + t2) * 10) / 10 : (state.repMode === "t1" ? t1 : t2);
+        sumGot += got; sumFull += fullPerSubj;
+        const gr = isYear ? calcThaiGrade(got).g : "";
+        return `<tr><td>${i + 1}</td><td>${s.code}</td><td class="left">${s.name}</td><td>${s.type}</td><td>${s.hrs}</td><td>${fullPerSubj}</td><td>${got}</td><td>${isYear ? gr : ""}</td></tr>`;
+      }).join("");
+      const pct = sumFull ? ((sumGot / sumFull) * 100).toFixed(2) : "0.00";
+
+      return `
+        <div style="text-align:center;margin-bottom:8px">
+          <img src="./icons/school-logo.png" alt="" style="width:52px;height:52px;object-fit:contain;margin-bottom:2px" />
+          <div style="font-weight:700">แบบรายงานผลพัฒนาผู้เรียนรายบุคคล</div>
+          <div>${termTitle}</div>
+          <div>โรงเรียนบ้านป่าไผ่ สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
+        </div>
+        <div style="margin:6px 0">
+          <strong>รหัสประจำตัวนักเรียน:</strong> ${stu.code} &nbsp;&nbsp;
+          <strong>ชื่อ-นามสกุล:</strong> ${stu.prefix}${stu.firstName} ${stu.lastName} &nbsp;&nbsp;
+          <strong>ชั้น:</strong> ประถมศึกษาปีที่ ${state.grade.replace(/\D/g, "")}
+        </div>
+        <table class="rep-table">
+          <thead>
+            <tr>
+              <th style="width:7%">ลำดับ</th><th style="width:13%">รหัสวิชา</th><th>ชื่อรายวิชา</th>
+              <th style="width:12%">ประเภท</th><th style="width:11%">ชม./ปี</th>
+              <th style="width:11%">คะแนนเต็ม</th><th style="width:12%">คะแนนที่ได้</th>
+              <th style="width:12%">${isYear ? "ระดับผลการเรียน" : "หมายเหตุ"}</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5" style="text-align:right;font-weight:700">รวมคะแนนทั้งหมด / ร้อยละ</td>
+              <td style="font-weight:700">${sumFull}</td>
+              <td style="font-weight:700">${Math.round(sumGot * 10) / 10}</td>
+              <td style="font-weight:700">${pct}%</td>
+            </tr>
+          </tfoot>
+        </table>
+        <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;text-align:center;gap:14px">
+          <div>ลงชื่อ........................................ครูประจำชั้น<br/>(${teacher.name})</div>
+          <div>ลงชื่อ........................................ผู้อำนวยการ<br/>(นางสาวนภาพร คงแสนคำ)<br/>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+        </div>`;
+    }
+
+    function renderReport() {
+      const list = getGradeStudents();
+      if (!list.some((s) => s.id === state.repStuId)) state.repStuId = list[0] ? list[0].id : "";
+      $("repStuSelect").innerHTML = list.map((s, i) => `<option value="${s.id}" ${s.id === state.repStuId ? "selected" : ""}>${i + 1}. ${s.prefix}${s.firstName} ${s.lastName} (${s.code})</option>`).join("");
+      $("repModeSelect").value = state.repMode;
+      const stu = list.find((s) => s.id === state.repStuId);
+      $("reportPaper").innerHTML = stu ? buildIndividualReportHtml(stu) : "<div>ไม่พบนักเรียนในชั้นนี้</div>";
+    }
+
+    function render() {
+      const av = teacher.avatar ? `<img class="mini-avatar" src="${teacher.avatar}" alt="" />` : "";
+      $("userSub").innerHTML = `${av}<span>${teacher.shortName} • ฐานข้อมูล DMC (${state.students.length} คน ป.1–ป.6)</span>`;
+      renderGradeBar();
+
+      $("viewEntry").classList.toggle("hidden", state.tab !== "entry");
+      $("viewSummary").classList.toggle("hidden", state.tab !== "summary");
+      $("viewReport").classList.toggle("hidden", state.tab !== "report");
+      document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === state.tab));
+
+      if (state.tab === "entry") renderEntry();
+      else if (state.tab === "summary") renderSummary();
+      else renderReport();
+    }
+
+    // Events
+    document.querySelectorAll("[data-tab]").forEach((b) => { b.onclick = () => { state.tab = b.dataset.tab; render(); }; });
+    $("gradeBarWrap").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-g]"); if (!b) return;
+      state.grade = b.dataset.g; render();
+    });
+    $("termSelect").onchange = (e) => { state.term = e.target.value; renderEntry(); };
+    $("subjectSelect").onchange = (e) => { state.subjIdx = Number(e.target.value); renderEntry(); };
+    $("sumSubjectSelect").onchange = (e) => { state.subjIdx = Number(e.target.value); renderSummary(); };
+    $("repStuSelect").onchange = (e) => { state.repStuId = e.target.value; renderReport(); };
+    $("repModeSelect").onchange = (e) => { state.repMode = e.target.value; renderReport(); };
+
+    $("entryList").addEventListener("input", (e) => {
+      const inp = e.target.closest("[data-code]"); if (!inp) return;
+      setCell(state.term, inp.dataset.code, state.subjIdx, inp.dataset.f, inp.value);
+      const tot = getSubjTotal(state.term, inp.dataset.code, state.subjIdx);
+      const tEl = $("tot_" + inp.dataset.code);
+      if (tEl) { tEl.textContent = tot; tEl.classList.toggle("over", tot > 50); }
+    });
+
+    $("saveScoresBtn").onclick = () => saveAll(true);
+    $("printOneBtn").onclick = () => window.print();
+    $("exportOnePdfBtn").onclick = () => {
+      const stu = getGradeStudents().find((s) => s.id === state.repStuId);
+      if (!stu) return;
+      window.BPP_PDF.exportOrShare($("reportPaper").innerHTML, `รายงานผล_${stu.grade}_${stu.firstName}_${state.repMode}.pdf`, { shareToAdmin: true, onStatus: showToast });
+    };
+    $("exportSumPdfBtn").onclick = () => {
+      const subj = getSubjectsForGrade(state.grade)[state.subjIdx];
+      const list = getGradeStudents();
+      const rowsHtml = list.map((s, i) => {
+        const t1 = getSubjTotal("t1", s.code, state.subjIdx), t2 = getSubjTotal("t2", s.code, state.subjIdx);
+        const yr = Math.round((t1 + t2) * 10) / 10;
+        return `<tr><td>${i + 1}</td><td>${s.code}</td><td class="left">${s.prefix}${s.firstName} ${s.lastName}</td><td>${t1}</td><td>${t2}</td><td>${yr}</td><td>${calcThaiGrade(yr).g}</td></tr>`;
+      }).join("");
+      const html = `<div class="report-paper" style="padding:0;border:none;box-shadow:none">
+        <div style="text-align:center;font-weight:700;margin-bottom:6px">สรุปคะแนนและผลการเรียน ปีการศึกษา 2569<br/>วิชา ${subj.code} ${subj.name} • ชั้น ${state.grade} โรงเรียนบ้านป่าไผ่</div>
+        <table class="rep-table"><thead><tr><th>ที่</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>เทอม 1 (50)</th><th>เทอม 2 (50)</th><th>รวม (100)</th><th>เกรด</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+      </div>`;
+      window.BPP_PDF.exportOrShare(html, `สรุปคะแนน_${state.grade}_${subj.code}.pdf`, { shareToAdmin: true, onStatus: showToast });
+    };
+
+    render();
+    syncCloud();
+  </script>
+</body>
+</html>

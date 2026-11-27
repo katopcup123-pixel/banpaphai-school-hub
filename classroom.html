@@ -314,6 +314,7 @@
 
       const items = [
         { id: "attendance", ico: "📊", cls: "c-blue", title: "เช็คสถิติการมาเรียน", sub: "เช็คชื่อรายวัน กราฟ & รายงาน A4", badge: "เปิดระบบ ↗" },
+        { id: "scores", ico: "💯", cls: "c-green", title: "บันทึกคะแนน (50+50)", sub: "กรอกคะแนนเทอม 1-2 เกรด & ใบรายงาน A4", badge: "เปิดระบบ ↗" },
         { id: "profiles", ico: "👨‍👩‍👧", cls: "c-teal", title: "ทะเบียนนักเรียน & ผู้ปกครอง", sub: "เบอร์โทรฉุกเฉิน โรคประจำตัว กลับบ้าน", badge: `${totalStu} คน` },
         { id: "visits", ico: "🏠", cls: "c-green", title: "เยี่ยมบ้านนักเรียน", sub: "ถ่ายรูป ปักหมุด GPS & ปริ้น A4", badge: `${visitedCnt} หลัง` },
         { id: "screening", ico: "🎯", cls: "c-amber", title: "คัดกรองยากจน / กสศ. / SDQ", sub: "สถานะทุนเสมอภาค & กลุ่มเสี่ยง", badge: `${eefCnt} คน` },
@@ -545,6 +546,7 @@
       const modBtn = e.target.closest("[data-mod]");
       if (modBtn) {
         if (modBtn.dataset.mod === "attendance") { location.href = "./attendance.html"; return; }
+        if (modBtn.dataset.mod === "scores") { location.href = "./scores.html"; return; }
         state.view = modBtn.dataset.mod; render(); return;
       }
       const gBtn = e.target.closest("[data-g]");

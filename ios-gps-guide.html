@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>คู่มือตั้งค่า GPS อัตโนมัติสำหรับ iPhone — BPP Connect</title>
+  <style>
+    @font-face {
+      font-family: "TH SarabunIT9";
+      src: url("./fonts/THSarabunIT9.ttf") format("truetype");
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: "TH SarabunIT9";
+      src: url("./fonts/THSarabunIT9-Bold.ttf") format("truetype");
+      font-weight: 700;
+    }
+    @page { size: A4 portrait; margin: 16mm 16mm 16mm 20mm; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px 14px 40px;
+      background: #F1F5F9;
+      color: #0F172A;
+      font-family: "TH SarabunIT9", "TH Sarabun New", -apple-system, sans-serif;
+      font-size: 16pt;
+      line-height: 1.32;
+    }
+    .toolbar {
+      max-width: 794px;
+      margin: 0 auto 14px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .btn {
+      border: none;
+      background: #007AFF;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Noto Sans Thai", sans-serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 9px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .btn.soft { background: #E2E8F0; color: #0F172A; }
+    .page {
+      max-width: 794px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      padding: 36px 46px 36px 56px;
+      border-radius: 10px;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+    }
+    h1 { text-align: center; font-size: 20pt; margin: 0 0 2px; }
+    .sub { text-align: center; font-size: 15pt; color: #334155; margin-bottom: 14px; }
+    .box {
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      background: #F8FAFC;
+    }
+    .box.green { border-left: 5px solid #10B981; background: #F0FDF4; }
+    .box.red { border-left: 5px solid #EF4444; background: #FEF2F2; }
+    h2 { font-size: 17pt; margin: 10px 0 4px; }
+    ol { margin: 4px 0 6px 22px; padding: 0; }
+    li { margin-bottom: 3px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5pt; margin-top: 8px; }
+    th, td { border: 1px solid #64748B; padding: 5px 7px; text-align: left; word-break: break-all; }
+    th { background: #E2E8F0; font-weight: 700; }
+    .code {
+      font-family: Consolas, monospace;
+      font-size: 9.5pt;
+      background: #FFFFFF;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: 1px solid #CBD5E1;
+      display: block;
+      margin-top: 4px;
+      word-break: break-all;
+    }
+    .copy-mini {
+      font-family: -apple-system, sans-serif;
+      font-size: 11px;
+      border: none;
+      background: #007AFF;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .toolbar, .copy-mini { display: none !important; }
+      .page { box-shadow: none; padding: 0; max-width: none; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button type="button" class="btn soft" onclick="window.print()">🖨️ พิมพ์เอกสาร</button>
+    <button type="button" class="btn" id="savePdfBtn">💾 บันทึกเป็นไฟล์ PDF (A4)</button>
+  </div>
+
+  <div class="page" id="guidePage">
+    <h1>คู่มือตั้งค่าสถานะ GPS อัตโนมัติสำหรับ iPhone (iOS)</h1>
+    <div class="sub">แอปพลิเคชัน BPP Connect • โรงเรียนบ้านป่าไผ่ สพป.นครราชสีมา เขต 4</div>
+
+    <div class="box">
+      <strong>ทำไม iPhone ต้องตั้งค่าเพิ่มเติม?</strong><br>
+      ระบบความปลอดภัยของ Apple ไม่อนุญาตให้เว็บแอปดึงพิกัด GPS ขณะปิดหน้าจอ แต่เราสามารถใช้แอป <strong>“คำสั่งลัด (Shortcuts)”</strong> ที่มีติดเครื่อง iPhone ทุกเครื่องอยู่แล้ว ตั้งค่าเพียง <strong>1 ครั้ง (ใช้เวลาไม่เกิน 1 นาที)</strong> เพื่อให้ระบบเปลี่ยนสีสถานะ <strong>🟢 อยู่โรงเรียน / 🔴 ไม่อยู่โรงเรียน</strong> ให้อัตโนมัติแม้ล็อกหน้าจอไว้ในกระเป๋าครับ
+    </div>
+
+    <div class="box green">
+      <h2 style="margin-top:0;color:#065F46">ส่วนที่ 1 : ตั้งค่าเมื่อ “มาถึงโรงเรียน” (ขึ้นวงแหวนสีเขียว 🟢)</h2>
+      <ol>
+        <li>เปิดแอป <strong>คำสั่งลัด (Shortcuts)</strong> บน iPhone แล้วแตะแท็บ <strong>การทำงานอัตโนมัติ (Automation)</strong> ด้านล่าง</li>
+        <li>แตะปุ่ม <strong>+ (มุมขวาบน)</strong> → เลือกหัวข้อ <strong>เมื่อมาถึง (Arrive)</strong></li>
+        <li>แตะ <strong>เลือก (Choose)</strong> ตรงช่องตำแหน่ง → พิมพ์ค้นหา <strong>โรงเรียนบ้านป่าไผ่</strong> (หรือปักหมุดที่โรงเรียน ระยะ 100 เมตร) → กด <strong>เสร็จสิ้น</strong></li>
+        <li>เลือกช่วงเวลาเป็น <strong>ตลอดเวลา</strong> และติ๊กเลือก <strong>ทำงานทันที (Run Immediately)</strong> → กด <strong>ถัดไป</strong></li>
+        <li>เลือก <strong>สร้างการทำงานอัตโนมัติว่างเปล่า (New Blank Automation)</strong> → กด <strong>เพิ่มการทำงาน (Add Action)</strong></li>
+        <li>ค้นหาคำสั่ง <strong>รับเนื้อหาของ URL (Get Contents of URL)</strong> แล้ววาง <strong>ลิงก์ 🟢 มาถึงโรงเรียน</strong> ของตนเองจากตารางด้านล่าง → กด <strong>เสร็จสิ้น</strong></li>
+      </ol>
+    </div>
+
+    <div class="box red">
+      <h2 style="margin-top:0;color:#991B1B">ส่วนที่ 2 : ตั้งค่าเมื่อ “ออกจากโรงเรียน” (ขึ้นวงแหวนสีแดง 🔴)</h2>
+      <ol>
+        <li>ทำซ้ำเหมือนส่วนที่ 1 แต่ในข้อ 2 ให้เลือก <strong>เมื่อออกจาก (Leave)</strong> ตำแหน่ง <strong>โรงเรียนบ้านป่าไผ่</strong></li>
+        <li>ติ๊กเลือก <strong>ทำงานทันที (Run Immediately)</strong> → เพิ่มคำสั่ง <strong>รับเนื้อหาของ URL (Get Contents of URL)</strong></li>
+        <li>วาง <strong>ลิงก์ 🔴 ออกจากโรงเรียน</strong> ของตนเองจากตารางด้านล่าง → กด <strong>เสร็จสิ้น</strong> เป็นอันเสร็จเรียบร้อย!</li>
+      </ol>
+    </div>
+
+    <h2>ตารางลิงก์ส่วนตัวสำหรับบุคลากรแต่ละท่าน (เลือกใช้เฉพาะแถวของตนเอง)</h2>
+    <div style="font-size:14pt;color:#475569;margin-bottom:4px">
+      รูปแบบลิงก์: <code>.../exec?action=staff_gps_ping&amp;userId=<strong>[รหัสผู้ใช้]</strong>&amp;status=<strong>at_school</strong></code> (มาถึง) หรือ <code><strong>away</strong></code> (ออก)
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:26%">ชื่อ - สกุล</th>
+          <th style="width:14%">รหัสผู้ใช้</th>
+          <th style="width:30%">🟢 ลิงก์เมื่อมาถึงโรงเรียน</th>
+          <th style="width:30%">🔴 ลิงก์เมื่อออกจากโรงเรียน</th>
+        </tr>
+      </thead>
+      <tbody id="staffUrlRows"></tbody>
+    </table>
+
+    <div style="margin-top:12px;font-size:14pt;color:#475569">
+      <strong>หมายเหตุ:</strong> สำหรับผู้ใช้มือถือ <strong>Android</strong> ที่ติดตั้งไฟล์ <strong>BPP-Connect.apk (v3.2.0 ขึ้นไป)</strong> ไม่ต้องตั้งค่า Shortcuts นี้ ระบบจะส่งพิกัด GPS อัปเดตสถานะ 🟢/🔴 เบื้องหลังให้อัตโนมัติทันทีหลังล็อกอินครับ
+    </div>
+  </div>
+
+  <script src="./apps-config.js"></script>
+  <script src="./pdf-export.js"></script>
+  <script>
+    const api = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "https://script.google.com/macros/s/AKfycbyY5tXe6nNyZpdb1EWE8taHLgEJU63sYvZ_vmu8MoiNVOgQc26McD-kNoatNLeeGsYbRw/exec";
+    const users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+    const tbody = document.getElementById("staffUrlRows");
+    tbody.innerHTML = users.map((u) => {
+      const urlIn = `${api}?action=staff_gps_ping&userId=${u.id}&status=at_school`;
+      const urlOut = `${api}?action=staff_gps_ping&userId=${u.id}&status=away`;
+      return `<tr>
+        <td><strong>${u.shortName}</strong><br><span style="font-size:12pt;color:#475569">${u.name}</span></td>
+        <td><code>${u.id}</code></td>
+        <td><span class="code">${urlIn}</span><button class="copy-mini" data-copy="${urlIn}">คัดลอก</button></td>
+        <td><span class="code">${urlOut}</span><button class="copy-mini" data-copy="${urlOut}">คัดลอก</button></td>
+      </tr>`;
+    }).join("");
+
+    tbody.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-copy]");
+      if (!btn) return;
+      navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+        btn.textContent = "คัดลอกแล้ว ✓";
+        setTimeout(() => { btn.textContent = "คัดลอก"; }, 1500);
+      });
+    });
+
+    document.getElementById("savePdfBtn").onclick = () => {
+      if (window.BPP_PDF && window.BPP_PDF.exportMultiPageA4) {
+        const clone = document.getElementById("guidePage").cloneNode(true);
+        clone.querySelectorAll(".copy-mini").forEach((b) => b.remove());
+        window.BPP_PDF.exportMultiPageA4([clone.innerHTML], "คู่มือตั้งค่า_GPS_อัตโนมัติ_iPhone_BPPConnect.pdf", { shareToAdmin: true });
+      } else {
+        window.print();
+      }
+    };
+  </script>
+</body>
+</html>

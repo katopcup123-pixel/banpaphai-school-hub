@@ -516,7 +516,9 @@
     state.currentUser = res.user;
     try { localStorage.setItem(STORAGE_USER, res.user.id); } catch (_) {}
     syncOneSignalUser(res.user.id);
+    notifyAndroidBridgeUser(res.user.id);
     setTimeout(() => syncStaffGpsPresence(false), 600);
+    startRealtimeStaffGps();
 
     els.unlockName.textContent = res.user.name;
     els.unlockPosition.textContent = res.user.position;
@@ -872,6 +874,7 @@
         <div><strong>เบอร์ติดต่อ:</strong> ${target.phone || "ยังไม่ได้เพิ่มเบอร์ในโปรไฟล์"}</div>
       </div>
       ${isMe ? `<button type="button" class="btn-primary" id="refreshMyGpsBtn">📍 อัปเดตพิกัด GPS ของฉันตอนนี้</button>` : ""}
+      ${isMe ? `<button type="button" class="btn-secondary" id="openIosGpsGuideBtn">📱 คู่มือตั้งค่า GPS อัตโนมัติสำหรับ iPhone (PDF)</button>` : ""}
       ${!isMe && target.phone ? `<a href="tel:${target.phone.replace(/[^0-9+]/g, "")}" class="btn-primary" style="display:block;text-align:center;text-decoration:none">📞 โทรออก (${target.phone})</a>` : ""}
       <button type="button" class="btn-secondary" id="staffCloseBtn">ปิด</button>
     `;
@@ -885,6 +888,111 @@
         syncStaffGpsPresence(true);
       };
     }
+    const iosBtn = document.getElementById("openIosGpsGuideBtn");
+    if (iosBtn) {
+      iosBtn.onclick = () => {
+        closeSheet();
+        openIosGpsGuidePdf();
+      };
+    }
+  }
+
+  let _gpsPollTimer = null;
+  let _gpsWatchId = null;
+  let _lastWatchPush = 0;
+
+  function notifyAndroidBridgeUser(userId) {
+    try {
+      if (window.BppAndroidBridge) {
+        if (userId && typeof window.BppAndroidBridge.setUserId === "function") {
+          window.BppAndroidBridge.setUserId(String(userId));
+        } else if (!userId && typeof window.BppAndroidBridge.stopTracking === "function") {
+          window.BppAndroidBridge.stopTracking();
+        }
+      }
+    } catch (_) {}
+  }
+
+  function startRealtimeStaffGps() {
+    if (state.currentUser) notifyAndroidBridgeUser(state.currentUser.id);
+    if (!_gpsPollTimer) {
+      _gpsPollTimer = setInterval(() => {
+        if (document.visibilityState !== "visible") return;
+        const apiUrl = (state.newsBackendUrl || (config && config.newsBackendUrl) || "").trim();
+        if (!apiUrl) return;
+        fetch(`${apiUrl}?action=get_kv&key=${encodeURIComponent(STORAGE_STAFF_GPS)}`, { cache: "no-store" })
+          .then((r) => r.json())
+          .then((gpsRes) => {
+            if (gpsRes && gpsRes.ok && gpsRes.value && typeof gpsRes.value === "object") {
+              const prev = JSON.stringify(state.staffGps || {});
+              const next = JSON.stringify(gpsRes.value);
+              if (prev !== next) {
+                state.staffGps = gpsRes.value;
+                try { localStorage.setItem(STORAGE_STAFF_GPS, next); } catch (_) {}
+                if (state.tab === "home") render();
+              }
+            }
+          })
+          .catch(() => {});
+      }, 15000);
+    }
+    if (navigator.geolocation && _gpsWatchId === null) {
+      try {
+        _gpsWatchId = navigator.geolocation.watchPosition(
+          () => {
+            if (Date.now() - _lastWatchPush > 25000 && state.currentUser) {
+              _lastWatchPush = Date.now();
+              syncStaffGpsPresence(false);
+            }
+          },
+          () => {},
+          { enableHighAccuracy: false, maximumAge: 20000, timeout: 10000 }
+        );
+      } catch (_) {}
+    }
+  }
+
+  function openIosGpsGuidePdf() {
+    const apiUrl = (state.newsBackendUrl || (config && config.newsBackendUrl) || "").trim();
+    const u = state.currentUser || { id: "napaporn", name: "บุคลากรโรงเรียนบ้านป่าไผ่" };
+    const arriveUrl = `${apiUrl}?action=staff_gps_ping&userId=${encodeURIComponent(u.id)}&status=at_school`;
+    const leaveUrl = `${apiUrl}?action=staff_gps_ping&userId=${encodeURIComponent(u.id)}&status=away`;
+
+    const copyBtnHtml = (id, label) => `<button type="button" class="btn-secondary" id="${id}" style="margin:6px 0">${label}</button>`;
+    els.sheetBody.innerHTML = `
+      <h3 style="margin:0 0 6px">📱 ตั้งค่า GPS อัตโนมัติสำหรับ iPhone</h3>
+      <div class="sheet-note" style="font-size:12.5px;line-height:1.6">
+        <strong>สำหรับ:</strong> ${u.name}<br>
+        ใช้แอป <strong>คำสั่งลัด (Shortcuts)</strong> ที่มีติดเครื่อง iPhone อยู่แล้ว ตั้งครั้งเดียว ระบบจะเปลี่ยนสี 🟢/🔴 ให้อัตโนมัติแม้ล็อกหน้าจอไว้!
+      </div>
+      <div style="font-size:12.5px;font-weight:700;margin:8px 0 4px">ขั้นตอนที่ 1: เมื่อมาถึงโรงเรียน (ขึ้นสีเขียว 🟢)</div>
+      <div class="sheet-note" style="font-size:12px;line-height:1.55">
+        1. เปิดแอป <strong>คำสั่งลัด (Shortcuts)</strong> → แท็บ <strong>การทำงานอัตโนมัติ (Automation)</strong> → กด <strong>+</strong><br>
+        2. เลือก <strong>เมื่อมาถึง (Arrive)</strong> → เลือกตำแหน่ง <strong>โรงเรียนบ้านป่าไผ่</strong> → เลือก <strong>ทำงานทันที (Run Immediately)</strong> → กด ถัดไป<br>
+        3. กด <strong>สร้างการทำงานอัตโนมัติว่างเปล่า</strong> → ค้นหาคำสั่ง <strong>รับเนื้อหาของ URL (Get Contents of URL)</strong><br>
+        4. วางลิงก์ "มาถึงโรงเรียน" ด้านล่างลงไป → กด <strong>เสร็จสิ้น</strong>
+      </div>
+      ${copyBtnHtml("copyIosArriveBtn", "📋 คัดลอกลิงก์ 🟢 มาถึงโรงเรียน")}
+      <div style="font-size:12.5px;font-weight:700;margin:8px 0 4px">ขั้นตอนที่ 2: เมื่อออกจากโรงเรียน (ขึ้นสีแดง 🔴)</div>
+      <div class="sheet-note" style="font-size:12px;line-height:1.55">
+        ทำเหมือนขั้นตอนที่ 1 แต่เลือก <strong>เมื่อออกจาก (Leave)</strong> ตำแหน่ง <strong>โรงเรียนบ้านป่าไผ่</strong> แล้ววางลิงก์ "ออกจากโรงเรียน" ด้านล่างครับ
+      </div>
+      ${copyBtnHtml("copyIosLeaveBtn", "📋 คัดลอกลิงก์ 🔴 ออกจากโรงเรียน")}
+      <button type="button" class="btn-primary" id="downloadIosPdfBtn" style="margin-top:8px">🖨️ เปิดคู่มือฉบับพิมพ์ PDF (A4)</button>
+      <button type="button" class="btn-secondary" id="closeIosGuideBtn">ปิด</button>
+    `;
+    els.sheetBackdrop.classList.add("open");
+    document.getElementById("closeIosGuideBtn").onclick = closeSheet;
+    document.getElementById("copyIosArriveBtn").onclick = () => {
+      navigator.clipboard.writeText(arriveUrl).then(() => notifyIsland("คัดลอกลิงก์ 🟢 มาถึงโรงเรียนแล้ว")).catch(() => notifyIsland(arriveUrl));
+    };
+    document.getElementById("copyIosLeaveBtn").onclick = () => {
+      navigator.clipboard.writeText(leaveUrl).then(() => notifyIsland("คัดลอกลิงก์ 🔴 ออกจากโรงเรียนแล้ว")).catch(() => notifyIsland(leaveUrl));
+    };
+    document.getElementById("downloadIosPdfBtn").onclick = () => {
+      closeSheet();
+      window.open("./ios-gps-guide.html", "_blank", "noopener");
+    };
   }
 
   // วันหยุดราชการ / นักขัตฤกษ์ไทย (พ.ศ. 2569–2570 / 2026–2027)
@@ -2876,6 +2984,7 @@
       state.tab = "home";
       try { localStorage.removeItem(STORAGE_USER); } catch (_) {}
       syncOneSignalUser(null);
+      notifyAndroidBridgeUser(null);
       notifyIsland("ออกจากระบบแล้ว");
       showLoginScreen();
       return;
@@ -3021,6 +3130,6 @@
   syncRemoteConfig(true);
   loadLiveNews(false);
   setTimeout(prefetchDocsCache, 800);
-  setTimeout(() => syncStaffGpsPresence(false), 1800);
+  setTimeout(() => { syncStaffGpsPresence(false); startRealtimeStaffGps(); }, 1800);
   playSplashThenLogin();
 })();

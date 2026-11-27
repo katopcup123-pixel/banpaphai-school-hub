@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -12,6 +13,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
+import android.webkit.JavascriptInterface;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -126,7 +128,36 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        webView.addJavascriptInterface(new BppAndroidBridge(), "BppAndroidBridge");
         webView.loadUrl(APP_URL);
+    }
+
+    private class BppAndroidBridge {
+        @JavascriptInterface
+        public void setUserId(String userId) {
+            if (userId == null || userId.trim().isEmpty()) return;
+            SharedPreferences prefs = getSharedPreferences(LocationTrackingService.PREFS_NAME, MODE_PRIVATE);
+            prefs.edit().putString(LocationTrackingService.KEY_USER_ID, userId.trim()).apply();
+            runOnUiThread(MainActivity.this::startGpsServiceIfPermitted);
+        }
+
+        @JavascriptInterface
+        public void stopTracking() {
+            SharedPreferences prefs = getSharedPreferences(LocationTrackingService.PREFS_NAME, MODE_PRIVATE);
+            prefs.edit().remove(LocationTrackingService.KEY_USER_ID).apply();
+            runOnUiThread(() -> stopService(new Intent(MainActivity.this, LocationTrackingService.class)));
+        }
+    }
+
+    private void startGpsServiceIfPermitted() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            Intent svc = new Intent(this, LocationTrackingService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(svc);
+            } else {
+                startService(svc);
+            }
+        }
     }
 
     private void requestNeededPermissions() {

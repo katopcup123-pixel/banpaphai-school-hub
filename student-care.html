@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>ระบบดูแลช่วยเหลือนักเรียน — เยี่ยมบ้าน & คัดกรอง กสศ.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #F4F6FB;
+      --surface: #FFFFFF;
+      --glass: rgba(255, 255, 255, 0.88);
+      --fill: rgba(118, 118, 128, 0.11);
+      --border: rgba(15, 23, 42, 0.08);
+      --text: #0F172A;
+      --secondary: #64748B;
+      --accent: #0D9488;
+      --accent-soft: rgba(13, 148, 136, 0.12);
+      --spring: cubic-bezier(0.32, 1.18, 0.56, 1);
+    }
+    [data-theme="dark"] {
+      --bg: #0B0D12;
+      --surface: #1C1C1E;
+      --glass: rgba(24, 24, 28, 0.88);
+      --fill: rgba(118, 118, 128, 0.24);
+      --border: rgba(255, 255, 255, 0.09);
+      --text: #F2F2F7;
+      --secondary: #AEAEB2;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+    .app { max-width: 560px; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; }
+    .topbar {
+      flex-shrink: 0; background: var(--glass); backdrop-filter: saturate(180%) blur(24px);
+      border-bottom: 0.5px solid var(--border);
+      padding: calc(10px + env(safe-area-inset-top)) 16px 10px; z-index: 20;
+    }
+    .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .top-row h1 { margin: 0; font-size: 17.5px; font-weight: 700; letter-spacing: -0.02em; }
+    .sub-line { font-size: 11.5px; color: var(--secondary); margin-top: 2px; }
+    .seg-bar {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+      background: var(--fill); padding: 4px; border-radius: 13px; margin-top: 10px;
+    }
+    .seg-btn {
+      border: none; background: transparent; color: var(--secondary);
+      font-family: inherit; font-size: 12.5px; font-weight: 600;
+      padding: 8px 6px; border-radius: 10px; cursor: pointer; transition: all 0.2s;
+    }
+    .seg-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08); }
+
+    .body-scroll {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 14px 16px calc(32px + env(safe-area-inset-bottom));
+      scrollbar-width: none;
+    }
+    .body-scroll::-webkit-scrollbar { display: none; }
+
+    .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+    .kpi-box { background: var(--surface); border: 0.5px solid var(--border); border-radius: 16px; padding: 10px 8px; text-align: center; }
+    .kpi-num { font-size: 20px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .kpi-lbl { font-size: 10.5px; color: var(--secondary); margin-top: 2px; }
+
+    .card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 20px; padding: 14px; margin-bottom: 12px;
+      box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+    }
+    .card h2 { margin: 0 0 8px; font-size: 14.5px; font-weight: 700; }
+    .meta { font-size: 11.5px; color: var(--secondary); }
+
+    .field, .select-field, .textarea-field {
+      width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text);
+      border-radius: 12px; padding: 9px 12px; font-family: inherit; font-size: 14.5px;
+      margin-bottom: 8px; outline: none;
+    }
+    .field:focus, .select-field:focus, .textarea-field:focus { border-color: var(--accent); }
+    .lbl { display: block; font-size: 12px; font-weight: 600; color: var(--secondary); margin: 6px 0 4px; }
+
+    .btn-primary {
+      width: 100%; border: none; background: var(--accent); color: #FFF;
+      font-family: inherit; font-size: 13.5px; font-weight: 600;
+      height: 42px; border-radius: 13px; cursor: pointer;
+    }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-soft {
+      border: none; background: var(--fill); color: var(--text);
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      padding: 7px 11px; border-radius: 10px; cursor: pointer;
+    }
+    .btn-soft:active { transform: scale(0.95); }
+
+    .stu-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 10px 0; border-bottom: 0.5px solid var(--border); cursor: pointer;
+    }
+    .stu-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .stu-name { font-size: 13.5px; font-weight: 600; }
+    .badge {
+      display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+      background: var(--fill); color: var(--secondary);
+    }
+    .badge.ok { background: rgba(16, 185, 129, 0.14); color: #059669; }
+    .badge.warn { background: rgba(245, 158, 11, 0.16); color: #B45309; }
+    .badge.danger { background: rgba(239, 68, 68, 0.14); color: #DC2626; }
+
+    .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .chk-item {
+      display: flex; align-items: center; gap: 6px; font-size: 12.5px;
+      background: var(--bg); padding: 7px 9px; border-radius: 10px; cursor: pointer;
+    }
+    .photo-preview { width: 100%; max-height: 180px; object-fit: cover; border-radius: 12px; margin: 6px 0 8px; border: 1px solid var(--border); }
+
+    /* Bottom Sheet Modal */
+    .backdrop {
+      position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.42);
+      backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+    }
+    .backdrop.open { opacity: 1; pointer-events: auto; }
+    .sheet {
+      width: 100%; max-width: 560px; max-height: 90dvh; overflow-y: auto;
+      background: var(--surface); border-radius: 24px 24px 0 0;
+      padding: 12px 18px calc(28px + env(safe-area-inset-bottom));
+      transform: translateY(100%); transition: transform 0.32s var(--spring);
+    }
+    .backdrop.open .sheet { transform: translateY(0); }
+    .grabber { width: 38px; height: 5px; border-radius: 999px; background: var(--fill); margin: 0 auto 12px; }
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.92); color: #FFF; font-size: 13px; font-weight: 600;
+      padding: 10px 18px; border-radius: 999px; display: none; z-index: 95;
+    }
+    .toast.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="top-row">
+        <div>
+          <h1>💛 ระบบดูแลช่วยเหลือนักเรียน</h1>
+          <div class="sub-line" id="userSub">โรงเรียนบ้านป่าไผ่</div>
+        </div>
+        <button type="button" class="btn-soft" id="printReportBtn">🖨️ พิมพ์รายงาน A4</button>
+      </div>
+      <div class="seg-bar">
+        <button type="button" class="seg-btn active" data-tab="visit">🏠 ระบบเยี่ยมบ้าน</button>
+        <button type="button" class="seg-btn" data-tab="eef">🎒 คัดกรองยากจน กสศ.</button>
+      </div>
+    </header>
+    <main class="body-scroll" id="mainBody"></main>
+  </div>
+
+  <div class="backdrop" id="sheetBackdrop">
+    <div class="sheet">
+      <div class="grabber"></div>
+      <div id="sheetContent"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="./apps-config.js"></script>
+  <script src="./students-data.js"></script>
+  <script src="./pdf-export.js"></script>
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
+
+    const STORAGE_KEY = "bpp_student_care_v1";
+    const GRADES = (window.BPP_GRADE_ORDER || ["อ.2","อ.3","ป.1","ป.2","ป.3","ป.4","ป.5","ป.6"]);
+    const GRADE_FULL = {
+      "อ.2": "อนุบาลปีที่ 2", "อ.3": "อนุบาลปีที่ 3",
+      "ป.1": "ประถมศึกษาปีที่ 1", "ป.2": "ประถมศึกษาปีที่ 2", "ป.3": "ประถมศึกษาปีที่ 3",
+      "ป.4": "ประถมศึกษาปีที่ 4", "ป.5": "ประถมศึกษาปีที่ 5", "ป.6": "ประถมศึกษาปีที่ 6"
+    };
+    const HOMEROOM_DEFAULT = {
+      narisara: "อ.2", namphet: "ป.1", pacharasaran: "ป.2", thanakarin: "ป.5", nantaphat: "ป.6", napaporn: "ป.5"
+    };
+
+    function getCurrentTeacher() {
+      const uid = localStorage.getItem("bpp_connect_user_v1");
+      const users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+      return users.find((u) => u.id === uid) || users[0] || { id: "", name: "นายธานครินทร์ สุเมธาลังการ", shortName: "ครูธานครินทร์", position: "ครู" };
+    }
+    const currentTeacher = getCurrentTeacher();
+    document.getElementById("userSub").textContent = `ผู้ใช้งาน: ${currentTeacher.shortName || currentTeacher.name}`;
+
+    const allStudents = (window.BPP_STUDENTS_HELPER && window.BPP_STUDENTS_HELPER.loadStudents()) || (window.BPP_DEFAULT_STUDENTS || []);
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg; el.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 2500);
+    }
+
+    function openSheet(html) {
+      document.getElementById("sheetContent").innerHTML = html;
+      document.getElementById("sheetBackdrop").classList.add("open");
+    }
+    function closeSheet() { document.getElementById("sheetBackdrop").classList.remove("open"); }
+    document.getElementById("sheetBackdrop").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("sheetBackdrop")) closeSheet();
+    });
+
+    let db = (() => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") return parsed;
+        }
+      } catch (_) {}
+      return { updatedAt: 0, visits: {}, eef: {}, reportMeta: {} };
+    })();
+
+    function saveDb() {
+      db.updatedAt = Date.now();
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch (_) {}
+      const apiUrl = (localStorage.getItem("bpp_connect_news_api_v1") || (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
+      if (apiUrl) {
+        // ซิงก์ขึ้นคลาวด์โดยตัดรูปใหญ่เกินเพื่อไม่ให้เกินขีดจำกัดเซลล์ Google Sheets
+        const lightVisits = {};
+        Object.entries(db.visits || {}).forEach(([k, v]) => {
+          lightVisits[k] = { ...v, photo: v.photo && v.photo.length < 18000 ? v.photo : "" };
+        });
+        fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "save_kv", key: STORAGE_KEY, value: { ...db, visits: lightVisits } })
+        }).catch(() => {});
+      }
+    }
+
+    function pullCloud() {
+      const apiUrl = (localStorage.getItem("bpp_connect_news_api_v1") || (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
+      if (!apiUrl) return;
+      fetch(`${apiUrl}?action=get_kv&key=${encodeURIComponent(STORAGE_KEY)}`, { cache: "no-store" })
+        .then((r) => r.json())
+        .then((json) => {
+          if (json && json.ok && json.value && (json.value.updatedAt || 0) > (db.updatedAt || 0)) {
+            db = { visits: {}, eef: {}, reportMeta: {}, ...json.value };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+            render();
+          }
+        })
+        .catch(() => {});
+    }
+
+    const ui = {
+      tab: "visit",
+      year: "2569",
+      grade: HOMEROOM_DEFAULT[currentTeacher.id] || "ป.5"
+    };
+
+    function keyFor(stuId) { return `${ui.year}_${stuId}`; }
+
+    function compressPhoto(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const maxW = 640;
+            const scale = Math.min(1, maxW / img.width);
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", 0.72));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function classifyEef(rec) {
+      if (!rec) return { status: "ยังไม่คัดกรอง", cls: "" };
+      const inc = Number(rec.incomePerPerson || 9999);
+      const riskPts = (rec.risks || []).length;
+      if (inc <= 3000 && riskPts >= 2) return { status: "ยากจนพิเศษ (ผ่านเกณฑ์ กสศ.)", cls: "danger" };
+      if (inc <= 3000 || riskPts >= 2) return { status: "ยากจน (ปัจจัยพื้นฐาน)", cls: "warn" };
+      return { status: "ปกติ", cls: "ok" };
+    }
+
+    function render() {
+      document.querySelectorAll(".seg-btn").forEach((b) => b.classList.toggle("active", b.dataset.tab === ui.tab));
+      const classStudents = allStudents.filter((s) => s.grade === ui.grade);
+      const maleCount = classStudents.filter((s) => s.gender === "ช").length;
+      const femaleCount = classStudents.length - maleCount;
+
+      const filterBar = `
+        <div class="filter-row">
+          <select class="select-field" id="yearSel" style="margin:0">
+            ${["2569","2570","2571","2572"].map((y) => `<option value="${y}" ${ui.year === y ? "selected" : ""}>ปีการศึกษา ${y}</option>`).join("")}
+          </select>
+          <select class="select-field" id="gradeSel" style="margin:0">
+            ${GRADES.map((g) => `<option value="${g}" ${ui.grade === g ? "selected" : ""}>ชั้น ${g}</option>`).join("")}
+          </select>
+        </div>`;
+
+      if (ui.tab === "visit") {
+        const visitedCount = classStudents.filter((s) => db.visits && db.visits[keyFor(s.id)]).length;
+        const photoCount = classStudents.filter((s) => db.visits && db.visits[keyFor(s.id)] && db.visits[keyFor(s.id)].photo).length;
+        const rmKey = `${ui.year}_${ui.grade}`;
+        const rm = (db.reportMeta && db.reportMeta[rmKey]) || {
+          docNo: `พิเศษ/${ui.year}`,
+          dateRange: `17 - 28 มิถุนายน ${ui.year}`,
+          reportDate: `28 มิถุนายน ${ui.year}`,
+          subdistrict: "ตำบลจันทึก"
+        };
+
+        document.getElementById("mainBody").innerHTML = `
+          ${filterBar}
+          <div class="kpi-row">
+            <div class="kpi-box"><div class="kpi-num">${visitedCount}/${classStudents.length}</div><div class="kpi-lbl">เยี่ยมบ้านแล้ว</div></div>
+            <div class="kpi-box"><div class="kpi-num">${photoCount}</div><div class="kpi-lbl">แนบภาพถ่าย</div></div>
+            <div class="kpi-box"><div class="kpi-num">${maleCount}/${femaleCount}</div><div class="kpi-lbl">ชาย / หญิง</div></div>
+          </div>
+
+          <div class="card">
+            <h2>📄 ตั้งค่าหัวเล่มรายงานการเยี่ยมบ้าน (${ui.grade})</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div><label class="lbl">ที่บันทึกข้อความ</label><input class="field" id="rmDocNo" value="${rm.docNo}" /></div>
+              <div><label class="lbl">วันที่ส่งรายงาน</label><input class="field" id="rmReportDate" value="${rm.reportDate}" /></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div><label class="lbl">ช่วงวันที่ออกเยี่ยมบ้าน</label><input class="field" id="rmDateRange" value="${rm.dateRange}" /></div>
+              <div><label class="lbl">ตำบลหลักที่เยี่ยม</label><input class="field" id="rmSubdistrict" value="${rm.subdistrict}" /></div>
+            </div>
+            <button type="button" class="btn-soft" id="saveRmBtn" style="width:100%">💾 บันทึกข้อมูลหัวเล่ม</button>
+          </div>
+
+          <div class="card">
+            <h2>รายชื่อนักเรียนชั้น ${ui.grade} (แตะเพื่อบันทึกเยี่ยมบ้าน)</h2>
+            ${classStudents.map((st, idx) => {
+              const v = db.visits && db.visits[keyFor(st.id)];
+              return `
+                <div class="stu-row" data-visit-stu="${st.id}">
+                  <div>
+                    <div class="stu-name">${idx + 1}. ${st.prefix || ""}${st.firstName} ${st.lastName} ${v && v.nickname ? `(${v.nickname})` : ""}</div>
+                    <div class="meta">รหัส ${st.code || "-"} ${v ? `• ${v.houseNo ? `บ้านเลขที่ ${v.houseNo} ม.${v.moo || "1"}` : "บันทึกแล้ว"} ${v.photo ? "📸" : ""}` : "• ยังไม่ได้บันทึกเยี่ยมบ้าน"}</div>
+                  </div>
+                  <span class="badge ${v ? "ok" : ""}">${v ? "เยี่ยมแล้ว ✓" : "บันทึก →"}</span>
+                </div>`;
+            }).join("")}
+          </div>`;
+      } else {
+        let specialPoor = 0, poor = 0, screened = 0;
+        classStudents.forEach((st) => {
+          const rec = db.eef && db.eef[keyFor(st.id)];
+          if (rec) {
+            screened++;
+            const cl = classifyEef(rec);
+            if (cl.cls === "danger") specialPoor++;
+            else if (cl.cls === "warn") poor++;
+          }
+        });
+
+        document.getElementById("mainBody").innerHTML = `
+          ${filterBar}
+          <div class="kpi-row">
+            <div class="kpi-box"><div class="kpi-num">${screened}/${classStudents.length}</div><div class="kpi-lbl">คัดกรองแล้ว</div></div>
+            <div class="kpi-box"><div class="kpi-num" style="color:#DC2626">${specialPoor}</div><div class="kpi-lbl">ยากจนพิเศษ กสศ.</div></div>
+            <div class="kpi-box"><div class="kpi-num" style="color:#D97706">${poor}</div><div class="kpi-lbl">ยากจน (ปัจจัยฯ)</div></div>
+          </div>
+
+          <div class="card">
+            <h2>🎒 รายชื่อคัดกรองนักเรียนยากจน กสศ. (นร.01) ชั้น ${ui.grade}</h2>
+            <div class="meta" style="margin-bottom:8px">แตะชื่อนักเรียนเพื่อกรอกรายได้ครัวเรือน สภาพบ้าน และความเสี่ยงตามเกณฑ์ กสศ.</div>
+            ${classStudents.map((st, idx) => {
+              const rec = db.eef && db.eef[keyFor(st.id)];
+              const cl = classifyEef(rec);
+              return `
+                <div class="stu-row" data-eef-stu="${st.id}">
+                  <div>
+                    <div class="stu-name">${idx + 1}. ${st.prefix || ""}${st.firstName} ${st.lastName}</div>
+                    <div class="meta">${rec ? `รายได้เฉลี่ย ${Number(rec.incomePerPerson || 0).toLocaleString()} บ./คน/เดือน • ปัจจัยเสี่ยง ${(rec.risks || []).length} ข้อ` : "ยังไม่ได้คัดกรอง"}</div>
+                  </div>
+                  <span class="badge ${cl.cls}">${cl.status}</span>
+                </div>`;
+            }).join("")}
+          </div>`;
+      }
+
+      wireEvents();
+    }
+
+    function openVisitForm(stu) {
+      const k = keyFor(stu.id);
+      const v = (db.visits && db.visits[k]) || {
+        nickname: "", houseNo: "", moo: "1", tambon: "จันทึก", amphoe: "ปากช่อง",
+        visitDate: new Date().toISOString().slice(0, 10), gps: "", photo: "",
+        hobbies: ["ดูทีวี"], helpParents: true, extraIncome: false,
+        familyTime: "มากกว่า 15 ชั่วโมง/วัน", relFather: "สนิทสนม", relMother: "สนิทสนม",
+        caregiverAway: "ญาติ", incomeBand: "11,000 – 20,000 บาท",
+        needHelp: ["ด้านการเรียน", "ด้านพฤติกรรม", "ด้านเศรษฐกิจ"],
+        welfare: [], healthIssue: "ไม่มี", safetyRisks: [],
+        distance: "ไม่ถึง 1 กิโลเมตร", travel: "ผู้ปกครองมาส่ง",
+        housing: "สภาพบ้านปกติและมีห้องส้วมในที่อยู่อาศัยและบริเวณ",
+        chores: ["ช่วยงานบ้าน"], gameRisk: ["เล่นเกมเกินวันละ 1 ชั่วโมง"],
+        internetHome: "สามารถเข้าถึง Internet ได้จากที่บ้าน",
+        socialRisk: ["เข้าใช้ line, Facebook, twitter หรือ chat (เกินวันละ 1 ชั่วโมง)"],
+        note: ""
+      };
+      let photoData = v.photo || "";
+      const has = (arr, val) => Array.isArray(arr) && arr.includes(val);
+
+      openSheet(`
+        <h3 style="margin:0 0 4px">🏠 เยี่ยมบ้าน: ${stu.prefix || ""}${stu.firstName} ${stu.lastName}</h3>
+        <div class="meta" style="margin-bottom:10px">ชั้น ${stu.grade} • รหัส ${stu.code || "-"}</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label class="lbl">ชื่อเล่น</label><input class="field" id="vfNick" value="${v.nickname || ""}" /></div>
+          <div><label class="lbl">วันที่เยี่ยมบ้าน</label><input class="field" id="vfDate" type="date" value="${v.visitDate || ""}" /></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+          <div><label class="lbl">บ้านเลขที่</label><input class="field" id="vfHouse" value="${v.houseNo || ""}" /></div>
+          <div><label class="lbl">หมู่</label><input class="field" id="vfMoo" value="${v.moo || "1"}" /></div>
+          <div><label class="lbl">ตำบล</label><input class="field" id="vfTambon" value="${v.tambon || "จันทึก"}" /></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <input class="field" id="vfGps" placeholder="พิกัด GPS บ้านนักเรียน" value="${v.gps || ""}" style="margin:0;flex:1" />
+          <button type="button" class="btn-soft" id="vfGetGpsBtn">📍 ดึง GPS</button>
+        </div>
+
+        <label class="lbl">📸 ภาพถ่ายการเยี่ยมบ้าน (ใช้ใส่ในภาคผนวก PDF อัตโนมัติ)</label>
+        <input type="file" id="vfPhotoIn" accept="image/*" class="field" />
+        <img id="vfPhotoPrev" class="photo-preview" src="${photoData}" style="${photoData ? "" : "display:none"}" alt="" />
+
+        <label class="lbl">2. งานอดิเรก / กิจกรรมที่บ้าน</label>
+        <div class="check-grid">
+          ${["เล่นกีฬา","อ่านหนังสือ","เล่นเกม","เล่นดนตรี","ดูทีวี"].map((h) => `
+            <label class="chk-item"><input type="checkbox" name="vfHobby" value="${h}" ${has(v.hobbies, h) ? "checked" : ""} /> ${h}</label>`).join("")}
+          <label class="chk-item"><input type="checkbox" id="vfHelpParents" ${v.helpParents ? "checked" : ""} /> ช่วยพ่อแม่ทำงาน</label>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label class="lbl">3.1 เวลาอยู่ร่วมกันในครอบครัว</label>
+            <select class="select-field" id="vfFamTime">
+              ${["5 – 10 ชั่วโมง/วัน","11 – 15 ชั่วโมง/วัน","มากกว่า 15 ชั่วโมง/วัน"].map((o) => `<option ${v.familyTime === o ? "selected" : ""}>${o}</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <label class="lbl">3.3 ฝากอยู่กับใครเมื่อไม่อยู่บ้าน</label>
+            <select class="select-field" id="vfCareAway">
+              ${["ญาติ","เพื่อนบ้าน","นักเรียนอยู่บ้านด้วยตนเอง","อื่นๆ"].map((o) => `<option ${v.caregiverAway === o ? "selected" : ""}>${o}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label class="lbl">3.2 ความสัมพันธ์กับบิดา</label>
+            <select class="select-field" id="vfRelF">${["สนิทสนม","เฉยๆ","ห่างเหิน","ขัดแย้ง","ไม่มี"].map((o) => `<option ${v.relFather === o ? "selected" : ""}>${o}</option>`).join("")}</select>
+          </div>
+          <div>
+            <label class="lbl">3.2 ความสัมพันธ์กับมารดา</label>
+            <select class="select-field" id="vfRelM">${["สนิทสนม","เฉยๆ","ห่างเหิน","ขัดแย้ง","ไม่มี"].map((o) => `<option ${v.relMother === o ? "selected" : ""}>${o}</option>`).join("")}</select>
+          </div>
+        </div>
+
+        <label class="lbl">3.4 รายได้ครัวเรือนเฉลี่ย</label>
+        <select class="select-field" id="vfIncome">
+          ${["ต่ำกว่า 5,000 บาท","5,100 – 10,000 บาท","11,000 – 20,000 บาท","21,000 – 30,000 บาท","31,000 – 40,000 บาท","มากกว่า 41,000 บาท"].map((o) => `<option ${v.incomeBand === o ? "selected" : ""}>${o}</option>`).join("")}
+        </select>
+
+        <label class="lbl">3.5 สิ่งที่ผู้ปกครองต้องการให้โรงเรียนช่วยเหลือ</label>
+        <div class="check-grid">
+          ${["ด้านการเรียน","ด้านพฤติกรรม","ด้านเศรษฐกิจ","อื่นๆ"].map((o) => `
+            <label class="chk-item"><input type="checkbox" name="vfNeed" value="${o}" ${has(v.needHelp, o) ? "checked" : ""} /> ${o}</label>`).join("")}
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label class="lbl">4.3 ระยะทางบ้าน–โรงเรียน</label>
+            <select class="select-field" id="vfDist">
+              ${["ไม่ถึง 1 กิโลเมตร","ระยะทาง 1 - 5 กิโลเมตร","ระยะทาง 6 - 10 กิโลเมตร","มากกว่า 10 กิโลเมตร"].map((o) => `<option ${v.distance === o ? "selected" : ""}>${o}</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <label class="lbl">4.4 การเดินทางมาโรงเรียน</label>
+            <select class="select-field" id="vfTravel">
+              ${["ผู้ปกครองมาส่ง","เดิน","รถจักรยานยนต์","รถจักรยาน","รถโรงเรียน","รถโดยสารประจำทาง","รถยนต์"].map((o) => `<option ${v.travel === o ? "selected" : ""}>${o}</option>`).join("")}
+            </select>
+          </div>
+        </div>
+
+        <label class="lbl">4.5 สภาพที่อยู่อาศัย</label>
+        <select class="select-field" id="vfHousing">
+          ${["สภาพบ้านปกติและมีห้องส้วมในที่อยู่อาศัยและบริเวณ","สภาพบ้านชำรุดทรุดโทรมหรือบ้านทำจากวัสดุพื้นบ้าน","ไม่มีห้องส้วมในที่อยู่อาศัยและบริเวณ"].map((o) => `<option ${v.housing === o ? "selected" : ""}>${o}</option>`).join("")}
+        </select>
+
+        <label class="lbl">4.2 ด้านสวัสดิการและความปลอดภัย (เลือกที่พบ)</label>
+        <div class="check-grid">
+          ${["พ่อแม่แยกทางกัน หรือแต่งงานใหม่","บุคคลในครอบครัวเล่นการพนัน","มีความขัดแย้ง/ทะเลาะกันในครอบครัว","ไม่มีผู้ดูแล"].map((o) => `
+            <label class="chk-item"><input type="checkbox" name="vfSafe" value="${o}" ${has(v.safetyRisks, o) ? "checked" : ""} /> ${o}</label>`).join("")}
+        </div>
+
+        <label class="lbl">4.11 การเข้าถึงอินเทอร์เน็ตที่บ้าน</label>
+        <select class="select-field" id="vfNet">
+          ${["สามารถเข้าถึง Internet ได้จากที่บ้าน","ไม่สามารถเข้าถึง Internet ได้จากที่บ้าน"].map((o) => `<option ${v.internetHome === o ? "selected" : ""}>${o}</option>`).join("")}
+        </select>
+
+        <label class="lbl">บันทึกเพิ่มเติม / ข้อสังเกตครูที่ปรึกษา</label>
+        <textarea class="textarea-field" id="vfNote" rows="2" placeholder="สภาพความเป็นอยู่ / แนวทางช่วยเหลือ">${v.note || ""}</textarea>
+
+        <button type="button" class="btn-primary" id="vfSaveBtn">💾 บันทึกผลการเยี่ยมบ้าน</button>
+        <button type="button" class="btn-soft" id="vfCloseBtn" style="width:100%;margin-top:8px">ปิด</button>
+      `);
+
+      document.getElementById("vfCloseBtn").onclick = closeSheet;
+      document.getElementById("vfGetGpsBtn").onclick = () => {
+        if (!navigator.geolocation) { showToast("อุปกรณ์ไม่รองรับ GPS"); return; }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => { document.getElementById("vfGps").value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`; showToast("ดึงพิกัด GPS แล้ว"); },
+          () => showToast("ไม่สามารถดึงพิกัด GPS ได้")
+        );
+      };
+      document.getElementById("vfPhotoIn").onchange = async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        photoData = await compressPhoto(file);
+        const img = document.getElementById("vfPhotoPrev");
+        img.src = photoData; img.style.display = "block";
+      };
+      document.getElementById("vfSaveBtn").onclick = () => {
+        const checkedVals = (name) => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map((x) => x.value);
+        db.visits = db.visits || {};
+        db.visits[k] = {
+          nickname: document.getElementById("vfNick").value.trim(),
+          visitDate: document.getElementById("vfDate").value,
+          houseNo: document.getElementById("vfHouse").value.trim(),
+          moo: document.getElementById("vfMoo").value.trim(),
+          tambon: document.getElementById("vfTambon").value.trim() || "จันทึก",
+          amphoe: "ปากช่อง",
+          gps: document.getElementById("vfGps").value.trim(),
+          photo: photoData,
+          hobbies: checkedVals("vfHobby"),
+          helpParents: document.getElementById("vfHelpParents").checked,
+          familyTime: document.getElementById("vfFamTime").value,
+          caregiverAway: document.getElementById("vfCareAway").value,
+          relFather: document.getElementById("vfRelF").value,
+          relMother: document.getElementById("vfRelM").value,
+          incomeBand: document.getElementById("vfIncome").value,
+          needHelp: checkedVals("vfNeed"),
+          distance: document.getElementById("vfDist").value,
+          travel: document.getElementById("vfTravel").value,
+          housing: document.getElementById("vfHousing").value,
+          safetyRisks: checkedVals("vfSafe"),
+          internetHome: document.getElementById("vfNet").value,
+          note: document.getElementById("vfNote").value.trim()
+        };
+        saveDb(); closeSheet(); showToast("บันทึกข้อมูลเยี่ยมบ้านเรียบร้อยแล้ว"); render();
+      };
+    }
+
+    function openEefForm(stu) {
+      const k = keyFor(stu.id);
+      const rec = (db.eef && db.eef[k]) || {
+        incomePerPerson: 2500, householdMembers: 4, parentJob: "รับจ้างทั่วไป",
+        risks: [], note: ""
+      };
+      const has = (arr, val) => Array.isArray(arr) && arr.includes(val);
+      const riskOptions = [
+        "มีภาระพึ่งพิง (คนชรา/พิการ/ผู้ป่วยติดเตียง)",
+        "สภาพบ้านชำรุดทรุดโทรม / วัสดุพื้นบ้าน",
+        "ไม่มีที่ดินทำกินเป็นของตนเอง",
+        "ไม่มีรถยนต์ / รถปิกอัพ",
+        "บิดา-มารดาแยกทางกัน / กำพร้า",
+        "ไม่มีห้องส้วมหรือไฟฟ้า-น้ำประปาไม่สะดวก"
+      ];
+
+      openSheet(`
+        <h3 style="margin:0 0 4px">🎒 คัดกรอง กสศ. (นร.01): ${stu.prefix || ""}${stu.firstName} ${stu.lastName}</h3>
+        <div class="meta" style="margin-bottom:10px">ชั้น ${stu.grade} • รหัส ${stu.code || "-"}</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label class="lbl">รายได้เฉลี่ยต่อคน/เดือน (บาท)</label><input class="field" id="efInc" type="number" value="${rec.incomePerPerson}" /></div>
+          <div><label class="lbl">จำนวนสมาชิกในครัวเรือน (คน)</label><input class="field" id="efMem" type="number" value="${rec.householdMembers}" /></div>
+        </div>
+        <label class="lbl">อาชีพหลักผู้ปกครอง</label>
+        <input class="field" id="efJob" value="${rec.parentJob || ""}" placeholder="เช่น รับจ้างทั่วไป / เกษตรกร" />
+
+        <label class="lbl">ปัจจัยสถานะครัวเรือนตามเกณฑ์ กสศ. (เลือกข้อที่ตรง)</label>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+          ${riskOptions.map((o) => `
+            <label class="chk-item"><input type="checkbox" name="efRisk" value="${o}" ${has(rec.risks, o) ? "checked" : ""} /> ${o}</label>`).join("")}
+        </div>
+
+        <label class="lbl">หมายเหตุ / ความเห็นครูผู้คัดกรอง</label>
+        <textarea class="textarea-field" id="efNote" rows="2">${rec.note || ""}</textarea>
+
+        <button type="button" class="btn-primary" id="efSaveBtn">💾 บันทึกผลคัดกรอง กสศ.</button>
+        <button type="button" class="btn-soft" id="efCloseBtn" style="width:100%;margin-top:8px">ปิด</button>
+      `);
+
+      document.getElementById("efCloseBtn").onclick = closeSheet;
+      document.getElementById("efSaveBtn").onclick = () => {
+        const risks = [...document.querySelectorAll('input[name="efRisk"]:checked')].map((x) => x.value);
+        db.eef = db.eef || {};
+        db.eef[k] = {
+          incomePerPerson: Number(document.getElementById("efInc").value) || 0,
+          householdMembers: Number(document.getElementById("efMem").value) || 1,
+          parentJob: document.getElementById("efJob").value.trim(),
+          risks,
+          note: document.getElementById("efNote").value.trim(),
+          screenedAt: new Date().toISOString().slice(0, 10)
+        };
+        saveDb(); closeSheet(); showToast("บันทึกผลคัดกรอง กสศ. เรียบร้อยแล้ว"); render();
+      };
+    }
+
+    async function printOfficialReport() {
+      const classStudents = allStudents.filter((s) => s.grade === ui.grade);
+      const gradeFull = GRADE_FULL[ui.grade] || ui.grade;
+      const teacherName = currentTeacher.name || "นายธานครินทร์ สุเมธาลังการ";
+      const teacherPos = currentTeacher.position || "ครู";
+      const maleCount = classStudents.filter((s) => s.gender === "ช").length;
+      const femaleCount = classStudents.length - maleCount;
+
+      if (ui.tab === "visit") {
+        const rmKey = `${ui.year}_${ui.grade}`;
+        const rm = (db.reportMeta && db.reportMeta[rmKey]) || {
+          docNo: `พิเศษ/${ui.year}`,
+          dateRange: `17 - 28 มิถุนายน ${ui.year}`,
+          reportDate: `28 มิถุนายน ${ui.year}`,
+          subdistrict: "ตำบลจันทึก"
+        };
+        const visits = classStudents.map((st) => ({ st, v: (db.visits && db.visits[keyFor(st.id)]) || null }));
+        const visited = visits.filter((x) => x.v);
+        const cnt = (pred) => visited.filter((x) => pred(x.v)).length || "";
+        const withPhotos = visited.filter((x) => x.v.photo);
+
+        const html = `
+          <div style="font-family:'THSarabunIT9',sans-serif;font-size:16pt;line-height:1.35;color:#000">
+            <!-- หน้า 1: บันทึกข้อความ -->
+            <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:4px">
+              <img src="./icons/garuda-official.jpg" style="width:52px;height:56px;object-fit:contain" />
+              <div style="flex:1;text-align:center;font-size:22pt;font-weight:700;padding-right:52px">บันทึกข้อความ</div>
+            </div>
+            <div><strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่ สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</div>
+            <div style="display:flex;justify-content:space-between"><span><strong>ที่</strong>&nbsp;&nbsp;${rm.docNo}</span><span><strong>วันที่</strong>&nbsp;&nbsp;${rm.reportDate}</span></div>
+            <div style="border-bottom:1px solid #000;padding-bottom:3px;margin-bottom:8px"><strong>เรื่อง</strong>&nbsp;&nbsp;ส่งรายงานการเยี่ยมบ้านนักเรียนชั้น${gradeFull} ปีการศึกษา ${ui.year}</div>
+            <div style="margin-bottom:6px"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+            <div style="text-indent:2.5cm;text-align:justify">ตามที่งานระบบดูแลช่วยเหลือนักเรียน กลุ่มบริหารงานทั่วไป โรงเรียนบ้านป่าไผ่ มีกิจกรรมเยี่ยมบ้านนักเรียน โดยกำหนดให้ครูที่ปรึกษาปฏิบัติกิจกรรมเยี่ยมบ้านนักเรียนในความปกครอง โดยมีจุดมุ่งหมายเพื่อสร้างความสัมพันธ์และความเข้าใจที่ดีระหว่างผู้ปกครองกับครูและโรงเรียน รวมถึงรับทราบถึงความเป็นอยู่ พฤติกรรม ปัญหาของผู้เรียน และเพื่อรวมพลังขับเคลื่อนระบบดูแลช่วยเหลือนักเรียนให้มีประสิทธิภาพและยั่งยืนต่อไป</div>
+            <div style="text-indent:2.5cm;margin-top:6px">บัดนี้ ข้าพเจ้าได้ปฏิบัติหน้าที่ดังกล่าวเสร็จสิ้นแล้ว จึงขอส่งรายงานการเยี่ยมบ้านนักเรียน ชั้น${gradeFull} ปีการศึกษา ${ui.year} ดังรายละเอียดที่แนบ</div>
+            <div style="text-indent:2.5cm;margin-top:6px">จึงเรียนมาเพื่อโปรดทราบ</div>
+            <div style="margin-top:26px;text-align:center;margin-left:45%">
+              <div>ลงชื่อ......................................................</div>
+              <div>(${teacherName})</div>
+              <div>ตำแหน่ง ${teacherPos}</div>
+            </div>
+            <div style="margin-top:18px;border-top:1px dashed #666;padding-top:8px">
+              <div><strong>ความคิดเห็นของผู้บริหาร</strong></div>
+              <div style="height:28px;border-bottom:1px dotted #000;margin:6px 0"></div>
+              <div style="text-align:center;margin-left:45%;margin-top:18px">
+                <div>ลงชื่อ......................................................</div>
+                <div>(นางสาวนภาพร คงแสนคำ)</div>
+                <div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+              </div>
+            </div>
+
+            <!-- หน้า 2: คำนำ & รายชื่อนักเรียน -->
+            <div style="page-break-before:always"></div>
+            <div style="text-align:center;font-size:18pt;font-weight:700;margin-bottom:8px">คำนำ</div>
+            <div style="text-indent:2cm;text-align:justify">รายงานการเยี่ยมบ้านนักเรียน มีจุดมุ่งหมายเพื่อรวบรวมผลการปฏิบัติงานของครูที่ปรึกษาชั้น${gradeFull} ประจำปีการศึกษา ${ui.year} โรงเรียนบ้านป่าไผ่ เพื่อใช้เป็นแนวทางในการพัฒนางานในครั้งต่อ ๆ ไป ซึ่งได้ดำเนินการระหว่างวันที่ ${rm.dateRange} ประกอบด้วย รายชื่อนักเรียนพร้อมที่อยู่ แบบแสดงความคิดเห็น/ข้อเสนอแนะ ผลการดำเนินงาน แบบสรุปผลการเยี่ยมบ้านรายชั้น และภาคผนวกภาพถ่ายประกอบการเยี่ยมบ้าน</div>
+            <div style="text-align:right;margin-top:10px;margin-bottom:16px">${teacherName}<br>ผู้จัดทำ</div>
+
+            <div style="text-align:center;font-size:17pt;font-weight:700;margin-bottom:6px">รายชื่อนักเรียนพร้อมที่อยู่ ชั้น${gradeFull} ปีการศึกษา ${ui.year}</div>
+            <table style="width:100%;border-collapse:collapse;font-size:14.5pt">
+              <tr style="background:#f3f4f6">
+                <th style="border:1px solid #000;padding:4px">ที่</th>
+                <th style="border:1px solid #000;padding:4px">รหัส</th>
+                <th style="border:1px solid #000;padding:4px">ชื่อ - นามสกุล</th>
+                <th style="border:1px solid #000;padding:4px">ชื่อเล่น</th>
+                <th style="border:1px solid #000;padding:4px">บ้านเลขที่/หมู่/ตำบล</th>
+              </tr>
+              ${visits.map((x, i) => `
+                <tr>
+                  <td style="border:1px solid #000;padding:4px;text-align:center">${i + 1}</td>
+                  <td style="border:1px solid #000;padding:4px;text-align:center">${x.st.code || "-"}</td>
+                  <td style="border:1px solid #000;padding:4px">${x.st.prefix || ""}${x.st.firstName} ${x.st.lastName}</td>
+                  <td style="border:1px solid #000;padding:4px;text-align:center">${(x.v && x.v.nickname) || "-"}</td>
+                  <td style="border:1px solid #000;padding:4px">${x.v && x.v.houseNo ? `${x.v.houseNo} ม.${x.v.moo || "1"} ต.${x.v.tambon || "จันทึก"} อ.ปากช่อง` : "-"}</td>
+                </tr>`).join("")}
+            </table>
+
+            <!-- หน้า 3: แบบสรุปผลการออกเยี่ยมบ้านนักเรียนรายชั้น -->
+            <div style="page-break-before:always"></div>
+            <div style="text-align:center;font-size:17pt;font-weight:700">แบบสรุปผลการออกเยี่ยมบ้านนักเรียนรายชั้น</div>
+            <div style="text-align:center;margin-bottom:8px">ครูที่ปรึกษา ${teacherName} • วันที่ ${rm.dateRange} • ชั้น ${ui.grade}</div>
+            <div><strong>1. ข้อมูลทั่วไป:</strong> นักเรียนทั้งหมด ${classStudents.length} คน (ชาย ${maleCount} คน หญิง ${femaleCount} คน) • เยี่ยมบ้านแล้ว ${visited.length} ครอบครัว (${visited.length} คน)</div>
+            <div><strong>2. งานอดิเรกและกิจกรรมที่บ้าน:</strong> เล่นกีฬา ${cnt(v => (v.hobbies||[]).includes("เล่นกีฬา")) || 0} คน | อ่านหนังสือ ${cnt(v => (v.hobbies||[]).includes("อ่านหนังสือ")) || 0} คน | ดูทีวี ${cnt(v => (v.hobbies||[]).includes("ดูทีวี")) || 0} คน | ช่วยพ่อแม่ทำงาน ${cnt(v => v.helpParents) || 0} คน</div>
+            <div><strong>3. ความสัมพันธ์ในครอบครัว & รายได้:</strong></div>
+            <div style="padding-left:16px">• อยู่ร่วมกัน 5–10 ชม./วัน: ${cnt(v => v.familyTime === "5 – 10 ชั่วโมง/วัน") || 0} คน | 11–15 ชม./วัน: ${cnt(v => v.familyTime === "11 – 15 ชั่วโมง/วัน") || 0} คน | >15 ชม./วัน: ${cnt(v => v.familyTime === "มากกว่า 15 ชั่วโมง/วัน") || 0} คน</div>
+            <div style="padding-left:16px">• รายได้ <5,000 บ.: ${cnt(v => v.incomeBand === "ต่ำกว่า 5,000 บาท") || 0} | 5,100–10,000 บ.: ${cnt(v => v.incomeBand === "5,100 – 10,000 บาท") || 0} | 11,000–20,000 บ.: ${cnt(v => v.incomeBand === "11,000 – 20,000 บาท") || 0} คน</div>
+            <div style="padding-left:16px">• ต้องการช่วยเหลือ: ด้านการเรียน ${cnt(v => (v.needHelp||[]).includes("ด้านการเรียน")) || 0} | ด้านพฤติกรรม ${cnt(v => (v.needHelp||[]).includes("ด้านพฤติกรรม")) || 0} | ด้านเศรษฐกิจ ${cnt(v => (v.needHelp||[]).includes("ด้านเศรษฐกิจ")) || 0} คน</div>
+            <div><strong>4. พฤติกรรม ความเสี่ยง และสภาพที่อยู่อาศัย:</strong></div>
+            <div style="padding-left:16px">• สภาพบ้านปกติมีห้องส้วม: ${cnt(v => String(v.housing).includes("ปกติ")) || 0} คน | บ้านชำรุด/ไม่มีห้องส้วม: ${cnt(v => !String(v.housing).includes("ปกติ")) || 0} คน</div>
+            <div style="padding-left:16px">• ระยะทาง <1 กม.: ${cnt(v => v.distance === "ไม่ถึง 1 กิโลเมตร") || 0} | 1–5 กม.: ${cnt(v => v.distance === "ระยะทาง 1 - 5 กิโลเมตร") || 0} | >5 กม.: ${cnt(v => String(v.distance).includes("6") || String(v.distance).includes("มากกว่า")) || 0} คน</div>
+            <div style="padding-left:16px">• เข้าถึงอินเทอร์เน็ตที่บ้านได้: ${cnt(v => String(v.internetHome).includes("สามารถ")) || 0} คน | พ่อแม่แยกทาง/แต่งงานใหม่: ${cnt(v => (v.safetyRisks||[]).some(r => r.includes("แยกทาง"))) || 0} คน</div>
+            <div style="margin-top:24px;text-align:center;margin-left:45%">
+              <div>ลงชื่อ......................................................</div>
+              <div>(${teacherName})</div>
+              <div>ครูที่ปรึกษานักเรียนชั้น${gradeFull}</div>
+            </div>
+
+            ${withPhotos.length ? `
+              <div style="page-break-before:always"></div>
+              <div style="text-align:center;font-size:18pt;font-weight:700;margin-bottom:10px">ภาคผนวก : ภาพการเยี่ยมบ้านนักเรียนชั้น${gradeFull} ปีการศึกษา ${ui.year}</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                ${withPhotos.map((x) => `
+                  <div style="text-align:center;border:1px solid #ddd;padding:6px;border-radius:6px">
+                    <img src="${x.v.photo}" style="width:100%;height:175px;object-fit:cover;border-radius:4px" />
+                    <div style="margin-top:4px;font-size:14pt">ภาพถ่ายการเยี่ยมบ้าน ${x.st.prefix || ""}${x.st.firstName} ${x.st.lastName}</div>
+                  </div>`).join("")}
+              </div>` : ""}
+          </div>`;
+
+        if (window.BPP_PDF && window.BPP_PDF.exportA4) {
+          await window.BPP_PDF.exportA4({ html, fileName: `รายงานการเยี่ยมบ้าน_${ui.grade}_${ui.year}.pdf`, title: `รายงานการเยี่ยมบ้าน ${ui.grade}` });
+        } else {
+          window.print();
+        }
+      } else {
+        // พิมพ์รายงานคัดกรอง กสศ.
+        const rows = classStudents.map((st, idx) => {
+          const rec = db.eef && db.eef[keyFor(st.id)];
+          const cl = classifyEef(rec);
+          return `<tr>
+            <td style="border:1px solid #000;padding:4px;text-align:center">${idx + 1}</td>
+            <td style="border:1px solid #000;padding:4px">${st.prefix || ""}${st.firstName} ${st.lastName}</td>
+            <td style="border:1px solid #000;padding:4px;text-align:center">${rec ? Number(rec.incomePerPerson || 0).toLocaleString() : "-"}</td>
+            <td style="border:1px solid #000;padding:4px;text-align:center">${rec ? (rec.risks || []).length : "-"}</td>
+            <td style="border:1px solid #000;padding:4px">${cl.status}</td>
+          </tr>`;
+        }).join("");
+        const html = `
+          <div style="font-family:'THSarabunIT9',sans-serif;font-size:16pt;color:#000">
+            <div style="text-align:center;font-weight:700;font-size:18pt">แบบสรุปผลการคัดกรองนักเรียนยากจน (กสศ. / นร.01)</div>
+            <div style="text-align:center;margin-bottom:10px">โรงเรียนบ้านป่าไผ่ สพป.นครราชสีมา เขต 4 • ชั้น${gradeFull} ปีการศึกษา ${ui.year}</div>
+            <table style="width:100%;border-collapse:collapse;font-size:15pt">
+              <tr style="background:#f3f4f6">
+                <th style="border:1px solid #000;padding:5px">ที่</th>
+                <th style="border:1px solid #000;padding:5px">ชื่อ - นามสกุล</th>
+                <th style="border:1px solid #000;padding:5px">รายได้/คน/เดือน</th>
+                <th style="border:1px solid #000;padding:5px">ปัจจัยเสี่ยง</th>
+                <th style="border:1px solid #000;padding:5px">ผลการคัดกรอง</th>
+              </tr>
+              ${rows}
+            </table>
+            <div style="margin-top:28px;display:flex;justify-content:space-between;padding:0 16px">
+              <div style="text-align:center">ลงชื่อ............................................<br>(${teacherName})<br>ครูประจำชั้น${gradeFull}</div>
+              <div style="text-align:center">ลงชื่อ............................................<br>(นางสาวนภาพร คงแสนคำ)<br>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+            </div>
+          </div>`;
+        if (window.BPP_PDF && window.BPP_PDF.exportA4) {
+          await window.BPP_PDF.exportA4({ html, fileName: `คัดกรอง_กสศ_${ui.grade}_${ui.year}.pdf`, title: `คัดกรอง กสศ. ${ui.grade}` });
+        } else {
+          window.print();
+        }
+      }
+    }
+
+    function wireEvents() {
+      const ySel = document.getElementById("yearSel");
+      if (ySel) ySel.onchange = (e) => { ui.year = e.target.value; render(); };
+      const gSel = document.getElementById("gradeSel");
+      if (gSel) gSel.onchange = (e) => { ui.grade = e.target.value; render(); };
+
+      const saveRmBtn = document.getElementById("saveRmBtn");
+      if (saveRmBtn) saveRmBtn.onclick = () => {
+        db.reportMeta = db.reportMeta || {};
+        db.reportMeta[`${ui.year}_${ui.grade}`] = {
+          docNo: document.getElementById("rmDocNo").value.trim(),
+          reportDate: document.getElementById("rmReportDate").value.trim(),
+          dateRange: document.getElementById("rmDateRange").value.trim(),
+          subdistrict: document.getElementById("rmSubdistrict").value.trim()
+        };
+        saveDb(); showToast("บันทึกข้อมูลหัวเล่มแล้ว");
+      };
+
+      document.querySelectorAll("[data-visit-stu]").forEach((row) => {
+        row.onclick = () => {
+          const st = allStudents.find((x) => x.id === row.dataset.visitStu);
+          if (st) openVisitForm(st);
+        };
+      });
+      document.querySelectorAll("[data-eef-stu]").forEach((row) => {
+        row.onclick = () => {
+          const st = allStudents.find((x) => x.id === row.dataset.eefStu);
+          if (st) openEefForm(st);
+        };
+      });
+    }
+
+    document.querySelectorAll(".seg-btn").forEach((b) => {
+      b.onclick = () => { ui.tab = b.dataset.tab; render(); };
+    });
+    document.getElementById("printReportBtn").onclick = printOfficialReport;
+
+    render();
+    pullCloud();
+  </script>
+</body>
+</html>

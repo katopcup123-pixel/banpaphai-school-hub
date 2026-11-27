@@ -166,7 +166,7 @@
               return { ...s, url: nextUrl, color: nextColor };
             });
           const seen = new Set(cleaned.map((s) => s.id));
-          ["executive-brief", "academic-hub"].forEach((newId) => {
+          ["executive-brief", "academic-hub", "student-care"].forEach((newId) => {
             if (!seen.has(newId)) {
               const def = config.systems.find((x) => x.id === newId);
               if (def) cleaned.unshift(def);

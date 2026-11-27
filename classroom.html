@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>ระบบธุรการชั้นเรียน — BPP Connect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    @font-face { font-family: "TH SarabunIT9"; src: url("./fonts/THSarabunIT9.ttf") format("truetype"); font-weight: 400; }
+    @font-face { font-family: "TH SarabunIT9"; src: url("./fonts/THSarabunIT9-Bold.ttf") format("truetype"); font-weight: 700; }
+    :root {
+      --bg: #F2F4F8; --surface: #FFFFFF; --surface-soft: rgba(255,255,255,0.88);
+      --text: #1C1C1E; --secondary: #6C6C70; --sep: rgba(60,60,67,0.12);
+      --accent: #007AFF; --green: #16A34A; --red: #DC2626; --amber: #D97706; --purple: #7C3AED; --teal: #0D9488;
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    [data-theme="dark"] {
+      --bg: #0B0D12; --surface: #1C1C1E; --surface-soft: rgba(28,28,32,0.88);
+      --text: #F2F2F7; --secondary: #98989F; --sep: rgba(255,255,255,0.1);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
+      background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+    }
+    .app { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    .topbar {
+      flex-shrink: 0; padding: 12px 16px 10px;
+      background: var(--surface-soft); backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border-bottom: 0.5px solid var(--sep);
+    }
+    .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .title-wrap h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+    .user-sub { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary); margin-top: 2px; }
+    .mini-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; }
+
+    .body-scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px 36px; }
+
+    /* Hub Menu Grid */
+    .hub-banner {
+      background: linear-gradient(135deg, var(--accent), #3B82F6);
+      color: #fff; border-radius: 20px; padding: 14px 16px; margin-bottom: 14px;
+      box-shadow: 0 8px 20px rgba(0,122,255,0.22);
+      animation: popIn 0.35s var(--spring) both;
+    }
+    .hub-banner h2 { margin: 0; font-size: 16px; font-weight: 700; }
+    .hub-banner p { margin: 4px 0 0; font-size: 12.5px; opacity: 0.92; }
+
+    .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .menu-tile {
+      background: var(--surface); border: 1px solid var(--sep); border-radius: 18px;
+      padding: 14px 12px; text-align: left; cursor: pointer; color: var(--text); font: inherit;
+      display: flex; flex-direction: column; gap: 8px;
+      transition: transform 0.16s var(--spring); animation: slideUp 0.28s ease both;
+    }
+    .menu-tile:active { transform: scale(0.96); }
+    .tile-top { display: flex; align-items: center; justify-content: space-between; }
+    .tile-ico { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; font-size: 20px; }
+    .c-blue { background: rgba(0,122,255,0.13); }
+    .c-green { background: rgba(22,163,74,0.14); }
+    .c-amber { background: rgba(217,119,6,0.14); }
+    .c-purple { background: rgba(124,58,237,0.14); }
+    .c-teal { background: rgba(13,148,136,0.14); }
+    .c-rose { background: rgba(220,38,38,0.13); }
+    .c-indigo { background: rgba(79,70,229,0.14); }
+    .tile-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--bg); color: var(--secondary); }
+    .tile-title { font-size: 13.5px; font-weight: 700; line-height: 1.3; }
+    .tile-sub { font-size: 11.5px; color: var(--secondary); line-height: 1.35; }
+
+    /* Sub-module View */
+    .sub-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .grade-bar { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 10px; scrollbar-width: none; }
+    .grade-bar::-webkit-scrollbar { display: none; }
+    .grade-pill {
+      flex-shrink: 0; border: 1px solid var(--sep); background: var(--surface); color: var(--text);
+      font: inherit; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer;
+    }
+    .grade-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .btn-primary, .btn-soft, .btn-green {
+      border: none; font: inherit; font-size: 12.5px; font-weight: 600;
+      border-radius: 11px; padding: 8px 12px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-soft { background: var(--surface); color: var(--text); border: 1px solid var(--sep); }
+
+    .card {
+      background: var(--surface); border-radius: 16px; padding: 12px 13px;
+      border: 1px solid var(--sep); margin-bottom: 9px; animation: slideUp 0.24s ease both;
+    }
+    .row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .stu-name { font-size: 14px; font-weight: 700; }
+    .stu-meta { font-size: 11.5px; color: var(--secondary); margin-top: 2px; line-height: 1.45; }
+    .pill-tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+    .t-ok { background: rgba(22,163,74,0.14); color: var(--green); }
+    .t-warn { background: rgba(217,119,6,0.14); color: var(--amber); }
+    .t-bad { background: rgba(220,38,38,0.13); color: var(--red); }
+    .t-info { background: rgba(0,122,255,0.13); color: var(--accent); }
+
+    .field, .select-field, .textarea-field {
+      width: 100%; border: 1px solid var(--sep); background: var(--bg); color: var(--text);
+      border-radius: 11px; padding: 9px 11px; font: inherit; font-size: 13.5px; margin-bottom: 9px; outline: none;
+    }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .lbl { display: block; font-size: 11.5px; font-weight: 600; color: var(--secondary); margin-bottom: 3px; }
+    .visit-thumb { width: 100%; max-height: 160px; object-fit: cover; border-radius: 11px; margin-top: 8px; }
+
+    /* Bottom Sheet */
+    .backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.42); backdrop-filter: blur(4px); z-index: 60;
+      display: flex; align-items: flex-end; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+    }
+    .backdrop.open { opacity: 1; pointer-events: auto; }
+    .sheet {
+      width: 100%; max-width: 500px; max-height: 88vh; overflow-y: auto;
+      background: var(--surface); border-radius: 24px 24px 0 0;
+      padding: 12px 16px calc(22px + env(safe-area-inset-bottom));
+      transform: translateY(100%); transition: transform 0.34s var(--spring);
+    }
+    .backdrop.open .sheet { transform: translateY(0); }
+    .grabber { width: 38px; height: 4px; border-radius: 99px; background: rgba(120,120,128,0.35); margin: 0 auto 10px; }
+    .sheet h3 { margin: 0 0 8px; font-size: 16px; }
+
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 90; background: rgba(15,23,42,0.92); color: #fff;
+      font-size: 12.5px; font-weight: 600; padding: 9px 16px; border-radius: 999px; display: none;
+    }
+    .toast.show { display: block; }
+    .hidden { display: none !important; }
+
+    /* Official PDF Report Styles (TH SarabunIT9 16pt) */
+    .pdf-doc, .pdf-doc * { font-family: "TH SarabunIT9", serif; font-size: 16pt !important; color: #000; -webkit-text-size-adjust: 100% !important; }
+    .pdf-doc table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+    .pdf-doc th, .pdf-doc td { border: 1px solid #000; padding: 2px 5px; text-align: center; }
+    .pdf-doc td.left { text-align: left; }
+
+    @keyframes popIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="top-row">
+        <div class="title-wrap">
+          <h1 id="pageTitle">ระบบธุรการชั้นเรียน</h1>
+          <div class="user-sub" id="userSub">โรงเรียนบ้านป่าไผ่</div>
+        </div>
+        <button type="button" class="btn-soft hidden" id="backHubBtn">‹ เมนูทั้งหมด</button>
+      </div>
+    </header>
+
+    <main class="body-scroll" id="mainArea"></main>
+  </div>
+
+  <div class="backdrop" id="sheetBackdrop">
+    <div class="sheet">
+      <div class="grabber"></div>
+      <div id="sheetContent"></div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="./apps-config.js"></script>
+  <script src="./students-data.js"></script>
+  <script src="./pdf-export.js"></script>
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
+    document.documentElement.style.setProperty("--accent", localStorage.getItem("bpp_connect_accent_v1") || "#007AFF");
+
+    const STORAGE_KEY = "bpp_classroom_data_v1";
+    const HOMEROOM_MAP = {
+      narisara: ["อ.2", "อ.3"],
+      namphet: ["ป.1"],
+      pacharasaran: ["ป.2", "ป.3"],
+      thanakarin: ["ป.4", "ป.5"],
+      nantaphat: ["ป.6"]
+    };
+
+    function getAllUsers() {
+      let u = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+      try { const r = localStorage.getItem("bpp_connect_users_v3"); if (r) { const p = JSON.parse(r); if (p.length) u = p; } } catch (_) {}
+      return u;
+    }
+    function getTeacher() {
+      const uid = localStorage.getItem("bpp_connect_user_v1");
+      const users = getAllUsers();
+      return users.find((u) => u.id === uid) || users[0] || { id: "", name: "ครูประจำชั้น", shortName: "คุณครู", role: "teacher", avatar: "" };
+    }
+
+    const teacher = getTeacher();
+    const isAdmin = teacher.id === "thanakarin" && teacher.role === "admin";
+    const isDirector = teacher.role === "director";
+    const myGrades = HOMEROOM_MAP[teacher.id] || [];
+    const backendUrl = ((window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
+    const $ = (id) => document.getElementById(id);
+
+    const DEFAULT_DATA = {
+      profiles: {},   // stuId -> { parentName, parentPhone, allergy, transport }
+      visits: {},     // stuId -> { date, familyStatus, note, lat, lng, photo }
+      screening: {},  // stuId -> { poverty, eef, sdq, note }
+      health: {},     // stuId -> { weight, height, updatedAt }
+      subsidy: {},    // stuId -> { uniformPaid, suppliesPaid, amount, receiver, date }
+      behaviors: [],  // [{ id, stuId, grade, date, kind, note, by }]
+      savings: {},    // stuId -> { balance, history: [] }
+      chores: {}      // grade -> { Mon, Tue, Wed, Thu, Fri }
+    };
+
+    const state = {
+      view: "hub",
+      students: window.BPP_STUDENTS_HELPER.loadStudents(),
+      grade: myGrades[0] || "อ.2",
+      subTab: "behavior",
+      data: (() => { try { return { ...DEFAULT_DATA, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") }; } catch (_) { return { ...DEFAULT_DATA }; } })()
+    };
+
+    function showToast(m) {
+      const el = $("toast"); el.textContent = m; el.classList.add("show");
+      clearTimeout(showToast._t); showToast._t = setTimeout(() => el.classList.remove("show"), 2400);
+    }
+    function openSheet(html) { $("sheetContent").innerHTML = html; $("sheetBackdrop").classList.add("open"); }
+    function closeSheet() { $("sheetBackdrop").classList.remove("open"); }
+    $("sheetBackdrop").onclick = (e) => { if (e.target === $("sheetBackdrop")) closeSheet(); };
+
+    function saveData() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); } catch (_) {}
+      if (backendUrl) {
+        fetch(backendUrl, {
+          method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "save_kv", key: "classroom_v1", value: state.data })
+        }).catch(() => {});
+      }
+    }
+
+    async function syncCloud() {
+      if (!backendUrl) return;
+      try {
+        const res = await fetch(`${backendUrl}?action=get_kv&key=classroom_v1`, { cache: "no-store" });
+        const json = await res.json();
+        if (json && json.ok && json.value && typeof json.value === "object") {
+          state.data = { ...DEFAULT_DATA, ...json.value };
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); } catch (_) {}
+          render();
+        }
+      } catch (_) {}
+    }
+
+    function getAllowedGrades() {
+      const all = (window.BPP_GRADE_ORDER || []).filter((g) => state.students.some((s) => s.grade === g));
+      if (isDirector || isAdmin || myGrades.length === 0) return all;
+      return myGrades.filter((g) => all.includes(g));
+    }
+
+    function getGradeStudents() {
+      const allowed = getAllowedGrades();
+      if (!allowed.includes(state.grade)) state.grade = allowed[0] || "อ.2";
+      return state.students.filter((s) => s.grade === state.grade);
+    }
+
+    function gradeBarHtml() {
+      const allowed = getAllowedGrades();
+      return `<div class="grade-bar">${allowed.map((g) => {
+        const c = state.students.filter((s) => s.grade === g).length;
+        return `<button type="button" class="grade-pill ${state.grade === g ? "active" : ""}" data-g="${g}">ชั้น ${g} (${c})</button>`;
+      }).join("")}</div>`;
+    }
+
+    function calcBmiStatus(w, h) {
+      const wn = Number(w), hn = Number(h);
+      if (!wn || !hn) return { bmi: "-", label: "ยังไม่บันทึก", cls: "t-info" };
+      const bmi = wn / ((hn / 100) ** 2);
+      const b = bmi.toFixed(1);
+      if (bmi < 14) return { bmi: b, label: "ผอม", cls: "t-warn" };
+      if (bmi <= 18.5) return { bmi: b, label: "สมส่วน", cls: "t-ok" };
+      if (bmi <= 22) return { bmi: b, label: "เริ่มอ้วน", cls: "t-warn" };
+      return { bmi: b, label: "อ้วน", cls: "t-bad" };
+    }
+
+    function compressPhoto(file) {
+      return new Promise((resolve, reject) => {
+        const rd = new FileReader();
+        rd.onerror = reject;
+        rd.onload = () => {
+          const img = new Image();
+          img.onerror = reject;
+          img.onload = () => {
+            const maxW = 540, sc = img.width > maxW ? maxW / img.width : 1;
+            const c = document.createElement("canvas");
+            c.width = img.width * sc; c.height = img.height * sc;
+            c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+            resolve(c.toDataURL("image/jpeg", 0.72));
+          };
+          img.src = rd.result;
+        };
+        rd.readAsDataURL(file);
+      });
+    }
+
+    function renderHub() {
+      const allowed = getAllowedGrades();
+      const totalStu = state.students.filter((s) => allowed.includes(s.grade)).length;
+      const visitedCnt = Object.keys(state.data.visits).length;
+      const eefCnt = Object.values(state.data.screening).filter((x) => x && (x.eef || x.poverty)).length;
+      const paidCnt = Object.values(state.data.subsidy).filter((x) => x && (x.uniformPaid || x.suppliesPaid)).length;
+
+      const items = [
+        { id: "attendance", ico: "📊", cls: "c-blue", title: "เช็คสถิติการมาเรียน", sub: "เช็คชื่อรายวัน กราฟ & รายงาน A4", badge: "เปิดระบบ ↗" },
+        { id: "profiles", ico: "👨‍👩‍👧", cls: "c-teal", title: "ทะเบียนนักเรียน & ผู้ปกครอง", sub: "เบอร์โทรฉุกเฉิน โรคประจำตัว กลับบ้าน", badge: `${totalStu} คน` },
+        { id: "visits", ico: "🏠", cls: "c-green", title: "เยี่ยมบ้านนักเรียน", sub: "ถ่ายรูป ปักหมุด GPS & ปริ้น A4", badge: `${visitedCnt} หลัง` },
+        { id: "screening", ico: "🎯", cls: "c-amber", title: "คัดกรองยากจน / กสศ. / SDQ", sub: "สถานะทุนเสมอภาค & กลุ่มเสี่ยง", badge: `${eefCnt} คน` },
+        { id: "health", ico: "⚖️", cls: "c-purple", title: "สุขภาพ น้ำหนัก–ส่วนสูง", sub: "คำนวณ BMI & ภาวะโภชนาการ", badge: "สรุป A4" },
+        { id: "subsidy", ico: "💵", cls: "c-rose", title: "รับ–จ่ายเงินเรียนฟรี 15 ปี", sub: "ค่าเครื่องแบบ / อุปกรณ์การเรียน", badge: `${paidCnt} คน` },
+        { id: "homeroom", ico: "📒", cls: "c-indigo", title: "พฤติกรรม ออมทรัพย์ & เวร", sub: "สมุดประจำชั้น ยอดออม ตารางเวร", badge: `${state.data.behaviors.length} เรื่อง` }
+      ];
+
+      $("mainArea").innerHTML = `
+        <div class="hub-banner">
+          <h2>ศูนย์รวมงานธุรการชั้นเรียน</h2>
+          <p>${isDirector ? "ผู้อำนวยการ (ดูข้อมูลได้ทุกชั้น)" : `รับผิดชอบชั้น ${allowed.join(", ")} • นักเรียน ${totalStu} คน`}</p>
+        </div>
+        <div class="menu-grid">
+          ${items.map((it, idx) => `
+            <button type="button" class="menu-tile" data-mod="${it.id}" style="animation-delay:${idx * 28}ms">
+              <div class="tile-top">
+                <div class="tile-ico ${it.cls}">${it.ico}</div>
+                <span class="tile-badge">${it.badge}</span>
+              </div>
+              <div class="tile-title">${it.title}</div>
+              <div class="tile-sub">${it.sub}</div>
+            </button>`).join("")}
+        </div>`;
+    }
+
+    function renderProfiles() {
+      const list = getGradeStudents();
+      $("mainArea").innerHTML = `
+        ${gradeBarHtml()}
+        ${list.map((s, i) => {
+          const p = state.data.profiles[s.id] || {};
+          return `
+            <div class="card">
+              <div class="row-between">
+                <div>
+                  <div class="stu-name">${i + 1}. ${s.prefix}${s.firstName} ${s.lastName}</div>
+                  <div class="stu-meta">
+                    ผู้ปกครอง: ${p.parentName || "ยังไม่บันทึก"} • โทร: ${p.parentPhone || "-"}<br/>
+                    ${p.allergy ? `⚠️ แพ้/โรคประจำตัว: ${p.allergy} • ` : ""}กลับบ้าน: ${p.transport || "ผู้ปกครองรับ-ส่ง"}
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  ${p.parentPhone ? `<a href="tel:${p.parentPhone.replace(/[^0-9+]/g, "")}" class="btn-green" style="text-decoration:none;padding:6px 10px">📞 โทร</a>` : ""}
+                  <button type="button" class="btn-soft" data-edit-prof="${s.id}" style="padding:6px 10px">แก้ไข</button>
+                </div>
+              </div>
+            </div>`;
+        }).join("")}`;
+    }
+
+    function renderVisits() {
+      const list = getGradeStudents();
+      $("mainArea").innerHTML = `
+        <div class="sub-head">
+          ${gradeBarHtml()}
+          <button type="button" class="btn-primary" id="exportVisitsPdf">📤 Export PDF เยี่ยมบ้าน</button>
+        </div>
+        ${list.map((s, i) => {
+          const v = state.data.visits[s.id];
+          return `
+            <div class="card">
+              <div class="row-between">
+                <div>
+                  <div class="stu-name">${i + 1}. ${s.prefix}${s.firstName} ${s.lastName}</div>
+                  <div class="stu-meta">${v ? `📅 เยี่ยมเมื่อ ${v.date} • ${v.familyStatus || "ปกติ"}<br/>💬 ${v.note || "-"}` : "ยังไม่ได้บันทึกการเยี่ยมบ้าน"}</div>
+                </div>
+                <span class="pill-tag ${v ? "t-ok" : "t-warn"}">${v ? "✓ เยี่ยมแล้ว" : "รอเยี่ยม"}</span>
+              </div>
+              ${v && v.photo ? `<img class="visit-thumb" src="${v.photo}" alt="" />` : ""}
+              <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                <button type="button" class="btn-primary" data-edit-visit="${s.id}" style="padding:6px 11px">${v ? "แก้ไขข้อมูลเยี่ยมบ้าน" : "+ บันทึกเยี่ยมบ้าน"}</button>
+                ${v && v.lat ? `<a class="btn-soft" href="https://maps.google.com/?q=${v.lat},${v.lng}" target="_blank" rel="noopener" style="text-decoration:none;padding:6px 11px">🗺️ แผนที่บ้าน</a>` : ""}
+              </div>
+            </div>`;
+        }).join("")}`;
+    }
+
+    function renderScreening() {
+      const list = getGradeStudents();
+      $("mainArea").innerHTML = `
+        <div class="sub-head">
+          ${gradeBarHtml()}
+          <button type="button" class="btn-primary" id="exportScreenPdf">📤 Export PDF คัดกรอง</button>
+        </div>
+        ${list.map((s, i) => {
+          const sc = state.data.screening[s.id] || {};
+          const tags = [sc.eef ? "ทุน กสศ." : "", sc.poverty ? "ยากจน" : "", sc.sdq && sc.sdq !== "ปกติ" ? `SDQ: ${sc.sdq}` : ""].filter(Boolean);
+          return `
+            <div class="card">
+              <div class="row-between">
+                <div>
+                  <div class="stu-name">${i + 1}. ${s.prefix}${s.firstName} ${s.lastName}</div>
+                  <div class="stu-meta">${tags.length ? tags.join(" • ") : "กลุ่มปกติ"}${sc.note ? ` — ${sc.note}` : ""}</div>
+                </div>
+                <button type="button" class="btn-soft" data-edit-screen="${s.id}">คัดกรอง</button>
+              </div>
+            </div>`;
+        }).join("")}`;
+    }
+
+    function renderHealth() {
+      const list = getGradeStudents();
+      $("mainArea").innerHTML = `
+        <div class="sub-head">
+          ${gradeBarHtml()}
+          <button type="button" class="btn-primary" id="exportHealthPdf">📤 Export PDF สุขภาพ</button>
+        </div>
+        ${list.map((s, i) => {
+          const h = state.data.health[s.id] || {};
+          const st = calcBmiStatus(h.weight, h.height);
+          return `
+            <div class="card">
+              <div class="row-between">
+                <div>
+                  <div class="stu-name">${i + 1}. ${s.prefix}${s.firstName} ${s.lastName}</div>
+                  <div class="stu-meta">น้ำหนัก: ${h.weight || "-"} กก. • ส่วนสูง: ${h.height || "-"} ซม. • BMI: ${st.bmi}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="pill-tag ${st.cls}">${st.label}</span>
+                  <button type="button" class="btn-soft" data-edit-health="${s.id}" style="padding:6px 10px">กรอก</button>
+                </div>
+              </div>
+            </div>`;
+        }).join("")}`;
+    }
+
+    function renderSubsidy() {
+      const list = getGradeStudents();
+      $("mainArea").innerHTML = `
+        <div class="sub-head">
+          ${gradeBarHtml()}
+          <button type="button" class="btn-primary" id="exportSubPdf">📤 Export PDF บัญชีรับเงิน</button>
+        </div>
+        ${list.map((s, i) => {
+          const sb = state.data.subsidy[s.id] || {};
+          const ok = sb.uniformPaid && sb.suppliesPaid;
+          return `
+            <div class="card">
+              <div class="row-between">
+                <div>
+                  <div class="stu-name">${i + 1}. ${s.prefix}${s.firstName} ${s.lastName}</div>
+                  <div class="stu-meta">
+                    เครื่องแบบ: ${sb.uniformPaid ? "✓ รับแล้ว" : "ยังไม่รับ"} • อุปกรณ์: ${sb.suppliesPaid ? "✓ รับแล้ว" : "ยังไม่รับ"}
+                    ${sb.receiver ? `<br/>ผู้รับเงิน: ${sb.receiver} (${sb.amount || "-"} บาท)` : ""}
+                  </div>
+                </div>
+                <button type="button" class="btn-soft" data-edit-sub="${s.id}" style="${ok ? "border-color:var(--green);color:var(--green)" : ""}">${ok ? "✓ ครบ" : "บันทึก"}</button>
+              </div>
+            </div>`;
+        }).join("")}`;
+    }
+
+    function renderHomeroom() {
+      const list = getGradeStudents();
+      const ch = state.data.chores[state.grade] || { Mon: "", Tue: "", Wed: "", Thu: "", Fri: "" };
+      const behs = state.data.behaviors.filter((b) => b.grade === state.grade);
+      const totalSaved = list.reduce((acc, s) => acc + Number((state.data.savings[s.id] || {}).balance || 0), 0);
+
+      $("mainArea").innerHTML = `
+        ${gradeBarHtml()}
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+          <button type="button" class="${state.subTab === "behavior" ? "btn-primary" : "btn-soft"}" data-subtab="behavior">พฤติกรรม</button>
+          <button type="button" class="${state.subTab === "savings" ? "btn-primary" : "btn-soft"}" data-subtab="savings">ออมทรัพย์ (${totalSaved}฿)</button>
+          <button type="button" class="${state.subTab === "chores" ? "btn-primary" : "btn-soft"}" data-subtab="chores">เวรทำความสะอาด</button>
+        </div>
+        ${state.subTab === "behavior" ? `
+          <button type="button" class="btn-primary" id="addBehBtn" style="width:100%;margin-bottom:10px">+ บันทึกพฤติกรรม / โฮมรูม</button>
+          ${behs.length ? behs.map((b) => {
+            const stu = state.students.find((x) => x.id === b.stuId);
+            return `<div class="card"><div class="row-between"><strong>${stu ? `${stu.prefix}${stu.firstName} ${stu.lastName}` : "ทั้งห้อง"}</strong><span class="pill-tag ${b.kind === "ดีเด่น" ? "t-ok" : "t-warn"}">${b.kind}</span></div><div class="stu-meta">📅 ${b.date} • ${b.note} (บันทึกโดย ${b.by})</div></div>`;
+          }).join("") : `<div class="card" style="text-align:center;color:var(--secondary)">ยังไม่มีบันทึกพฤติกรรมในชั้น ${state.grade}</div>`}
+        ` : state.subTab === "savings" ? `
+          ${list.map((s, i) => {
+            const sv = state.data.savings[s.id] || { balance: 0 };
+            return `<div class="card"><div class="row-between"><div><div class="stu-name">${i + 1}. ${s.prefix}${s.firstName} ${s.lastName}</div><div class="stu-meta">ยอดเงินออมสะสม: <strong>${sv.balance} บาท</strong></div></div><button type="button" class="btn-green" data-add-save="${s.id}" style="padding:6px 11px">+ ฝาก/ถอน</button></div></div>`;
+          }).join("")}
+        ` : `
+          <div class="card">
+            <div class="stu-name" style="margin-bottom:8px">ตารางเวรทำความสะอาด ชั้น ${state.grade}</div>
+            ${[["Mon", "วันจันทร์"], ["Tue", "วันอังคาร"], ["Wed", "วันพุธ"], ["Thu", "วันพฤหัสบดี"], ["Fri", "วันศุกร์"]].map(([k, lb]) => `
+              <label class="lbl">${lb}</label>
+              <input class="field" id="chore_${k}" value="${ch[k] || ""}" placeholder="ระบุชื่อนักเรียนเวร${lb}..." />
+            `).join("")}
+            <button type="button" class="btn-primary" id="saveChoresBtn" style="width:100%">💾 บันทึกตารางเวร</button>
+          </div>
+        `}`;
+    }
+
+    function exportSimpleTablePdf(title, headers, rowsHtml) {
+      const html = `<div class="pdf-doc">
+        <div style="text-align:center;font-weight:700;margin-bottom:6px">${title}<br/>โรงเรียนบ้านป่าไผ่ สพป.นครราชสีมา เขต ๔ • ระดับชั้น ${state.grade}</div>
+        <table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rowsHtml}</tbody></table>
+        <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;text-align:center">
+          <div>ลงชื่อ........................................ครูประจำชั้น<br/>(${teacher.name})</div>
+          <div>ลงชื่อ........................................ผู้รับรอง<br/>(นางสาวนภาพร คงแสนคำ)<br/>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+        </div>
+      </div>`;
+      window.BPP_PDF.exportOrShare(html, `${title}_${state.grade}.pdf`.replace(/\s+/g, "_"), { shareToAdmin: true, onStatus: showToast });
+    }
+
+    function render() {
+      const av = teacher.avatar ? `<img class="mini-avatar" src="${teacher.avatar}" alt="" />` : "";
+      $("userSub").innerHTML = `${av}<span>${teacher.shortName} • ${myGrades.length ? `ชั้น ${myGrades.join(", ")}` : "ทุกชั้น"}</span>`;
+      const titles = {
+        hub: "ระบบธุรการชั้นเรียน",
+        profiles: "ทะเบียนนักเรียน & ผู้ปกครอง",
+        visits: "บันทึกการเยี่ยมบ้านนักเรียน",
+        screening: "คัดกรองยากจน / กสศ. / SDQ",
+        health: "สุขภาพ น้ำหนัก–ส่วนสูง",
+        subsidy: "รับ–จ่ายเงินเรียนฟรี 15 ปี",
+        homeroom: "พฤติกรรม ออมทรัพย์ & เวร"
+      };
+      $("pageTitle").textContent = titles[state.view] || "ระบบธุรการชั้นเรียน";
+      $("backHubBtn").classList.toggle("hidden", state.view === "hub");
+
+      if (state.view === "hub") renderHub();
+      else if (state.view === "profiles") renderProfiles();
+      else if (state.view === "visits") renderVisits();
+      else if (state.view === "screening") renderScreening();
+      else if (state.view === "health") renderHealth();
+      else if (state.view === "subsidy") renderSubsidy();
+      else renderHomeroom();
+    }
+
+    $("backHubBtn").onclick = () => { state.view = "hub"; render(); };
+
+    $("mainArea").addEventListener("click", (e) => {
+      const modBtn = e.target.closest("[data-mod]");
+      if (modBtn) {
+        if (modBtn.dataset.mod === "attendance") { location.href = "./attendance.html"; return; }
+        state.view = modBtn.dataset.mod; render(); return;
+      }
+      const gBtn = e.target.closest("[data-g]");
+      if (gBtn) { state.grade = gBtn.dataset.g; render(); return; }
+      const stBtn = e.target.closest("[data-subtab]");
+      if (stBtn) { state.subTab = stBtn.dataset.subtab; render(); return; }
+
+      // Edit Profile
+      const profBtn = e.target.closest("[data-edit-prof]");
+      if (profBtn) {
+        const s = state.students.find((x) => x.id === profBtn.dataset.editProf);
+        const p = state.data.profiles[s.id] || {};
+        openSheet(`
+          <h3>${s.prefix}${s.firstName} ${s.lastName} (${s.grade})</h3>
+          <label class="lbl">ชื่อผู้ปกครอง</label><input class="field" id="pName" value="${p.parentName || ""}" />
+          <label class="lbl">เบอร์โทรศัพท์ผู้ปกครอง</label><input class="field" id="pPhone" type="tel" value="${p.parentPhone || ""}" />
+          <label class="lbl">โรคประจำตัว / อาหารที่แพ้</label><input class="field" id="pAllergy" value="${p.allergy || ""}" placeholder="ไม่มี" />
+          <label class="lbl">การเดินทางกลับบ้าน</label><input class="field" id="pTrans" value="${p.transport || "ผู้ปกครองรับ-ส่ง"}" />
+          <button type="button" class="btn-primary" id="savePBtn" style="width:100%">บันทึก</button>
+        `);
+        $("savePBtn").onclick = () => {
+          state.data.profiles[s.id] = { parentName: $("pName").value.trim(), parentPhone: $("pPhone").value.trim(), allergy: $("pAllergy").value.trim(), transport: $("pTrans").value.trim() };
+          saveData(); closeSheet(); showToast("บันทึกข้อมูลผู้ปกครองแล้ว"); render();
+        };
+        return;
+      }
+
+      // Edit Home Visit
+      const visBtn = e.target.closest("[data-edit-visit]");
+      if (visBtn) {
+        const s = state.students.find((x) => x.id === visBtn.dataset.editVisit);
+        const v = state.data.visits[s.id] || {};
+        let photoData = v.photo || "", lat = v.lat || "", lng = v.lng || "";
+        openSheet(`
+          <h3>🏠 เยี่ยมบ้าน: ${s.prefix}${s.firstName} ${s.lastName}</h3>
+          <label class="lbl">สภาพครอบครัว</label>
+          <select class="select-field" id="vStatus">
+            <option ${v.familyStatus === "อบอุ่น/ปกติ" ? "selected" : ""}>อบอุ่น/ปกติ</option>
+            <option ${v.familyStatus === "อาศัยกับปู่ย่าตายาย" ? "selected" : ""}>อาศัยกับปู่ย่าตายาย</option>
+            <option ${v.familyStatus === "ฐานะยากจน/ควรช่วยเหลือ" ? "selected" : ""}>ฐานะยากจน/ควรช่วยเหลือ</option>
+          </select>
+          <label class="lbl">บันทึกรายละเอียด / ข้อเสนอแนะ</label>
+          <textarea class="textarea-field" id="vNote" rows="2">${v.note || ""}</textarea>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <button type="button" class="btn-soft" id="vGpsBtn" style="flex:1">📍 ปักหมุด GPS ${lat ? "(มีแล้ว)" : ""}</button>
+            <label class="btn-soft" style="flex:1;cursor:pointer">📷 แนบรูปบ้าน<input type="file" id="vPhoto" accept="image/*" class="hidden" /></label>
+          </div>
+          <button type="button" class="btn-primary" id="saveVBtn" style="width:100%">บันทึกเยี่ยมบ้าน</button>
+        `);
+        $("vGpsBtn").onclick = () => {
+          navigator.geolocation?.getCurrentPosition((pos) => { lat = pos.coords.latitude.toFixed(6); lng = pos.coords.longitude.toFixed(6); $("vGpsBtn").textContent = "📍 ปักหมุดแล้ว ✓"; showToast("จับพิกัดบ้านแล้ว"); }, () => showToast("กรุณาอนุญาต GPS"));
+        };
+        $("vPhoto").onchange = async () => { const f = $("vPhoto").files?.[0]; if (f) { photoData = await compressPhoto(f); showToast("แนบรูปบ้านแล้ว"); } };
+        $("saveVBtn").onclick = () => {
+          state.data.visits[s.id] = { date: new Date().toLocaleDateString("th-TH"), familyStatus: $("vStatus").value, note: $("vNote").value.trim(), lat, lng, photo: photoData };
+          saveData(); closeSheet(); showToast("บันทึกการเยี่ยมบ้านแล้ว"); render();
+        };
+        return;
+      }
+
+      // Edit Screening
+      const scrBtn = e.target.closest("[data-edit-screen]");
+      if (scrBtn) {
+        const s = state.students.find((x) => x.id === scrBtn.dataset.editScreen);
+        const sc = state.data.screening[s.id] || {};
+        openSheet(`
+          <h3>🎯 คัดกรอง: ${s.prefix}${s.firstName} ${s.lastName}</h3>
+          <label style="display:flex;gap:8px;margin-bottom:8px;font-size:14px"><input type="checkbox" id="scEef" ${sc.eef ? "checked" : ""} /> นักเรียนทุนเสมอภาค (กสศ.)</label>
+          <label style="display:flex;gap:8px;margin-bottom:10px;font-size:14px"><input type="checkbox" id="scPov" ${sc.poverty ? "checked" : ""} /> นักเรียนยากจน/ด้อยโอกาส</label>
+          <label class="lbl">ผลประเมิน SDQ</label>
+          <select class="select-field" id="scSdq">
+            <option ${sc.sdq === "ปกติ" ? "selected" : ""}>ปกติ</option>
+            <option ${sc.sdq === "กลุ่มเสี่ยง" ? "selected" : ""}>กลุ่มเสี่ยง</option>
+            <option ${sc.sdq === "มีปัญหา/ต้องดูแลพิเศษ" ? "selected" : ""}>มีปัญหา/ต้องดูแลพิเศษ</option>
+          </select>
+          <label class="lbl">หมายเหตุ</label><input class="field" id="scNote" value="${sc.note || ""}" />
+          <button type="button" class="btn-primary" id="saveScBtn" style="width:100%">บันทึกผลการคัดกรอง</button>
+        `);
+        $("saveScBtn").onclick = () => {
+          state.data.screening[s.id] = { eef: $("scEef").checked, poverty: $("scPov").checked, sdq: $("scSdq").value, note: $("scNote").value.trim() };
+          saveData(); closeSheet(); showToast("บันทึกผลการคัดกรองแล้ว"); render();
+        };
+        return;
+      }
+
+      // Edit Health
+      const hlBtn = e.target.closest("[data-edit-health]");
+      if (hlBtn) {
+        const s = state.students.find((x) => x.id === hlBtn.dataset.editHealth);
+        const h = state.data.health[s.id] || {};
+        openSheet(`
+          <h3>⚖️ สุขภาพ: ${s.prefix}${s.firstName} ${s.lastName}</h3>
+          <div class="row-2">
+            <div><label class="lbl">น้ำหนัก (กก.)</label><input class="field" id="hW" type="number" step="0.1" value="${h.weight || ""}" /></div>
+            <div><label class="lbl">ส่วนสูง (ซม.)</label><input class="field" id="hH" type="number" step="0.1" value="${h.height || ""}" /></div>
+          </div>
+          <button type="button" class="btn-primary" id="saveHBtn" style="width:100%">บันทึก</button>
+        `);
+        $("saveHBtn").onclick = () => {
+          state.data.health[s.id] = { weight: $("hW").value, height: $("hH").value, updatedAt: new Date().toLocaleDateString("th-TH") };
+          saveData(); closeSheet(); showToast("บันทึกน้ำหนัก–ส่วนสูงแล้ว"); render();
+        };
+        return;
+      }
+
+      // Edit Subsidy 15-Year Free Ed
+      const subBtn = e.target.closest("[data-edit-sub]");
+      if (subBtn) {
+        const s = state.students.find((x) => x.id === subBtn.dataset.editSub);
+        const sb = state.data.subsidy[s.id] || {};
+        openSheet(`
+          <h3>💵 เงินเรียนฟรี 15 ปี: ${s.prefix}${s.firstName} ${s.lastName}</h3>
+          <label style="display:flex;gap:8px;margin-bottom:8px;font-size:14px"><input type="checkbox" id="sbUni" ${sb.uniformPaid ? "checked" : ""} /> รับค่าเครื่องแบบนักเรียนแล้ว</label>
+          <label style="display:flex;gap:8px;margin-bottom:10px;font-size:14px"><input type="checkbox" id="sbSup" ${sb.suppliesPaid ? "checked" : ""} /> รับค่าอุปกรณ์การเรียนแล้ว</label>
+          <div class="row-2">
+            <div><label class="lbl">จำนวนเงินรวม (บาท)</label><input class="field" id="sbAmt" type="number" value="${sb.amount || ""}" /></div>
+            <div><label class="lbl">ชื่อผู้ปกครองผู้รับเงิน</label><input class="field" id="sbRec" value="${sb.receiver || ""}" /></div>
+          </div>
+          <button type="button" class="btn-primary" id="saveSbBtn" style="width:100%">บันทึก</button>
+        `);
+        $("saveSbBtn").onclick = () => {
+          state.data.subsidy[s.id] = { uniformPaid: $("sbUni").checked, suppliesPaid: $("sbSup").checked, amount: $("sbAmt").value, receiver: $("sbRec").value.trim(), date: new Date().toLocaleDateString("th-TH") };
+          saveData(); closeSheet(); showToast("บันทึกการรับเงินแล้ว"); render();
+        };
+        return;
+      }
+
+      // Homeroom Behavior / Savings / Chores
+      if (e.target.id === "addBehBtn") {
+        const list = getGradeStudents();
+        openSheet(`
+          <h3>📒 บันทึกพฤติกรรม / โฮมรูม (ชั้น ${state.grade})</h3>
+          <label class="lbl">นักเรียน</label>
+          <select class="select-field" id="bStu"><option value="">ทั้งห้องเรียน</option>${list.map((s) => `<option value="${s.id}">${s.prefix}${s.firstName} ${s.lastName}</option>`).join("")}</select>
+          <label class="lbl">ประเภท</label>
+          <select class="select-field" id="bKind"><option>ดีเด่น</option><option>ให้คำปรึกษา</option><option>ติดตามพฤติกรรม</option></select>
+          <label class="lbl">รายละเอียด</label><textarea class="textarea-field" id="bNote" rows="2"></textarea>
+          <button type="button" class="btn-primary" id="saveBBtn" style="width:100%">บันทึก</button>
+        `);
+        $("saveBBtn").onclick = () => {
+          const note = $("bNote").value.trim(); if (!note) { showToast("กรุณากรอกรายละเอียด"); return; }
+          state.data.behaviors.unshift({ id: "bh-" + Date.now(), stuId: $("bStu").value, grade: state.grade, date: new Date().toLocaleDateString("th-TH"), kind: $("bKind").value, note, by: teacher.shortName });
+          saveData(); closeSheet(); showToast("บันทึกพฤติกรรมแล้ว"); render();
+        };
+        return;
+      }
+
+      const svBtn = e.target.closest("[data-add-save]");
+      if (svBtn) {
+        const s = state.students.find((x) => x.id === svBtn.dataset.addSave);
+        const cur = state.data.savings[s.id] || { balance: 0 };
+        openSheet(`
+          <h3>💰 ออมทรัพย์: ${s.prefix}${s.firstName} ${s.lastName}</h3>
+          <div style="font-size:13px;color:var(--secondary);margin-bottom:8px">ยอดสะสมปัจจุบัน: <strong>${cur.balance} บาท</strong></div>
+          <label class="lbl">จำนวนเงิน (ใส่เครื่องหมาย - หากถอน)</label>
+          <input class="field" id="svAmt" type="number" placeholder="เช่น 20 หรือ -50" />
+          <button type="button" class="btn-green" id="saveSvBtn" style="width:100%">อัปเดตยอดออม</button>
+        `);
+        $("saveSvBtn").onclick = () => {
+          const delta = Number($("svAmt").value || 0);
+          if (!delta) return;
+          state.data.savings[s.id] = { balance: Math.max(0, Number(cur.balance || 0) + delta) };
+          saveData(); closeSheet(); showToast("อัปเดตยอดเงินออมแล้ว"); render();
+        };
+        return;
+      }
+
+      if (e.target.id === "saveChoresBtn") {
+        state.data.chores[state.grade] = {
+          Mon: $("chore_Mon").value.trim(), Tue: $("chore_Tue").value.trim(),
+          Wed: $("chore_Wed").value.trim(), Thu: $("chore_Thu").value.trim(), Fri: $("chore_Fri").value.trim()
+        };
+        saveData(); showToast("บันทึกตารางเวรทำความสะอาดแล้ว"); return;
+      }
+
+      // PDF Exports
+      if (e.target.id === "exportVisitsPdf") {
+        const list = getGradeStudents();
+        exportSimpleTablePdf("สรุปผลการเยี่ยมบ้านนักเรียน", ["ที่", "ชื่อ-นามสกุล", "สภาพครอบครัว", "รายละเอียด/หมายเหตุ"],
+          list.map((s, i) => { const v = state.data.visits[s.id] || {}; return `<tr><td>${i + 1}</td><td class="left">${s.prefix}${s.firstName} ${s.lastName}</td><td>${v.familyStatus || "ยังไม่เยี่ยม"}</td><td class="left">${v.note || "-"}</td></tr>`; }).join(""));
+        return;
+      }
+      if (e.target.id === "exportScreenPdf") {
+        const list = getGradeStudents();
+        exportSimpleTablePdf("แบบสรุปการคัดกรองนักเรียนยากจน ทุน กสศ. และ SDQ", ["ที่", "ชื่อ-นามสกุล", "ทุน กสศ.", "ยากจน", "SDQ", "หมายเหตุ"],
+          list.map((s, i) => { const sc = state.data.screening[s.id] || {}; return `<tr><td>${i + 1}</td><td class="left">${s.prefix}${s.firstName} ${s.lastName}</td><td>${sc.eef ? "✓" : "-"}</td><td>${sc.poverty ? "✓" : "-"}</td><td>${sc.sdq || "ปกติ"}</td><td class="left">${sc.note || "-"}</td></tr>`; }).join(""));
+        return;
+      }
+      if (e.target.id === "exportHealthPdf") {
+        const list = getGradeStudents();
+        exportSimpleTablePdf("แบบบันทึกน้ำหนัก ส่วนสูง และภาวะโภชนาการนักเรียน", ["ที่", "ชื่อ-นามสกุล", "น้ำหนัก(กก.)", "ส่วนสูง(ซม.)", "BMI", "เกณฑ์"],
+          list.map((s, i) => { const h = state.data.health[s.id] || {}; const st = calcBmiStatus(h.weight, h.height); return `<tr><td>${i + 1}</td><td class="left">${s.prefix}${s.firstName} ${s.lastName}</td><td>${h.weight || "-"}</td><td>${h.height || "-"}</td><td>${st.bmi}</td><td>${st.label}</td></tr>`; }).join(""));
+        return;
+      }
+      if (e.target.id === "exportSubPdf") {
+        const list = getGradeStudents();
+        exportSimpleTablePdf("บัญชีลงชื่อรับเงินอุดหนุนเรียนฟรี 15 ปี", ["ที่", "ชื่อ-นามสกุล", "เครื่องแบบ", "อุปกรณ์", "จำนวนเงิน", "ผู้รับเงิน"],
+          list.map((s, i) => { const sb = state.data.subsidy[s.id] || {}; return `<tr><td>${i + 1}</td><td class="left">${s.prefix}${s.firstName} ${s.lastName}</td><td>${sb.uniformPaid ? "✓" : "-"}</td><td>${sb.suppliesPaid ? "✓" : "-"}</td><td>${sb.amount || "-"}</td><td class="left">${sb.receiver || ""}</td></tr>`; }).join(""));
+      }
+    });
+
+    render();
+    syncCloud();
+  </script>
+</body>
+</html>

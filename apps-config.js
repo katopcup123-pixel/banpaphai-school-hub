@@ -1,6 +1,6 @@
 // ตั้งค่าแอป BPP Connect — โรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)
 window.SCHOOL_CONFIG = {
-  appVersion: "2.4.13",
+  appVersion: "2.5.0",
   schoolName: "BPP Connect",
   schoolSubtitle: "โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4",
   logoUrl: "./icons/school-logo.png",
@@ -193,6 +193,30 @@ window.SCHOOL_CONFIG = {
       url: "https://script.google.com/macros/s/AKfycbw6zyCd02fw_bubPn_gJcqk2u9u7xLTc3qjPRniX6_3gYDez9RTO0cvNfwZ7HuUC1R6/exec",
       icon: "award",
       color: "amber",
+      pinned: true,
+      directorOnly: false
+    },
+    {
+      id: "classroom-admin",
+      name: "ระบบธุรการชั้นเรียน",
+      shortName: "ธุรการชั้นเรียน",
+      description: "เยี่ยมบ้าน คัดกรอง กสศ. สุขภาพ เงินเรียนฟรี 15 ปี พฤติกรรม ออมทรัพย์ & เวร",
+      division: "academic",
+      url: "./classroom.html",
+      icon: "graduationCap",
+      color: "blue",
+      pinned: true,
+      directorOnly: false
+    },
+    {
+      id: "school-admin-office",
+      name: "ระบบธุรการโรงเรียน",
+      shortName: "ธุรการโรงเรียน",
+      description: "ออกเลขคำสั่ง ตารางเวรยาม หนังสือรับรอง ปพ.7 ครุภัณฑ์ ย้ายนักเรียน & สมุดผู้มาติดต่อ",
+      division: "general",
+      url: "./admin-office.html",
+      icon: "fileCheck",
+      color: "indigo",
       pinned: true,
       directorOnly: false
     },

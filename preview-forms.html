@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ทดสอบแบบฟอร์มราชการทั้ง 5 แบบ (TH SarabunIT๙) — BPP Connect</title>
+  <style>
+    @font-face { font-family: "TH SarabunIT9"; src: url("./fonts/THSarabunIT9.ttf") format("truetype"); font-weight: 400; font-style: normal; }
+    @font-face { font-family: "TH SarabunIT9"; src: url("./fonts/THSarabunIT9-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+    @font-face { font-family: "TH SarabunIT9"; src: url("./fonts/THSarabunIT9-Italic.ttf") format("truetype"); font-weight: 400; font-style: italic; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #E5E7EB; font-family: -apple-system, BlinkMacSystemFont, "Noto Sans Thai", sans-serif; }
+    .bar {
+      position: sticky; top: 0; z-index: 20;
+      background: #111827; color: #fff;
+      padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    }
+    .tab-btn {
+      border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.08);
+      color: #fff; font: inherit; font-size: 12.5px; font-weight: 600;
+      padding: 7px 12px; border-radius: 10px; cursor: pointer;
+    }
+    .tab-btn.active { background: #007AFF; border-color: #007AFF; }
+    .act-btn {
+      border: none; background: #16A34A; color: #fff;
+      font: inherit; font-size: 13px; font-weight: 700;
+      padding: 8px 14px; border-radius: 10px; cursor: pointer;
+    }
+    .act-btn.sec { background: #374151; }
+    .stage { padding: 20px 12px 48px; display: flex; justify-content: center; overflow-x: auto; }
+    .a4-sheet {
+      width: 794px; min-height: 1123px; background: #fff; color: #000;
+      padding: 40px 54px 40px 68px; box-shadow: 0 10px 34px rgba(0,0,0,0.18);
+      font-family: "TH SarabunIT9", "TH Sarabun New", serif; font-size: 16pt; line-height: 1.3;
+    }
+
+    /* Official styles shared with leave.html */
+    .doc-memo { font-family: "TH SarabunIT9", "TH Sarabun New", serif; color: #000; font-size: 16pt; line-height: 1.3; text-align: left; width: 100%; }
+    .memo-stamp-wrap { display: flex; justify-content: flex-end; margin-bottom: 2px; }
+    .memo-stamp { border: 1px solid #000; padding: 3px 9px; font-size: 13pt; line-height: 1.22; width: 200px; }
+    .memo-header { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 4px; }
+    .memo-garuda { width: 54px; height: auto; flex-shrink: 0; }
+    .memo-title { flex: 1; text-align: center; font-size: 28pt; font-weight: 700; padding-right: 54px; line-height: 0.95; }
+    .memo-meta-row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 3px; }
+    .memo-field-line { margin: 1px 0; text-align: left; }
+    .memo-indent { text-indent: 56px; text-align: left; margin: 4px 0 3px; }
+    .memo-table { width: 100%; border-collapse: collapse; margin: 5px 0 5px; font-size: 14.5pt; table-layout: fixed; }
+    .memo-table th, .memo-table td { border: 1px solid #000; padding: 2px 5px; text-align: center; height: 24px; }
+    .memo-table td.left { text-align: left; }
+    .memo-sign-right { width: 54%; margin-left: auto; text-align: center; margin-top: 10px; line-height: 1.26; }
+    .memo-sign-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; margin-top: 10px; line-height: 1.26; }
+    .memo-box-2x2 { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14pt; table-layout: fixed; }
+    .memo-box-2x2 td { border: 1px solid #000; width: 50%; vertical-align: top; padding: 4px 7px; line-height: 1.26; }
+    .chk-box { display: inline-block; width: 13px; height: 13px; border: 1px solid #000; text-align: center; line-height: 12px; font-size: 11px; margin: 0 3px; vertical-align: middle; font-family: sans-serif; }
+    .memo-footnote { margin-top: 6px; font-size: 14pt; font-style: italic; }
+    .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 9px 16px; border-radius: 999px; font-size: 13px; display: none; z-index: 100; }
+    .toast.show { display: block; }
+
+    @media print {
+      @page { size: A4 portrait; margin: 12mm 15mm 12mm 18mm; }
+      body { background: #fff; }
+      .bar, .toast { display: none !important; }
+      .stage { padding: 0; }
+      .a4-sheet { width: auto; min-height: auto; padding: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <button class="tab-btn active" data-k="offcampus">1. ออกนอกโรงเรียน</button>
+    <button class="tab-btn" data-k="sick">2. ใบลา (ป่วย/กิจ/คลอด)</button>
+    <button class="tab-btn" data-k="duty">3. ขออนุญาตไปราชการ</button>
+    <button class="tab-btn" data-k="miss_in">4. ชี้แจงเข้า 08.15</button>
+    <button class="tab-btn" data-k="miss_out">5. ชี้แจงกลับ 16.30</button>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="act-btn" id="btnPdf">📤 ทดสอบ Export PDF</button>
+      <button class="act-btn sec" id="btnPrint">🖨️ ปริ้น A4</button>
+    </div>
+  </div>
+  <div class="stage"><div class="a4-sheet" id="previewSheet"></div></div>
+  <div class="toast" id="toast"></div>
+
+  <script src="./pdf-export.js"></script>
+  <script>
+    const SAMPLES = {
+      offcampus: {
+        title: "ขอออกนอกโรงเรียน",
+        html: `<div class="doc-memo">
+          <div class="memo-stamp-wrap"><div class="memo-stamp"><div><strong>กลุ่มบริหารงานบุคคล</strong></div><div>รับที่………………………………….</div><div>วันที่.....................................</div><div>เวลา...................................น.</div></div></div>
+          <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-official.png" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
+          <div class="memo-field-line"><strong>ส่วนราชการ</strong> โรงเรียนบ้านป่าไผ่ อำเภอปากช่อง สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
+          <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong> ๒๗ พฤศจิกายน ๒๕๖๙</div></div>
+          <div class="memo-field-line"><strong>เรื่อง</strong> ขออนุญาตออกนอกบริเวณโรงเรียน</div>
+          <div class="memo-field-line"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          <div class="memo-indent">ด้วยข้าพเจ้า นายธานครินทร์ สุเมธาลังการ ตำแหน่ง ครู วิทยฐานะ - โรงเรียนบ้านป่าไผ่ มีความจำเป็นเนื่องจาก (ระบุ) ติดต่อราชการธนาคารกรุงไทย สาขาปากช่อง จึงขออนุญาตออกนอกบริเวณโรงเรียน ไปที่ ธนาคารกรุงไทย สาขาปากช่อง ในวันที่ ๒๗ พฤศจิกายน ๒๕๖๙ ตั้งแต่เวลา ๐๙:๐๐ ถึงเวลา ๑๐:๐๐ น. รวม ๑ ชั่วโมง</div>
+          <div class="memo-field-line"><strong>ภาระงาน</strong> <span class="chk-box"></span> มี &nbsp;&nbsp;<span class="chk-box">✓</span> ไม่มี</div>
+          <div class="memo-field-line">โดยได้มอบหมายภาระงานการเรียนการสอน/งานพิเศษ ดังนี้</div>
+          <table class="memo-table"><thead><tr><th style="width:12%">คาบ</th><th style="width:42%">งานสอน/ภาระงาน</th><th style="width:14%">ชั้น</th><th style="width:32%">ผู้สอนแทน (ลงชื่อ)</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr></tbody></table>
+          <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบและพิจารณา</div>
+          <div class="memo-sign-right"><div>ลงชื่อ...................................................ผู้ขออนุญาต</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>ตำแหน่ง ครู</div></div>
+          <div style="margin-top:8px"><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong><div style="text-indent:0.8cm">- เพื่อโปรดทราบ</div><div>………………………………………………………………………………</div><div>………………………………………………………………………………</div></div>
+          <div class="memo-sign-2col">
+            <div><div>ลงชื่อ.........................................................</div><div>(นางสาวนริศรา พืชผักหวาน)</div><div>เจ้าหน้าที่ทะเบียนและสถิติ</div></div>
+            <div><div>ลงชื่อ............................................................</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>หัวหน้ากลุ่มบริหารงานบุคคล</div></div>
+          </div>
+          <div style="margin-top:10px"><strong>ความเห็นของผู้อำนวยการโรงเรียน</strong>
+            <div>&nbsp;&nbsp;&nbsp;<span class="chk-box">✓</span> อนุญาต &nbsp;&nbsp;<span class="chk-box"></span> ไม่อนุญาต เนื่องจาก........................................................................</div>
+            <div class="memo-sign-right" style="margin-top:10px"><div>ลงชื่อ............................................................</div><div>(นางสาวนภาพร คงแสนคำ)</div><div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div></div>
+          </div>
+          <div class="memo-footnote">*หมายเหตุ ให้ผู้อำนวยการอนุญาตก่อนออกนอกบริเวณโรงเรียน</div>
+        </div>`
+      },
+      sick: {
+        title: "แบบใบลาป่วย",
+        html: `<div class="doc-memo">
+          <div style="text-align:center;font-size:20pt;font-weight:700;margin-bottom:4px">แบบใบลาป่วย ลากิจส่วนตัว ลาคลอดบุตร</div>
+          <div style="text-align:right">เขียนที่ โรงเรียนบ้านป่าไผ่</div>
+          <div style="text-align:right">วันที่ 27 เดือน พฤศจิกายน พ.ศ. 2569</div>
+          <div class="memo-field-line"><strong>เรื่อง</strong> ขอลาป่วย</div>
+          <div class="memo-field-line"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          <div class="memo-indent">ข้าพเจ้า นางสาวน้ำเพชร ชมประเสริฐ ตำแหน่ง ครู โรงเรียนบ้านป่าไผ่ สังกัดสำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4 สังกัดสำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน กระทรวงศึกษาธิการ</div>
+          <div style="margin-left:42px">
+            <div>ขอลา ( ✓ ) ป่วย เนื่องจาก มีไข้สูง ปวดศีรษะ แพทย์ให้พักรักษาตัว</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( &nbsp; ) กิจส่วนตัว เนื่องจาก ..........................................................................</div>
+            <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( &nbsp; ) ลาคลอดบุตร เนื่องจาก ......................................................................</div>
+          </div>
+          <div class="memo-field-line">ตั้งแต่วันที่ 27 เดือน พฤศจิกายน พ.ศ. 2569 ถึงวันที่ 27 เดือน พฤศจิกายน พ.ศ. 2569 มีกำหนด 1 วัน</div>
+          <div class="memo-field-line">ข้าพเจ้าได้ลา ( &nbsp; ) ป่วย ( &nbsp; ) กิจส่วนตัว ( &nbsp; ) คลอดบุตร ครั้งสุดท้ายตั้งแต่วันที่ ...... เดือน ............ พ.ศ. ...... ถึงวันที่ ...... เดือน ............ พ.ศ. ...... กำหนด ...... วัน</div>
+          <div class="memo-field-line">ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่ ต.จันทึก อ.ปากช่อง จ.นครราชสีมา โทร 081-234-5678</div>
+          <div class="memo-sign-right"><div>ขอแสดงความนับถือ</div><div style="margin-top:14px">............................................................</div><div>(นางสาวน้ำเพชร ชมประเสริฐ)</div><div>ตำแหน่ง ครู</div></div>
+          <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:14px;margin-top:10px;align-items:start">
+            <div>
+              <div><strong>สถิติการลา</strong> ( ✓ ) 1 ต.ค. - 31 มี.ค. ( &nbsp; ) 1 เม.ย. - 30 ก.ย.</div>
+              <table class="memo-table">
+                <thead><tr><th rowspan="2">ประเภทการลา</th><th colspan="2">ลามาแล้ว</th><th colspan="2">ลาครั้งนี้</th><th colspan="2">รวมเป็น</th></tr><tr><th>ครั้ง</th><th>วัน</th><th>ครั้ง</th><th>วัน</th><th>ครั้ง</th><th>วัน</th></tr></thead>
+                <tbody><tr><td class="left">ป่วย</td><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td></tr><tr><td class="left">กิจส่วนตัว</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td class="left">คลอดบุตร</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr></tbody>
+              </table>
+              <div style="text-align:center;margin-top:10px"><div>ลงชื่อ..............................................ผู้บันทึกข้อมูล</div><div>(นางสาวนริศรา พืชผักหวาน)</div><div>หัวหน้างานทะเบียนและสถิติ</div></div>
+            </div>
+            <div style="padding-top:12px">
+              <div><strong>ความเห็นผู้บังคับบัญชา</strong></div>
+              <div>....................................................................</div>
+              <div style="text-align:center;margin:8px 0"><div>ลงชื่อ.................................................</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>หัวหน้ากลุ่มบริหารงานบุคคล</div></div>
+              <div><strong>คำสั่ง</strong> ( ✓ ) อนุญาต ( &nbsp; ) ไม่อนุญาต</div>
+              <div style="text-align:center;margin-top:12px"><div>ลงชื่อ.................................................</div><div>(นางสาวนภาพร คงแสนคำ)</div><div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div></div>
+            </div>
+          </div>
+        </div>`
+      },
+      duty: {
+        title: "ขออนุญาตไปราชการ",
+        html: `<div class="doc-memo">
+          <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-official.png" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
+          <div class="memo-field-line"><strong>ส่วนราชการ</strong> โรงเรียนบ้านป่าไผ่ สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</div>
+          <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong> 27 พฤศจิกายน 2569</div></div>
+          <div class="memo-field-line"><strong>เรื่อง</strong> ขออนุญาตไปราชการ</div>
+          <div class="memo-field-line"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          <div class="memo-indent">ข้าพเจ้า นายธานครินทร์ สุเมธาลังการ ตำแหน่ง ครู ข้าราชการครูและบุคลากรทางการศึกษากลุ่มสาระการเรียนรู้ วิทยาศาสตร์และเทคโนโลยี พร้อมด้วยข้าราชการครูและบุคลากรทางการศึกษา จำนวน 1 คน ได้แก่</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:14.5pt">
+            <div>1. นางสาวน้ำเพชร ชมประเสริฐ ตำแหน่ง ครู</div><div>6. ....................................... ตำแหน่ง ...............</div>
+            <div>2. ....................................... ตำแหน่ง ...............</div><div>7. ....................................... ตำแหน่ง ...............</div>
+            <div>3. ....................................... ตำแหน่ง ...............</div><div>8. ....................................... ตำแหน่ง ...............</div>
+            <div>4. ....................................... ตำแหน่ง ...............</div><div>9. ....................................... ตำแหน่ง ...............</div>
+            <div>5. ....................................... ตำแหน่ง ...............</div><div>10. ...................................... ตำแหน่ง ...............</div>
+          </div>
+          <div style="margin-top:4px;font-size:15pt">
+            มีความประสงค์ขออนุญาตไปราชการเพื่อ <span class="chk-box">✓</span> ฝึกอบรม <span class="chk-box"></span> สัมมนา <span class="chk-box"></span> ศึกษาดูงาน <span class="chk-box"></span> เข้าร่วมประชุม<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="chk-box"></span> ไปราชการตามคำสั่งของสำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="chk-box"></span> แข่งขันทักษะวิชาการของนักเรียน &nbsp;<span class="chk-box"></span> เป็นวิทยากร &nbsp;<span class="chk-box"></span> อื่น ๆ
+          </div>
+          <div class="memo-field-line"><strong>หน่วยงานที่จัด (จำเป็นต้องกรอก)</strong> สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</div>
+          <div class="memo-field-line"><strong>เรื่อง</strong> การอบรมเชิงปฏิบัติการพัฒนาสื่อดิจิทัล</div>
+          <div class="memo-field-line"><strong>วัตถุประสงค์ของการไปราชการเพื่อ (จำเป็นต้องกรอก)</strong> พัฒนาทักษะการใช้เทคโนโลยีเพื่อการจัดการเรียนรู้</div>
+          <div class="memo-field-line"><strong>สถานที่</strong> ห้องประชุม สพป.นม.4 <strong>อำเภอ</strong> สีคิ้ว <strong>จังหวัด</strong> นครราชสีมา</div>
+          <div class="memo-field-line">โดยขออนุญาตเดินทางไปราชการระหว่างวันที่ 27 เดือน พฤศจิกายน พ.ศ. 2569 ถึงวันที่ 27 เดือน พฤศจิกายน พ.ศ. 2569 จำนวน 1 วัน เดินทางโดยพาหนะ รถยนต์ส่วนตัว ตั้งแต่เวลา 08:30 น. ถึงเวลา 16:30 น. โดยขออนุมัติค่าใช้จ่ายไปราชการจำนวน - บาท (-) จึงขอความอนุเคราะห์ผู้อำนวยการโรงเรียนพิจารณามอบหมายฝ่ายธุรการดำเนินการออกคำสั่งให้ข้าพเจ้าได้ไปปฏิบัติราชการตามความประสงค์</div>
+          <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบและพิจารณา</div>
+          <div class="memo-sign-right"><div>ลงชื่อ………………………………………………..</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>ตำแหน่ง ครู</div></div>
+          <table class="memo-box-2x2">
+            <tr><td><strong>ความเห็นของหัวหน้างานพัฒนาบุคลากร</strong><br/>......................................................................<div style="text-align:center;margin-top:10px">ลงชื่อ................................................<br/>(นางสาวนริศรา พืชผักหวาน)<br/>........../................../..........</div></td><td><strong>ความเห็นหัวหน้ากลุ่มบริหารงานบุคคล</strong><br/>......................................................................<div style="text-align:center;margin-top:10px">ลงชื่อ................................................<br/>(นายธานครินทร์ สุเมธาลังการ)<br/>........../................../..........</div></td></tr>
+            <tr><td><strong>ความเห็นหัวหน้ากลุ่มบริหารงานงบประมาณ</strong><br/>......................................................................<div style="text-align:center;margin-top:10px">ลงชื่อ................................................<br/>(นางสาวน้ำเพชร ชมประเสริฐ)<br/>........../................../..........</div></td><td><strong>ความเห็นของผู้อำนวยการโรงเรียน/ผู้รักษาการ</strong><br/><span class="chk-box">✓</span> อนุญาต &nbsp;<span class="chk-box"></span> ไม่อนุญาต เพราะ....................<div style="text-align:center;margin-top:10px">ลงชื่อ................................................<br/>(นางสาวนภาพร คงแสนคำ)<br/>........../................../..........</div></td></tr>
+          </table>
+        </div>`
+      },
+      miss_in: {
+        title: "ชี้แจงไม่ลงเวลาเข้า_0815",
+        html: `<div class="doc-memo">
+          <div class="memo-stamp-wrap"><div class="memo-stamp"><div><strong>กลุ่มบริหารงานบุคคล</strong></div><div>รับที่………………………………….</div><div>วันที่.....................................</div><div>เวลา...................................น.</div></div></div>
+          <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-official.png" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
+          <div class="memo-field-line"><strong>ส่วนราชการ</strong> โรงเรียนบ้านป่าไผ่ อำเภอปากช่อง สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
+          <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong> ๒๗ พฤศจิกายน ๒๕๖๙</div></div>
+          <div class="memo-field-line"><strong>เรื่อง</strong> ชี้แจงการมาลงเวลาปฏิบัติราชการ</div>
+          <div class="memo-field-line"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          <div class="memo-indent">ข้าพเจ้า นายธานครินทร์ สุเมธาลังการ ตำแหน่ง ครู วิทยฐานะ - โรงเรียนบ้านป่าไผ่ ไม่ได้มาลงเวลาปฏิบัติราชการภายในเวลา 08.15 น. เมื่อวันที่ 27 พฤศจิกายน 2569 เนื่องจาก (ระบุความจำเป็น) ติดภารกิจรับนักเรียนหน้าโรงเรียน ทั้งนี้ ข้าพเจ้าได้มาปฏิบัติงานในวันดังกล่าว ตั้งแต่เวลา 07:45 น. ซึ่งมี นายพชรศรัณย์ ทับชม เป็นผู้ร่วมปฏิบัติงานกับข้าพเจ้า</div>
+          <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบ</div>
+          <div class="memo-sign-right"><div>ลงชื่อ............................................................</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>ตำแหน่ง ครู</div></div>
+          <div style="margin-top:10px"><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong></div>
+          <div class="memo-indent">ด้วย นายธานครินทร์ สุเมธาลังการ บันทึกชี้แจงการมาลงเวลาปฏิบัติราชการ และขออนุญาตลงเวลาภายหลัง โดยถือว่ามาปฏิบัติงานในเวลาราชการ</div>
+          <div style="margin-top:6px"><strong>สถิติการบันทึกชี้แจง</strong> [ ✓ ] 1 ต.ค. – 31 มี.ค. &nbsp;[ &nbsp; ] 1 เม.ย. – 30 ก.ย.</div>
+          <table class="memo-table"><thead><tr><th colspan="2">บันทึกฯ มาแล้ว</th><th colspan="2">บันทึกฯ ครั้งนี้</th><th colspan="2">รวม</th></tr><tr><th>ครั้ง</th><th>วัน</th><th>ครั้ง</th><th>วัน</th><th>ครั้ง</th><th>วัน</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td></tr></tbody></table>
+          <div style="text-align:center;margin-top:8px"><div>เพื่อโปรดทราบและพิจารณา</div><div style="margin-top:10px">ลงชื่อ...................................................ผู้ตรวจสอบ</div><div>(นางสาวนริศรา พืชผักหวาน)</div><div>เจ้าหน้าที่ทะเบียนและสถิติ</div></div>
+          <div class="memo-sign-2col" style="margin-top:14px">
+            <div><div>ลงชื่อ............................................................</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>หัวหน้ากลุ่มบริหารงานบุคคล</div></div>
+            <div><div>ลงชื่อ............................................................</div><div>(นางสาวนภาพร คงแสนคำ)</div><div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div></div>
+          </div>
+        </div>`
+      },
+      miss_out: {
+        title: "ชี้แจงไม่ลงเวลากลับ_1630",
+        html: `<div class="doc-memo">
+          <div class="memo-stamp-wrap"><div class="memo-stamp"><div><strong>กลุ่มบริหารงานบุคคล</strong></div><div>รับที่………………………………….</div><div>วันที่.....................................</div><div>เวลา...................................น.</div></div></div>
+          <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-official.png" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
+          <div class="memo-field-line"><strong>ส่วนราชการ</strong> โรงเรียนบ้านป่าไผ่ อำเภอปากช่อง สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
+          <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong> ๒๗ พฤศจิกายน ๒๕๖๙</div></div>
+          <div class="memo-field-line"><strong>เรื่อง</strong> ชี้แจงการไม่ลงเวลากลับจากการปฏิบัติราชการ</div>
+          <div class="memo-field-line"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          <div class="memo-indent">ข้าพเจ้า นายธานครินทร์ สุเมธาลังการ ตำแหน่ง ครู วิทยฐานะ - โรงเรียนบ้านป่าไผ่ ได้จัดทำบันทึกข้อความชี้แจงเหตุผลการไม่ลงเวลากลับจากการปฏิบัติราชการ เวลา 16.30 น. เมื่อวันที่ 27 เดือน พฤศจิกายน พ.ศ. 2569 เนื่องจาก ติดภารกิจดูแลนักเรียนกลับบ้านจนเลยเวลาลงชื่อ</div>
+          <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบ</div>
+          <div class="memo-sign-right"><div>ลงชื่อ............................................................</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>ตำแหน่ง ครู</div></div>
+          <div style="margin-top:10px"><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong></div>
+          <div class="memo-indent">ด้วย นายธานครินทร์ สุเมธาลังการ บันทึกชี้แจงการไม่ลงเวลากลับจากการปฏิบัติราชการ เวลา 16.30 น. เมื่อวันที่ 27 พฤศจิกายน 2569</div>
+          <div style="margin-top:6px"><strong>สถิติการบันทึกชี้แจง</strong> [ ✓ ] 1 ต.ค. – 31 มี.ค. &nbsp;[ &nbsp; ] 1 เม.ย. – 30 ก.ย.</div>
+          <table class="memo-table"><thead><tr><th colspan="2">บันทึกฯ มาแล้ว</th><th colspan="2">บันทึกฯ ครั้งนี้</th><th colspan="2">รวม</th></tr><tr><th>ครั้ง</th><th>วัน</th><th>ครั้ง</th><th>วัน</th><th>ครั้ง</th><th>วัน</th></tr></thead><tbody><tr><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td></tr></tbody></table>
+          <div style="text-align:center;margin-top:8px"><div>เพื่อโปรดทราบและพิจารณา</div><div style="margin-top:10px">ลงชื่อ...................................................ผู้ตรวจสอบ</div><div>(นางสาวนริศรา พืชผักหวาน)</div><div>เจ้าหน้าที่ทะเบียนและสถิติ</div></div>
+          <div class="memo-sign-2col" style="margin-top:14px">
+            <div><div>ลงชื่อ............................................................</div><div>(นายธานครินทร์ สุเมธาลังการ)</div><div>หัวหน้ากลุ่มบริหารงานบุคคล</div></div>
+            <div><div>ลงชื่อ............................................................</div><div>(นางสาวนภาพร คงแสนคำ)</div><div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div></div>
+          </div>
+        </div>`
+      }
+    };
+
+    let currentKey = "offcampus";
+    const sheet = document.getElementById("previewSheet");
+    const toast = document.getElementById("toast");
+    function showToast(m) { toast.textContent = m; toast.classList.add("show"); clearTimeout(showToast._t); showToast._t = setTimeout(() => toast.classList.remove("show"), 2500); }
+    function selectForm(k) {
+      currentKey = k;
+      document.querySelectorAll("[data-k]").forEach((b) => b.classList.toggle("active", b.dataset.k === k));
+      sheet.innerHTML = SAMPLES[k].html;
+    }
+    document.querySelectorAll("[data-k]").forEach((b) => { b.onclick = () => selectForm(b.dataset.k); });
+    document.getElementById("btnPrint").onclick = () => window.print();
+    document.getElementById("btnPdf").onclick = () => {
+      window.BPP_PDF.exportOrShare(SAMPLES[currentKey].html, `${SAMPLES[currentKey].title}_ตัวอย่าง.pdf`, { shareToAdmin: true, onStatus: showToast });
+    };
+    selectForm("offcampus");
+  </script>
+</body>
+</html>

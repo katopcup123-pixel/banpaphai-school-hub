@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>BPP Docs — ระบบเอกสารธุรการโรงเรียนบ้านป่าไผ่</title>
+  <link rel="preconnect" href="https://script.google.com" crossorigin />
+  <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -254,10 +256,51 @@
       gap: 12px;
       box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
       cursor: pointer;
-      animation: slideUp 0.34s var(--ease) both;
-      transition: transform 0.2s var(--spring), box-shadow 0.2s;
+      transition: transform 0.16s var(--spring), box-shadow 0.2s;
+      content-visibility: auto;
+      contain-intrinsic-size: 92px;
     }
+    .doc-card.anim-in { animation: slideUp 0.24s var(--ease) both; }
     .doc-card:active { transform: scale(0.98); }
+
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: var(--fill);
+      color: var(--secondary);
+      transition: opacity 0.25s ease;
+    }
+    .sync-pill.syncing::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulseDot 0.9s ease-in-out infinite;
+    }
+    .sync-pill.done { color: #059669; background: rgba(16, 185, 129, 0.12); }
+    @keyframes pulseDot { 50% { opacity: 0.25; transform: scale(0.75); } }
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 0.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      display: inline-grid;
+      place-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.18s var(--spring);
+    }
+    .btn-icon:active { transform: scale(0.92); }
+    .btn-icon.spinning svg { animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .doc-ico {
       width: 44px;
@@ -485,10 +528,15 @@
           <h1>ระบบเอกสารธุรการ</h1>
           <div class="user-sub" id="userSub">โรงเรียนบ้านป่าไผ่</div>
         </div>
-        <button type="button" class="btn-primary" id="addDocBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-          <span>เพิ่มเอกสาร</span>
-        </button>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <button type="button" class="btn-icon" id="refreshDocsBtn" title="รีเฟรชเอกสารล่าสุด" aria-label="รีเฟรชเอกสารล่าสุด">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+          </button>
+          <button type="button" class="btn-primary" id="addDocBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            <span>เพิ่มเอกสาร</span>
+          </button>
+        </div>
       </div>
       <div class="search-box">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -529,6 +577,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="./apps-config.js"></script>
+  <script src="./docs-seed.js"></script>
   <script>
     // Inherit Dark Mode & Accent Color from BPP Connect automatically
     document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
@@ -552,14 +601,64 @@
     const isAdmin = currentTeacher.id === "thanakarin" && currentTeacher.role === "admin";
     const $ = (id) => document.getElementById(id);
 
+    const DOCS_CACHE_KEY = "bpp_docs_cache_v1";
+
     const state = {
       docs: [],
       categories: ["บริหารทั่วไป", "บริหารงานบุคคล", "บริหารงานงบประมาณ", "บริหารงานวิชาการ", "คำสั่งโรงเรียน", "เกรียติบัตร"],
       group: "all",
       category: "all",
       query: "",
-      pageSize: 30
+      pageSize: 30,
+      hasPainted: false,
+      lastSig: ""
     };
+
+    function indexDocs(list) {
+      return (list || []).map((d) => ({
+        ...d,
+        _q: `${d.title || ""} ${d.docNo || ""} ${d.author || ""} ${d.category || ""}`.toLowerCase()
+      }));
+    }
+
+    function docsSignature(docs, cats) {
+      const first = docs[0] || {};
+      const last = docs[docs.length - 1] || {};
+      return `${docs.length}|${first.rowIndex || ""}|${first.title || ""}|${first.fileUrl || ""}|${last.rowIndex || ""}|${(cats || []).length}`;
+    }
+
+    function readCachedDocs() {
+      try {
+        const raw = localStorage.getItem(DOCS_CACHE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.docs) && parsed.docs.length) return parsed;
+        }
+      } catch (_) {}
+      if (window.BPP_DOCS_SEED && Array.isArray(window.BPP_DOCS_SEED.docs) && window.BPP_DOCS_SEED.docs.length) {
+        return window.BPP_DOCS_SEED;
+      }
+      return null;
+    }
+
+    function writeCachedDocs(docs, categories) {
+      try {
+        const cleanDocs = (docs || []).map(({ _q, ...rest }) => rest);
+        localStorage.setItem(DOCS_CACHE_KEY, JSON.stringify({
+          updatedAt: Date.now(),
+          categories: categories || state.categories,
+          docs: cleanDocs
+        }));
+      } catch (_) {}
+    }
+
+    function setSyncBadge(mode, text) {
+      const pill = $("syncPill");
+      if (!pill) return;
+      pill.className = "sync-pill" + (mode ? " " + mode : "");
+      pill.textContent = text || "";
+      pill.classList.toggle("hidden", !text);
+    }
 
     function showToast(msg) {
       const el = $("toast");
@@ -605,10 +704,9 @@
     function closeSheet() { $("sheetBackdrop").classList.remove("open"); }
     $("sheetBackdrop").addEventListener("click", (e) => { if (e.target === $("sheetBackdrop")) closeSheet(); });
 
-    async function loadDocs() {
+    async function loadDocs(forceNetwork = false) {
       const av = currentTeacher.avatar ? `<img class="mini-avatar" src="${currentTeacher.avatar}" alt="" />` : "";
-      $("userSub").innerHTML = `${av}<span>ผู้ใช้งาน: ${currentTeacher.shortName}</span>`;
-      $("docList").innerHTML = `<div class="skel"></div><div class="skel"></div><div class="skel"></div>`;
+      $("userSub").innerHTML = `${av}<span>ผู้ใช้งาน: ${currentTeacher.shortName}</span><span class="sync-pill hidden" id="syncPill"></span>`;
 
       const apiUrl = getDocsApiUrl();
       if (!apiUrl) {
@@ -617,15 +715,56 @@
         return;
       }
 
+      // 1) แสดงข้อมูลจากแคช/สแนปช็อตทันทีภายใน <50ms ไม่ต้องรอ GAS Cold Start
+      const cached = readCachedDocs();
+      if (cached && !state.hasPainted) {
+        state.docs = indexDocs(cached.docs);
+        if (Array.isArray(cached.categories) && cached.categories.length) state.categories = cached.categories;
+        state.lastSig = docsSignature(state.docs, state.categories);
+        renderAll(true);
+        state.hasPainted = true;
+      } else if (!state.hasPainted) {
+        $("docList").innerHTML = `<div class="skel"></div><div class="skel"></div><div class="skel"></div>`;
+      }
+
+      // ถ้าแคชเพิ่งซิงก์ไปไม่เกิน 45 วินาที และไม่ได้กดรีเฟรชเอง ไม่ต้องยิง GAS ซ้ำให้เปลืองเน็ต
+      if (!forceNetwork && cached && cached.updatedAt && (Date.now() - cached.updatedAt) < 45000 && cached !== window.BPP_DOCS_SEED) {
+        setSyncBadge("done", "ล่าสุด ✓");
+        setTimeout(() => setSyncBadge("", ""), 1800);
+        return;
+      }
+
+      // 2) ซิงก์ข้อมูลล่าสุดจาก Google Sheets เบื้องหลังแบบไม่บล็อกหน้าจอ
+      setSyncBadge("syncing", "ซิงก์ล่าสุด...");
+      const refBtn = $("refreshDocsBtn");
+      if (refBtn) refBtn.classList.add("spinning");
+
       try {
         const res = await fetch(`${apiUrl}?action=listDocs`, { cache: "no-store" });
         const json = await res.json();
         if (!json.ok) throw new Error(json.error || "โหลดข้อมูลไม่สำเร็จ");
-        state.docs = json.docs || [];
-        if (Array.isArray(json.categories) && json.categories.length) state.categories = json.categories;
-        renderAll();
+        const freshDocs = indexDocs(json.docs || []);
+        const freshCats = (Array.isArray(json.categories) && json.categories.length) ? json.categories : state.categories;
+        const freshSig = docsSignature(freshDocs, freshCats);
+        writeCachedDocs(freshDocs, freshCats);
+
+        if (!state.hasPainted || freshSig !== state.lastSig || forceNetwork) {
+          state.docs = freshDocs;
+          state.categories = freshCats;
+          state.lastSig = freshSig;
+          renderAll(!state.hasPainted);
+          state.hasPainted = true;
+        }
+        setSyncBadge("done", "อัปเดตแล้ว ✓");
+        setTimeout(() => setSyncBadge("", ""), 2000);
       } catch (err) {
-        $("docList").innerHTML = `<div class="empty">ไม่สามารถโหลดเอกสารได้: ${err.message}</div>`;
+        if (!state.hasPainted) {
+          $("docList").innerHTML = `<div class="empty">ไม่สามารถโหลดเอกสารได้: ${err.message}</div>`;
+        } else {
+          setSyncBadge("", "ออฟไลน์ (ใช้แคช)");
+        }
+      } finally {
+        if (refBtn) refBtn.classList.remove("spinning");
       }
     }
 
@@ -638,13 +777,23 @@
       `).join("");
     }
 
-    function renderAll() {
+    function renderAll(animate = false) {
       const total = state.docs.length;
-      const inCount = state.docs.filter((d) => d.group === "ภายใน").length;
-      const outCount = state.docs.filter((d) => d.group === "ภายนอก").length;
-      animateCount($("statAll"), total);
-      animateCount($("statIn"), inCount);
-      animateCount($("statOut"), outCount);
+      let inCount = 0;
+      let outCount = 0;
+      for (let i = 0; i < total; i++) {
+        if (state.docs[i].group === "ภายใน") inCount++;
+        else if (state.docs[i].group === "ภายนอก") outCount++;
+      }
+      if (animate) {
+        animateCount($("statAll"), total);
+        animateCount($("statIn"), inCount);
+        animateCount($("statOut"), outCount);
+      } else {
+        $("statAll").textContent = total;
+        $("statIn").textContent = inCount;
+        $("statOut").textContent = outCount;
+      }
 
       document.querySelectorAll(".stat-card").forEach((c) => {
         c.classList.toggle("active", c.dataset.grp === state.group);
@@ -656,7 +805,7 @@
         if (state.group !== "all" && d.group !== state.group) return false;
         if (state.category !== "all" && d.category !== state.category) return false;
         if (!q) return true;
-        return (
+        return d._q ? d._q.includes(q) : (
           d.title.toLowerCase().includes(q) ||
           d.docNo.toLowerCase().includes(q) ||
           d.author.toLowerCase().includes(q) ||
@@ -674,8 +823,9 @@
 
       $("docList").innerHTML = shown.map((d, idx) => {
         const badge = detectFileBadge(d.fileUrl);
+        const animAttr = animate ? ` class="doc-card anim-in" style="animation-delay:${Math.min(idx, 8) * 18}ms"` : ` class="doc-card"`;
         return `
-          <article class="doc-card" style="animation-delay:${Math.min(idx, 10) * 24}ms" data-doc-row="${d.rowIndex}">
+          <article${animAttr} data-doc-row="${d.rowIndex}">
             <div class="doc-ico ${badge.cls}">${badge.label}</div>
             <div class="doc-body">
               <div class="doc-badges">
@@ -816,10 +966,21 @@
 
           closeSheet();
           showToast(existing ? "แก้ไขข้อมูลเอกสารแล้ว" : `บันทึกเอกสารฉบับที่ ${json.doc.docNo} สำเร็จ!`);
+          // อัปเดตรายการในหน้าจอ + แคชทันทีไม่ต้องรอโหลดใหม่
+          if (existing) {
+            state.docs = state.docs.map((d) => d.rowIndex === existing.rowIndex
+              ? indexDocs([{ ...d, group: selectedGroup, category, title, fileUrl: json.fileUrl || fileUrl || d.fileUrl }])[0]
+              : d);
+          } else if (json.doc) {
+            state.docs = [indexDocs([json.doc])[0], ...state.docs];
+          }
+          state.lastSig = docsSignature(state.docs, state.categories);
+          writeCachedDocs(state.docs, state.categories);
+          renderAll(false);
+
           if (!existing && window.parent && window.parent !== window) {
             window.parent.postMessage({ type: "BPP_DOC_UPLOADED", title }, location.origin);
           }
-          loadDocs();
         } catch (err) {
           showToast(err.message);
           $("fSaveBtn").disabled = false;
@@ -831,8 +992,15 @@
 
     // --- Event Listeners ---
     $("addDocBtn").onclick = () => openDocFormSheet(null);
-    $("docSearch").oninput = (e) => { state.query = e.target.value; state.pageSize = 30; renderAll(); };
-    $("loadMoreBtn").onclick = () => { state.pageSize += 40; renderAll(); };
+    $("refreshDocsBtn").onclick = () => loadDocs(true);
+    let searchTimer = null;
+    $("docSearch").oninput = (e) => {
+      state.query = e.target.value;
+      state.pageSize = 30;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => renderAll(false), 70);
+    };
+    $("loadMoreBtn").onclick = () => { state.pageSize += 40; renderAll(false); };
 
     document.querySelectorAll(".stat-card").forEach((card) => {
       card.onclick = () => {

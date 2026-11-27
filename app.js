@@ -2627,8 +2627,34 @@
     navigator.serviceWorker.ready.then((reg) => { state.swReg = reg; }).catch(() => {});
   }
 
+  // อุ่นแคชระบบเอกสารธุรการเบื้องหลังทันทีเมื่อเปิดแอป เพื่อให้กดเข้าหน้าเอกสารแล้วโหลดทันที 0ms
+  function prefetchDocsCache() {
+    const apiUrl = (localStorage.getItem("bpp_docs_api_url") || (config && config.docsApiUrl) || "").trim();
+    if (!apiUrl) return;
+    try {
+      const raw = localStorage.getItem("bpp_docs_cache_v1");
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached && cached.updatedAt && (Date.now() - cached.updatedAt) < 120000) return;
+      }
+    } catch (_) {}
+    fetch(`${apiUrl}?action=listDocs`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json && json.ok && Array.isArray(json.docs)) {
+          localStorage.setItem("bpp_docs_cache_v1", JSON.stringify({
+            updatedAt: Date.now(),
+            categories: json.categories || [],
+            docs: json.docs
+          }));
+        }
+      })
+      .catch(() => {});
+  }
+
   initOneSignal();
   syncRemoteConfig(true);
   loadLiveNews(false);
+  setTimeout(prefetchDocsCache, 800);
   playSplashThenLogin();
 })();

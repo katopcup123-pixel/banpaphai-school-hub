@@ -107,7 +107,7 @@ window.BPP_PDF = {
     statusBar.textContent = "⏳ กำลังสร้างตัวอย่าง PDF ขนาดกะทัดรัด...";
 
     const pageEl = document.createElement("div");
-    pageEl.style.cssText = "width:794px;background:#ffffff;color:#000000;padding:26px 42px 26px 56px;box-sizing:border-box;font-family:'TH SarabunIT9','TH Sarabun New',serif;font-size:16pt;line-height:1.24;text-align:left;";
+    pageEl.style.cssText = "width:794px;background:#ffffff;color:#000000;padding:24px 42px 24px 56px;box-sizing:border-box;font-family:'TH SarabunIT9','TH Sarabun New',serif;font-size:16pt;line-height:1.24;text-align:left;-webkit-text-size-adjust:100%;text-size-adjust:100%;";
     pageEl.innerHTML = htmlContent;
 
     overlay.appendChild(statusBar);

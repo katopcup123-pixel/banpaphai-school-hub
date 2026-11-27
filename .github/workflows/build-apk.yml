@@ -1,0 +1,51 @@
+name: Build BPP Connect Android APK
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Prepare app icon from school logo
+        run: |
+          mkdir -p android-app/app/src/main/res/mipmap-xxxhdpi
+          cp icons/school-logo.png android-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+
+      - name: Build Android APK
+        working-directory: android-app
+        run: gradle assembleDebug --no-daemon
+
+      - name: Copy APK to release filename
+        run: cp android-app/app/build/outputs/apk/debug/app-debug.apk BPP-Connect.apk
+
+      - name: Publish BPP-Connect.apk to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: "BPP Connect Android APK"
+          body: "ไฟล์ติดตั้งแอป BPP Connect สำหรับมือถือ Android (อัปเดตหน้าเว็บและฟีเจอร์ใหม่อัตโนมัติ ไม่ต้องลบลงใหม่)"
+          files: BPP-Connect.apk
+          make_latest: true

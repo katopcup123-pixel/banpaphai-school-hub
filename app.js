@@ -153,7 +153,13 @@
       const raw = localStorage.getItem(STORAGE_OVERRIDE);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // อัปเกรดลิงก์ e-Budget และนิเทศภายในจาก GAS เดิมมาใช้หน้าในแอปอัตโนมัติ (ไม่ต้องล็อกอินซ้ำ)
+          const builtInUrls = { "e-budget": "./ebudget.html", "supervision": "./supervision.html" };
+          return parsed.map((s) => (builtInUrls[s.id] && String(s.url || "").includes("script.google.com"))
+            ? { ...s, url: builtInUrls[s.id] }
+            : s);
+        }
       }
     } catch (_) {}
     return [...config.systems];

@@ -155,13 +155,21 @@
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // อัปเกรดลิงก์ e-Budget และนิเทศภายในมาใช้หน้าในแอป + นำ 3 ระบบที่ปิดไว้ชั่วคราวออกอัตโนมัติ
+          // อัปเกรดลิงก์ e-Budget และนิเทศภายในมาใช้หน้าในแอป + นำ 3 ระบบที่ปิดไว้ชั่วคราวออก + เติมระบบใหม่ v2.9 อัตโนมัติ
           const builtInUrls = { "e-budget": "./ebudget.html", "supervision": "./supervision.html" };
-          return parsed
+          const cleaned = parsed
             .filter((s) => !removedIds.has(s.id))
             .map((s) => (builtInUrls[s.id] && String(s.url || "").includes("script.google.com"))
               ? { ...s, url: builtInUrls[s.id] }
               : s);
+          const seen = new Set(cleaned.map((s) => s.id));
+          ["executive-brief", "academic-hub"].forEach((newId) => {
+            if (!seen.has(newId)) {
+              const def = config.systems.find((x) => x.id === newId);
+              if (def) cleaned.unshift(def);
+            }
+          });
+          return cleaned;
         }
       }
     } catch (_) {}
@@ -2196,6 +2204,18 @@
               </div>
             </div>
           </details>
+          <details class="settings-acc">
+            <summary>💾 สำรองและกู้คืนข้อมูลทั้งโรงเรียน (1-Click Backup) <span class="acc-chev">›</span></summary>
+            <div class="settings-acc-body">
+              <div class="info-meta" style="margin-bottom:8px">สำรองข้อมูลทุกระบบ (นักเรียน เช็คชื่อ คะแนน e-Budget นิเทศ ตารางสอน วPA/SAR ธุรการ) เป็นไฟล์เก็บไว้ในเครื่องหรือ Google Drive</div>
+              <button type="button" class="btn-primary" id="exportFullBackupBtn" style="margin-top:0">⬇️ ดาวน์โหลดไฟล์สำรองทั้งหมด (.json)</button>
+              <button type="button" class="btn-secondary" id="exportSummaryCsvBtn">📊 ส่งออกตารางสรุปนักเรียน & ระบบ (.csv Excel)</button>
+              <label class="btn-secondary" style="display:block;text-align:center;cursor:pointer">
+                ⬆️ กู้คืนข้อมูลจากไฟล์สำรอง (.json)
+                <input type="file" id="importFullBackupInput" accept=".json,application/json" style="display:none" />
+              </label>
+            </div>
+          </details>
         </div>`
       : "";
 
@@ -2653,6 +2673,49 @@
       return;
     }
 
+    if (e.target.id === "exportFullBackupBtn" && isAdminUser(state.currentUser)) {
+      haptic();
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith("bpp_") || k.startsWith("banpaphai_"))) {
+          data[k] = localStorage.getItem(k);
+        }
+      }
+      const payload = {
+        app: "BPP Connect",
+        version: config.appVersion || "2.9.0",
+        exportedAt: new Date().toISOString(),
+        exportedBy: state.currentUser.name,
+        keysCount: Object.keys(data).length,
+        data
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `BPP-Connect-Backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      notifyIsland(`สำรองข้อมูล ${payload.keysCount} รายการเรียบร้อยแล้ว`);
+      return;
+    }
+
+    if (e.target.id === "exportSummaryCsvBtn" && isAdminUser(state.currentUser)) {
+      haptic();
+      const stuList = (window.BPP_STUDENTS_HELPER && window.BPP_STUDENTS_HELPER.loadStudents()) || [];
+      const rows = [["รหัสนักเรียน", "ชั้น", "คำนำหน้า", "ชื่อ", "นามสกุล", "เพศ"]];
+      stuList.forEach((s) => rows.push([s.code || "", s.grade || "", s.prefix || "", s.firstName || "", s.lastName || "", s.gender || ""]));
+      const csv = "\uFEFF" + rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `BPP-Students-Backup-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      notifyIsland(`ส่งออกไฟล์ Excel (.csv) ${stuList.length} คนแล้ว`);
+      return;
+    }
+
     if (e.target.id === "openUserManualBtn") {
       openUserManualSheet();
       return;
@@ -2752,6 +2815,31 @@
       state.tab = btn.dataset.tab;
       render();
     });
+  });
+
+  // กู้คืนข้อมูลจากไฟล์สำรอง (.json) สำหรับแอดมิน
+  document.addEventListener("change", (e) => {
+    if (!e.target || e.target.id !== "importFullBackupInput") return;
+    if (!isAdminUser(state.currentUser)) return;
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result || "{}"));
+        if (!parsed || !parsed.data || typeof parsed.data !== "object") throw new Error("รูปแบบไฟล์สำรองไม่ถูกต้อง");
+        const entries = Object.entries(parsed.data).filter(([k]) => k.startsWith("bpp_") || k.startsWith("banpaphai_"));
+        if (!confirm(`ยืนยันกู้คืนข้อมูล ${entries.length} รายการ (สำรองเมื่อ ${parsed.exportedAt || "-"})?`)) return;
+        entries.forEach(([k, v]) => {
+          if (typeof v === "string") localStorage.setItem(k, v);
+        });
+        notifyIsland(`กู้คืนข้อมูล ${entries.length} รายการเรียบร้อยแล้ว กำลังรีโหลด...`);
+        setTimeout(() => location.reload(), 900);
+      } catch (err) {
+        notifyIsland("กู้คืนไม่สำเร็จ: " + err.message);
+      }
+    };
+    reader.readAsText(file, "UTF-8");
   });
 
   // Use unified OneSignalSDKWorker.js (registered by OneSignal.init) to avoid SW scope collision

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>รายงานผู้บริหารวันต่อวัน — โรงเรียนบ้านป่าไผ่</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #F4F6FB;
+      --surface: #FFFFFF;
+      --glass: rgba(255, 255, 255, 0.88);
+      --fill: rgba(118, 118, 128, 0.11);
+      --border: rgba(15, 23, 42, 0.08);
+      --text: #0F172A;
+      --secondary: #64748B;
+      --accent: #C69214;
+      --accent-soft: rgba(198, 146, 20, 0.14);
+      --blue: #007AFF;
+      --emerald: #10B981;
+      --rose: #EF4444;
+      --amber: #F59E0B;
+      --spring: cubic-bezier(0.32, 1.18, 0.56, 1);
+    }
+    [data-theme="dark"] {
+      --bg: #0B0D12;
+      --surface: #1C1C1E;
+      --glass: rgba(24, 24, 28, 0.88);
+      --fill: rgba(118, 118, 128, 0.24);
+      --border: rgba(255, 255, 255, 0.09);
+      --text: #F2F2F7;
+      --secondary: #AEAEB2;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+    .app { max-width: 560px; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; }
+    .topbar {
+      flex-shrink: 0; background: var(--glass); backdrop-filter: saturate(180%) blur(24px);
+      border-bottom: 0.5px solid var(--border);
+      padding: calc(10px + env(safe-area-inset-top)) 16px 12px; z-index: 20;
+    }
+    .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .top-row h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+    .sub-line { font-size: 11.5px; color: var(--secondary); margin-top: 2px; }
+    .top-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-gold {
+      border: none; background: linear-gradient(135deg, #D4A017, #B07D0B); color: #FFF;
+      font-family: inherit; font-size: 12.5px; font-weight: 600;
+      height: 36px; padding: 0 13px; border-radius: 999px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px;
+      box-shadow: 0 4px 12px rgba(198, 146, 20, 0.28);
+    }
+    .btn-gold:active { transform: scale(0.95); }
+    .btn-ico {
+      width: 36px; height: 36px; border-radius: 999px; border: 0.5px solid var(--border);
+      background: var(--surface); color: var(--text); display: grid; place-items: center; cursor: pointer;
+    }
+    .btn-ico:active { transform: scale(0.92); }
+    .body-scroll {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 14px 16px calc(32px + env(safe-area-inset-bottom));
+      scrollbar-width: none;
+    }
+    .body-scroll::-webkit-scrollbar { display: none; }
+    .hero-card {
+      background: linear-gradient(135deg, #1E293B 0%, #0F172A 60%, #3B2A08 100%);
+      color: #FFF; border-radius: 22px; padding: 16px; margin-bottom: 14px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
+    }
+    .hero-date { font-size: 11.5px; opacity: 0.82; }
+    .hero-greeting { font-size: 17px; font-weight: 700; margin: 4px 0 10px; }
+    .hero-kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .hk-box { background: rgba(255,255,255,0.1); border-radius: 14px; padding: 10px 8px; text-align: center; }
+    .hk-num { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .hk-lbl { font-size: 10.5px; opacity: 0.85; margin-top: 2px; }
+
+    .card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 20px; padding: 14px; margin-bottom: 12px;
+      box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+    }
+    .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .card-head h2 { margin: 0; font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .pill {
+      font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+      background: var(--fill); color: var(--secondary);
+    }
+    .pill.ok { background: rgba(16, 185, 129, 0.14); color: #059669; }
+    .pill.warn { background: rgba(245, 158, 11, 0.16); color: #B45309; }
+    .pill.danger { background: rgba(239, 68, 68, 0.14); color: #DC2626; }
+
+    .mini-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .mini-stat { background: var(--bg); border-radius: 12px; padding: 8px 4px; text-align: center; }
+    .mini-stat strong { display: block; font-size: 16px; font-variant-numeric: tabular-nums; }
+    .mini-stat span { font-size: 10.5px; color: var(--secondary); }
+
+    .bar-track { height: 8px; border-radius: 999px; background: var(--fill); overflow: hidden; margin: 8px 0 6px; }
+    .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #10B981, #059669); transition: width 0.4s ease; }
+
+    .row-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 12.5px;
+    }
+    .row-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .row-title { font-weight: 600; color: var(--text); }
+    .row-sub { font-size: 11px; color: var(--secondary); }
+    .link-btn {
+      border: none; background: var(--fill); color: var(--text);
+      font-family: inherit; font-size: 11.5px; font-weight: 600;
+      padding: 6px 10px; border-radius: 10px; cursor: pointer; text-decoration: none;
+    }
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.92); color: #FFF; font-size: 13px; font-weight: 600;
+      padding: 10px 18px; border-radius: 999px; display: none; z-index: 90;
+    }
+    .toast.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="top-row">
+        <div>
+          <h1>📊 รายงานผู้บริหารวันต่อวัน</h1>
+          <div class="sub-line" id="execSub">โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4</div>
+        </div>
+        <div class="top-actions">
+          <button type="button" class="btn-ico" id="refreshBtn" title="รีเฟรชข้อมูล">↻</button>
+          <button type="button" class="btn-gold" id="printPdfBtn">🖨️ PDF A4</button>
+        </div>
+      </div>
+    </header>
+    <main class="body-scroll" id="execBody"></main>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="./apps-config.js"></script>
+  <script src="./students-data.js"></script>
+  <script src="./docs-seed.js"></script>
+  <script src="./pdf-export.js"></script>
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
+
+    const THAI_MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+    const THAI_DAYS = ["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
+
+    function todayYmd() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    }
+    function formatThaiToday() {
+      const d = new Date();
+      return `วัน${THAI_DAYS[d.getDay()]}ที่ ${d.getDate()} ${THAI_MONTHS[d.getMonth()]} พ.ศ. ${d.getFullYear() + 543}`;
+    }
+    function getCurrentUser() {
+      const uid = localStorage.getItem("bpp_connect_user_v1");
+      const users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+      return users.find((u) => u.id === uid) || users[0] || { name: "ผู้บริหารโรงเรียนบ้านป่าไผ่", shortName: "ผอ.นภาพร" };
+    }
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg; el.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 2500);
+    }
+
+    const brief = {
+      students: (window.BPP_STUDENTS_HELPER && window.BPP_STUDENTS_HELPER.loadStudents()) || (window.BPP_DEFAULT_STUDENTS || []),
+      attToday: { present: 0, absent: 0, leave: 0, sick: 0, checked: 0 },
+      earlyWarn: [],
+      leavesToday: [],
+      docsTotal: 0,
+      docsLatest: [],
+      budget: { year: "2570", allocated: 0, disbursed: 0, remain: 0 },
+      sup: { total: 0, completed: 0, mean: 0 }
+    };
+
+    function readLocalMetrics() {
+      const ymd = todayYmd();
+      // 1. Attendance + Early Warning
+      let attRecords = {};
+      try { attRecords = JSON.parse(localStorage.getItem("bpp_attendance_records_v1") || "{}"); } catch (_) {}
+      const dayRec = attRecords[ymd] || {};
+      let p = 0, a = 0, l = 0, s = 0;
+      Object.values(dayRec).forEach((st) => {
+        if (st === "present" || st === "มา") p++;
+        else if (st === "absent" || st === "ขาด") a++;
+        else if (st === "leave" || st === "ลา") l++;
+        else if (st === "sick" || st === "ป่วย") s++;
+      });
+      brief.attToday = { present: p, absent: a, leave: l, sick: s, checked: p + a + l + s };
+
+      // Count absences per student across recorded dates
+      const absMap = {};
+      Object.keys(attRecords).sort().forEach((dk) => {
+        const rec = attRecords[dk] || {};
+        Object.entries(rec).forEach(([sid, st]) => {
+          if (st === "absent" || st === "ขาด") absMap[sid] = (absMap[sid] || 0) + 1;
+        });
+      });
+      brief.earlyWarn = brief.students
+        .map((st) => ({ ...st, absentCount: absMap[st.id] || absMap[st.code] || 0 }))
+        .filter((st) => st.absentCount >= 3)
+        .sort((x, y) => y.absentCount - x.absentCount);
+
+      // 2. Leaves today
+      let leaves = [];
+      try { leaves = JSON.parse(localStorage.getItem("bpp_leaves_v1") || "[]"); } catch (_) {}
+      brief.leavesToday = (Array.isArray(leaves) ? leaves : []).filter((lv) => {
+        const d1 = String(lv.date || lv.startDate || "").slice(0, 10);
+        const d2 = String(lv.endDate || d1).slice(0, 10);
+        return d1 && ymd >= d1 && ymd <= d2;
+      });
+
+      // 3. Docs
+      let docsData = null;
+      try { docsData = JSON.parse(localStorage.getItem("bpp_docs_cache_v1") || "null"); } catch (_) {}
+      if (!docsData && window.BPP_DOCS_SEED) docsData = window.BPP_DOCS_SEED;
+      const docsList = (docsData && Array.isArray(docsData.docs)) ? docsData.docs : [];
+      brief.docsTotal = docsList.length;
+      brief.docsLatest = docsList.slice(0, 3);
+
+      // 4. e-Budget
+      try {
+        const eb = JSON.parse(localStorage.getItem("banpaphai_ebudget_state_v1") || "null");
+        if (eb && eb.years) {
+          const y = eb.activeYear || Object.keys(eb.years)[0];
+          const yd = eb.years[y] || {};
+          let alloc = 0, disb = 0;
+          ["projects", "operating", "activities", "policySubsidies"].forEach((k) => {
+            (yd[k] || []).forEach((it) => {
+              alloc += Number(it.allocated) || 0;
+              (it.disbursements || []).forEach((d) => { disb += Number(d.amount) || 0; });
+            });
+          });
+          brief.budget = { year: y, allocated: alloc, disbursed: disb, remain: alloc - disb };
+        }
+      } catch (_) {}
+
+      // 5. Supervision
+      try {
+        const sup = JSON.parse(localStorage.getItem("bpp_supervision_db_v1") || "null");
+        if (sup) {
+          const svs = sup.supervisions || [];
+          const bks = sup.bookings || [];
+          const mean = svs.length ? (svs.reduce((acc, c) => acc + (Number(c.mean) || 0), 0) / svs.length) : 0;
+          brief.sup = { total: bks.length, completed: Math.max(bks.filter((b) => b.status === "นิเทศแล้ว").length, svs.length), mean: Number(mean.toFixed(2)) };
+        }
+      } catch (_) {}
+    }
+
+    async function syncLiveCloud() {
+      const apiUrl = (localStorage.getItem("bpp_connect_news_api_v1") || (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
+      if (!apiUrl) return;
+      try {
+        const [attRes, lvRes] = await Promise.all([
+          fetch(`${apiUrl}?action=attendance`, { cache: "no-store" }).then((r) => r.json()).catch(() => null),
+          fetch(`${apiUrl}?action=leaves`, { cache: "no-store" }).then((r) => r.json()).catch(() => null)
+        ]);
+        if (attRes && attRes.ok && attRes.records) {
+          localStorage.setItem("bpp_attendance_records_v1", JSON.stringify(attRes.records));
+        }
+        if (lvRes && lvRes.ok && Array.isArray(lvRes.leaves)) {
+          localStorage.setItem("bpp_leaves_v1", JSON.stringify(lvRes.leaves));
+        }
+        readLocalMetrics();
+        render();
+      } catch (_) {}
+    }
+
+    function fmtBaht(n) {
+      return Number(n || 0).toLocaleString("th-TH", { maximumFractionDigits: 0 });
+    }
+
+    function render() {
+      const user = getCurrentUser();
+      const totalStu = brief.students.length;
+      const pctDisb = brief.budget.allocated > 0 ? Math.min(100, Math.round((brief.budget.disbursed / brief.budget.allocated) * 100)) : 0;
+      const attPct = brief.attToday.checked > 0 ? Math.round((brief.attToday.present / brief.attToday.checked) * 100) : 0;
+
+      document.getElementById("execSub").textContent = `${formatThaiToday()}`;
+      document.getElementById("execBody").innerHTML = `
+        <section class="hero-card">
+          <div class="hero-date">${formatThaiToday()}</div>
+          <div class="hero-greeting">สวัสดีครับ ${user.shortName || user.name}</div>
+          <div class="hero-kpi">
+            <div class="hk-box">
+              <div class="hk-num">${brief.attToday.checked ? `${brief.attToday.present}/${totalStu}` : `-/${totalStu}`}</div>
+              <div class="hk-lbl">มาเรียนวันนี้</div>
+            </div>
+            <div class="hk-box">
+              <div class="hk-num">${brief.leavesToday.length}</div>
+              <div class="hk-lbl">ครูลา/ออกนอก</div>
+            </div>
+            <div class="hk-box">
+              <div class="hk-num">${brief.earlyWarn.length}</div>
+              <div class="hk-lbl">เด็กเสี่ยงขาดบ่อย</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>👥 สถิตินักเรียนวันนี้</h2>
+            <span class="pill ${brief.attToday.checked ? "ok" : "warn"}">${brief.attToday.checked ? `เช็คแล้ว ${brief.attToday.checked}/${totalStu} (${attPct}%)` : "รอครูประจำชั้นเช็คชื่อ"}</span>
+          </div>
+          <div class="mini-grid">
+            <div class="mini-stat"><strong style="color:#10B981">${brief.attToday.present}</strong><span>มาเรียน</span></div>
+            <div class="mini-stat"><strong style="color:#EF4444">${brief.attToday.absent}</strong><span>ขาด</span></div>
+            <div class="mini-stat"><strong style="color:#F59E0B">${brief.attToday.leave}</strong><span>ลากิจ</span></div>
+            <div class="mini-stat"><strong style="color:#3B82F6">${brief.attToday.sick}</strong><span>ป่วย</span></div>
+          </div>
+          ${brief.earlyWarn.length ? `
+            <div style="margin-top:10px;padding:9px 11px;border-radius:12px;background:rgba(239,68,68,0.09);font-size:12px;color:#B91C1C">
+              ⚠️ พบนักเรียนขาดเรียนสะสม ≥ 3 วัน จำนวน <strong>${brief.earlyWarn.length} คน</strong>: ${brief.earlyWarn.slice(0,3).map(s => `${s.firstName} (${s.grade}: ${s.absentCount} วัน)`).join(", ")}
+            </div>` : ""}
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>🚗 บุคลากรลา / ไปราชการ / ออกนอกวันนี้</h2>
+            <span class="pill ${brief.leavesToday.length ? "warn" : "ok"}">${brief.leavesToday.length ? `${brief.leavesToday.length} รายการ` : "ปฏิบัติงานครบทุกคน"}</span>
+          </div>
+          ${brief.leavesToday.length ? brief.leavesToday.map((lv) => `
+            <div class="row-item">
+              <div>
+                <div class="row-title">${lv.teacherName || lv.author || "-"}</div>
+                <div class="row-sub">${lv.type || lv.formType || "การลา"} • ${lv.reason || lv.destination || "-"}</div>
+              </div>
+              <span class="pill warn">${lv.timeRange || "วันนี้"}</span>
+            </div>
+          `).join("") : `<div class="row-sub">ยังไม่มีรายการแจ้งลาหรือขอออกนอกโรงเรียนในวันนี้</div>`}
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>💰 ภาพรวมงบประมาณ e-Budget (ปี ${brief.budget.year})</h2>
+            <span class="pill ok">เบิกจ่าย ${pctDisb}%</span>
+          </div>
+          ${brief.budget.allocated > 0 ? `
+            <div class="bar-track"><div class="bar-fill" style="width:${pctDisb}%"></div></div>
+            <div class="row-item"><span class="row-sub">งบจัดสรรทั้งหมด</span><strong>${fmtBaht(brief.budget.allocated)} บาท</strong></div>
+            <div class="row-item"><span class="row-sub">เบิกจ่ายแล้ว</span><strong style="color:#007AFF">${fmtBaht(brief.budget.disbursed)} บาท</strong></div>
+            <div class="row-item"><span class="row-sub">คงเหลือ</span><strong style="color:#10B981">${fmtBaht(brief.budget.remain)} บาท</strong></div>
+          ` : `<div class="row-sub">เปิดระบบ e-Budget 1 ครั้งเพื่อซิงก์ยอดงบประมาณล่าสุดเข้าหน้านี้</div>`}
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>📁 เอกสารธุรการล่าสุด (${brief.docsTotal} ฉบับ)</h2>
+            <a class="link-btn" href="./docs.html">ดูทั้งหมด →</a>
+          </div>
+          ${brief.docsLatest.length ? brief.docsLatest.map((d) => `
+            <div class="row-item">
+              <div style="min-width:0;flex:1">
+                <div class="row-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.title}</div>
+                <div class="row-sub">ฉบับที่ ${d.docNo || "-"} • ${d.group || ""} • ${d.author || "-"}</div>
+              </div>
+            </div>
+          `).join("") : `<div class="row-sub">ไม่มีข้อมูลเอกสาร</div>`}
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>🧭 นิเทศภายในโรงเรียน</h2>
+            <span class="pill ok">ค่าเฉลี่ย ${brief.sup.mean || "-"}</span>
+          </div>
+          <div class="row-item"><span class="row-sub">กำหนดการนิเทศทั้งหมด</span><strong>${brief.sup.total} คู่</strong></div>
+          <div class="row-item"><span class="row-sub">ดำเนินการนิเทศแล้ว</span><strong style="color:#10B981">${brief.sup.completed} ครั้ง</strong></div>
+        </section>
+      `;
+    }
+
+    async function exportDailyPdf() {
+      const html = `
+        <div style="font-family:'THSarabunIT9',sans-serif;font-size:16pt;line-height:1.38;color:#000">
+          <div style="text-align:center;font-weight:700;font-size:18pt;margin-bottom:4px">รายงานสรุปสำหรับผู้บริหารประจำวัน</div>
+          <div style="text-align:center;margin-bottom:14px">โรงเรียนบ้านป่าไผ่ สพป.นครราชสีมา เขต 4 • ${formatThaiToday()}</div>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:14px;font-size:16pt">
+            <tr><th style="border:1px solid #000;padding:6px;text-align:left;background:#f3f4f6" colspan="2">1. สถิติการมาเรียนของนักเรียน (ทั้งหมด ${brief.students.length} คน)</th></tr>
+            <tr><td style="border:1px solid #000;padding:6px;width:50%">มาเรียน: ${brief.attToday.present} คน</td><td style="border:1px solid #000;padding:6px">ขาด: ${brief.attToday.absent} | ลา: ${brief.attToday.leave} | ป่วย: ${brief.attToday.sick} คน</td></tr>
+            <tr><td style="border:1px solid #000;padding:6px" colspan="2">นักเรียนเฝ้าระวังขาดเรียนสะสม ≥ 3 วัน: ${brief.earlyWarn.length ? brief.earlyWarn.map(s => `${s.firstName} ${s.lastName} (${s.grade}: ${s.absentCount} วัน)`).join(", ") : "ไม่มี"}</td></tr>
+          </table>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:14px;font-size:16pt">
+            <tr><th style="border:1px solid #000;padding:6px;text-align:left;background:#f3f4f6">2. สถานะบุคลากรลา / ไปราชการ / ขอออกนอกวันนี้ (${brief.leavesToday.length} รายการ)</th></tr>
+            <tr><td style="border:1px solid #000;padding:6px">${brief.leavesToday.length ? brief.leavesToday.map(lv => `• ${lv.teacherName || "-"} (${lv.type || "ลา"}: ${lv.reason || lv.destination || "-"})`).join("<br>") : "บุคลากรปฏิบัติราชการครบทุกคน"}</td></tr>
+          </table>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:14px;font-size:16pt">
+            <tr><th style="border:1px solid #000;padding:6px;text-align:left;background:#f3f4f6" colspan="2">3. ภาพรวมงบประมาณ e-Budget (ปี ${brief.budget.year}) และเอกสารธุรการ</th></tr>
+            <tr><td style="border:1px solid #000;padding:6px">จัดสรร: ${fmtBaht(brief.budget.allocated)} บาท</td><td style="border:1px solid #000;padding:6px">คงเหลือ: ${fmtBaht(brief.budget.remain)} บาท</td></tr>
+            <tr><td style="border:1px solid #000;padding:6px" colspan="2">เอกสารธุรการในระบบ: ${brief.docsTotal} ฉบับ | นิเทศแล้ว: ${brief.sup.completed} ครั้ง (เฉลี่ย ${brief.sup.mean || "-"})</td></tr>
+          </table>
+          <div style="margin-top:34px;text-align:right;padding-right:24px">
+            <div>ลงชื่อ......................................................ผู้รับทราบรายงาน</div>
+            <div>(นางสาวนภาพร คงแสนคำ)</div>
+            <div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          </div>
+        </div>`;
+      if (window.BPP_PDF && window.BPP_PDF.exportA4) {
+        await window.BPP_PDF.exportA4({ html, fileName: `รายงานผู้บริหาร_${todayYmd()}.pdf`, title: "รายงานผู้บริหารประจำวัน" });
+      } else {
+        window.print();
+      }
+    }
+
+    document.getElementById("refreshBtn").onclick = () => { showToast("กำลังอัปเดตข้อมูลล่าสุด..."); syncLiveCloud(); };
+    document.getElementById("printPdfBtn").onclick = exportDailyPdf;
+
+    readLocalMetrics();
+    render();
+    syncLiveCloud();
+  </script>
+</body>
+</html>

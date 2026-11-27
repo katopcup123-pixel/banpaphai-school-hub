@@ -1,6 +1,6 @@
 // ตั้งค่าแอป BPP Connect — โรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)
 window.SCHOOL_CONFIG = {
-  appVersion: "2.8.0",
+  appVersion: "2.9.0",
   schoolName: "BPP Connect",
   schoolSubtitle: "โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4",
   logoUrl: "./icons/school-logo.png",
@@ -148,6 +148,30 @@ window.SCHOOL_CONFIG = {
   ],
 
   systems: [
+    {
+      id: "executive-brief",
+      name: "รายงานผู้บริหารวันต่อวัน",
+      shortName: "สรุปผู้บริหาร",
+      description: "สรุปสถิติเด็กมาเรียน ครูลา เอกสาร งบประมาณ และนิเทศในหน้าเดียว + ปริ้น PDF A4",
+      division: "general",
+      url: "./executive.html",
+      icon: "barChart",
+      color: "amber",
+      pinned: true,
+      directorOnly: true
+    },
+    {
+      id: "academic-hub",
+      name: "ตารางสอน • วPA/SAR • เฝ้าระวัง",
+      shortName: "ตารางสอน/วPA",
+      description: "ตารางสอน จัดครูสอนแทนอัตโนมัติ คลังผลงาน วPA/PLC/SAR และติดตามเด็กขาดเรียนบ่อย",
+      division: "academic",
+      url: "./academic-hub.html",
+      icon: "graduationCap",
+      color: "sky",
+      pinned: true,
+      directorOnly: false
+    },
     {
       id: "e-budget",
       name: "e-Budget",

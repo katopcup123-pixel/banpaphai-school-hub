@@ -682,104 +682,271 @@
         };
         const visits = classStudents.map((st) => ({ st, v: (db.visits && db.visits[keyFor(st.id)]) || null }));
         const visited = visits.filter((x) => x.v);
-        const cnt = (pred) => visited.filter((x) => pred(x.v)).length || "";
+        const cnt = (pred) => {
+          const n = visited.filter((x) => pred(x.v)).length;
+          return n > 0 ? String(n) : "........";
+        };
+        const cNum = (pred) => {
+          const n = visited.filter((x) => pred(x.v)).length;
+          return n > 0 ? String(n) : "";
+        };
+        const toThaiNum = (n) => String(n).replace(/\d/g, (d) => "๐๑๒๓๔๕๖๗๘๙"[d]);
+
         const photoCards = [];
         visited.forEach((x) => {
           const p1 = x.v.photo1 || x.v.photo;
           const p2 = x.v.photo2;
           const fullName = `${x.st.prefix || ""}${x.st.firstName} ${x.st.lastName}`;
-          if (p1) photoCards.push({ src: p1, caption: `ภาพถ่ายการเยี่ยมบ้าน ${fullName} (รูปที่ 1)` });
-          if (p2) photoCards.push({ src: p2, caption: `ภาพถ่ายการเยี่ยมบ้าน ${fullName} (รูปที่ 2)` });
+          if (p1) photoCards.push({ src: p1, caption: `ภาพถ่ายการเยี่ยมบ้าน ${fullName}` });
+          if (p2) photoCards.push({ src: p2, caption: `ภาพถ่ายการเยี่ยมบ้าน ${fullName} (ภาพที่ 2)` });
         });
 
-        const html = `
-          <div style="font-family:'TH SarabunIT9',sans-serif;font-size:16pt;line-height:1.35;color:#000">
-            <!-- หน้า 1: บันทึกข้อความ -->
-            <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:4px">
-              <img src="./icons/garuda-official.jpg" style="width:52px;height:56px;object-fit:contain" />
-              <div style="flex:1;text-align:center;font-size:22pt;font-weight:700;padding-right:52px">บันทึกข้อความ</div>
-            </div>
-            <div><strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่ สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</div>
-            <div style="display:flex;justify-content:space-between"><span><strong>ที่</strong>&nbsp;&nbsp;${rm.docNo}</span><span><strong>วันที่</strong>&nbsp;&nbsp;${rm.reportDate}</span></div>
-            <div style="border-bottom:1px solid #000;padding-bottom:3px;margin-bottom:8px"><strong>เรื่อง</strong>&nbsp;&nbsp;ส่งรายงานการเยี่ยมบ้านนักเรียนชั้น${gradeFull} ปีการศึกษา ${ui.year}</div>
-            <div style="margin-bottom:6px"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
-            <div style="text-indent:2.5cm;text-align:justify">ตามที่งานระบบดูแลช่วยเหลือนักเรียน กลุ่มบริหารงานทั่วไป โรงเรียนบ้านป่าไผ่ มีกิจกรรมเยี่ยมบ้านนักเรียน โดยกำหนดให้ครูที่ปรึกษาปฏิบัติกิจกรรมเยี่ยมบ้านนักเรียนในความปกครอง โดยมีจุดมุ่งหมายเพื่อสร้างความสัมพันธ์และความเข้าใจที่ดีระหว่างผู้ปกครองกับครูและโรงเรียน รวมถึงรับทราบถึงความเป็นอยู่ พฤติกรรม ปัญหาของผู้เรียน และเพื่อรวมพลังขับเคลื่อนระบบดูแลช่วยเหลือนักเรียนให้มีประสิทธิภาพและยั่งยืนต่อไป</div>
-            <div style="text-indent:2.5cm;margin-top:6px">บัดนี้ ข้าพเจ้าได้ปฏิบัติหน้าที่ดังกล่าวเสร็จสิ้นแล้ว จึงขอส่งรายงานการเยี่ยมบ้านนักเรียน ชั้น${gradeFull} ปีการศึกษา ${ui.year} ดังรายละเอียดที่แนบ</div>
-            <div style="text-indent:2.5cm;margin-top:6px">จึงเรียนมาเพื่อโปรดทราบ</div>
-            <div style="margin-top:26px;text-align:center;margin-left:45%">
+        const pages = [];
+
+        // หน้า 1: บันทึกข้อความ (ตามร่างเป๊ะ)
+        pages.push(`
+          <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:6px">
+            <img src="./icons/garuda-official.jpg" style="width:56px;height:60px;object-fit:contain" />
+            <div style="flex:1;text-align:center;font-size:24pt;font-weight:700;padding-right:56px">บันทึกข้อความ</div>
+          </div>
+          <div style="margin-bottom:2px"><strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่&nbsp;&nbsp;สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมาเขต 4</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+            <span><strong>ที่</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${rm.docNo}</span>
+            <span><strong>วันที่</strong>&nbsp;&nbsp;&nbsp;&nbsp;${rm.reportDate}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          </div>
+          <div style="border-bottom:1.2px solid #000;padding-bottom:4px;margin-bottom:10px"><strong>เรื่อง</strong>&nbsp;&nbsp;ส่งรายงานการเยี่ยมบ้านนักเรียนชั้น ${gradeFull} ปีการศึกษา ${ui.year}</div>
+          <div style="margin-bottom:8px"><strong>เรียน</strong>&nbsp;&nbsp;&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+          <div style="text-indent:2.5cm;text-align:justify;margin-bottom:8px">ตามที่ทางงานระบบดูแลช่วยเหลือนักเรียน กลุ่มบริหารงานทั่วไป โรงเรียนบ้านป่าไผ่ มีกิจกรรมเยี่ยมบ้านนักเรียน โดยกำหนดให้ครูที่ปรึกษาให้ปฏิบัติกิจกรรมเยี่ยมบ้านนักเรียนในความปกครอง โดยมีจุดมุ่งหมายเพื่อสร้างความสัมพันธ์และความเข้าใจที่ดี ระหว่างผู้ปกครองกับครูและโรงเรียน รวมถึงรับทราบถึงความเป็นอยู่ พฤติกรรม ปัญหาของผู้เรียน และเพื่อรวมพลังขับเคลื่อนระบบดูแลช่วยเหลือนักเรียนให้มีประสิทธิภาพและยั่งยืนต่อไป</div>
+          <div style="text-indent:2.5cm;text-align:justify;margin-bottom:8px">บัดนี้ ข้าพเจ้าได้ปฏิบัติหน้าที่ดังกล่าวเสร็จสิ้นแล้ว จึงขอส่งรายงานการเยี่ยมบ้านนักเรียน ชั้น ${gradeFull} ปีการศึกษา ${ui.year} ดังรายละเอียดที่แนบ</div>
+          <div style="text-indent:2.5cm;margin-bottom:32px">จึงเรียนมาเพื่อโปรดทราบ</div>
+          <div style="text-align:center;margin-left:44%;margin-bottom:28px">
+            <div>ลงชื่อ......................................................</div>
+            <div>(${teacherName})</div>
+            <div>ตำแหน่ง&nbsp;&nbsp;${teacherPos}</div>
+          </div>
+          <div style="margin-top:16px">
+            <div><strong>ความคิดเห็นของผู้บริหาร</strong></div>
+            <div style="height:26px;border-bottom:1px dotted #000;margin:8px 0"></div>
+            <div style="height:26px;border-bottom:1px dotted #000;margin:8px 0 28px"></div>
+            <div style="text-align:center;margin-left:44%">
               <div>ลงชื่อ......................................................</div>
-              <div>(${teacherName})</div>
-              <div>ตำแหน่ง ${teacherPos}</div>
+              <div>(นางสาวนภาพร คงแสนคำ)</div>
+              <div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
             </div>
-            <div style="margin-top:18px;border-top:1px dashed #666;padding-top:8px">
-              <div><strong>ความคิดเห็นของผู้บริหาร</strong></div>
-              <div style="height:28px;border-bottom:1px dotted #000;margin:6px 0"></div>
-              <div style="text-align:center;margin-left:45%;margin-top:18px">
-                <div>ลงชื่อ......................................................</div>
-                <div>(นางสาวนภาพร คงแสนคำ)</div>
-                <div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
-              </div>
-            </div>
+          </div>
+        `);
 
-            <!-- หน้า 2: คำนำ & รายชื่อนักเรียน -->
-            <div style="page-break-before:always"></div>
-            <div style="text-align:center;font-size:18pt;font-weight:700;margin-bottom:8px">คำนำ</div>
-            <div style="text-indent:2cm;text-align:justify">รายงานการเยี่ยมบ้านนักเรียน มีจุดมุ่งหมายเพื่อรวบรวมผลการปฏิบัติงานของครูที่ปรึกษาชั้น${gradeFull} ประจำปีการศึกษา ${ui.year} โรงเรียนบ้านป่าไผ่ เพื่อใช้เป็นแนวทางในการพัฒนางานในครั้งต่อ ๆ ไป ซึ่งได้ดำเนินการระหว่างวันที่ ${rm.dateRange} ประกอบด้วย รายชื่อนักเรียนพร้อมที่อยู่ แบบแสดงความคิดเห็น/ข้อเสนอแนะ ผลการดำเนินงาน แบบสรุปผลการเยี่ยมบ้านรายชั้น และภาคผนวกภาพถ่ายประกอบการเยี่ยมบ้าน</div>
-            <div style="text-align:right;margin-top:10px;margin-bottom:16px">${teacherName}<br>ผู้จัดทำ</div>
+        // หน้า 2: คำนำ (ตามร่างเป๊ะ)
+        pages.push(`
+          <div style="text-align:center;font-size:20pt;font-weight:700;margin:20px 0 18px">คำนำ</div>
+          <div style="text-indent:2.2cm;text-align:justify;margin-bottom:12px">รายงานการเยี่ยมบ้านนักเรียน มีจุดมุ่งหมายเพื่อรวบรวมผลการปฏิบัติงานของครูที่ปรึกษาชั้น${gradeFull} ประจำปีการศึกษา ${ui.year} โรงเรียนบ้านป่าไผ่ เพื่อใช้เป็นแนวทางในการพัฒนางานในครั้งต่อ ๆ ไป</div>
+          <div style="text-indent:2.2cm;text-align:justify;margin-bottom:12px">รายงานการเยี่ยมบ้านเล่มนี้ ประกอบด้วย ข้อเสนอแนะ/ความคิดเห็นของครูผู้เยี่ยมบ้านนักเรียน ผลการดำเนินงานการเยี่ยมบ้านนักเรียน อุปสรรค/ปัญหา/ข้อเสนอแนะ ในการเยี่ยมบ้าน รายชื่อนักเรียนพร้อมที่อยู่ของนักเรียนชั้น${gradeFull} รวมทั้งภาคผนวก ซึ่งประกอบด้วย ประมวลภาพถ่ายประกอบการเยี่ยมบ้าน แบบบันทึกการเยี่ยมบ้าน</div>
+          <div style="text-indent:2.2cm;text-align:justify;margin-bottom:44px">การจัดทำรายงานผลการเยี่ยมบ้านนักเรียน จึงเป็นการรายงานผลการดำเนินงานที่ได้ดำเนินการระหว่างวันที่ ${rm.dateRange} เพื่อเป็นข้อมูลการดำเนินงานระบบการดูแลช่วยเหลือนักเรียน และรายงานผลการดำเนินงานให้ผู้บังคับบัญชาทราบ อันนำไปสู่การนำผลการรายงานไปสู่การวางแผนการดำเนินงานระบบการดูแลช่วยเหลือนักเรียนในโรงเรียนต่อไป</div>
+          <div style="text-align:center;margin-left:52%">
+            <div>${teacherName}</div>
+            <div>ผู้จัดทำ</div>
+          </div>
+        `);
 
-            <div style="text-align:center;font-size:17pt;font-weight:700;margin-bottom:6px">รายชื่อนักเรียนพร้อมที่อยู่ ชั้น${gradeFull} ปีการศึกษา ${ui.year}</div>
-            <table style="width:100%;border-collapse:collapse;font-size:14.5pt">
+        // หน้า 3: รายชื่อนักเรียนพร้อมที่อยู่ของนักเรียน (ครบ 9 คอลัมน์ตามร่างเป๊ะ)
+        pages.push(`
+          <div style="text-align:center;font-size:18pt;font-weight:700;margin-bottom:2px">รายชื่อนักเรียนพร้อมที่อยู่ของนักเรียน</div>
+          <div style="text-align:center;font-size:16pt;font-weight:700;margin-bottom:12px">ชั้น${gradeFull} ปีการศึกษา ${ui.year}</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13.5pt">
+            <tr style="background:#f3f4f6">
+              <th style="border:1px solid #000;padding:4px;width:34px">ที่</th>
+              <th style="border:1px solid #000;padding:4px;width:68px">เลขประจำตัว</th>
+              <th style="border:1px solid #000;padding:4px">ชื่อ - นามสกุล</th>
+              <th style="border:1px solid #000;padding:4px;width:62px">ชื่อเล่น</th>
+              <th style="border:1px solid #000;padding:4px;width:78px">ว/ด/ป เกิด</th>
+              <th style="border:1px solid #000;padding:4px;width:64px">บ้านเลขที่</th>
+              <th style="border:1px solid #000;padding:4px;width:36px">หมู่</th>
+              <th style="border:1px solid #000;padding:4px;width:58px">ตำบล</th>
+              <th style="border:1px solid #000;padding:4px;width:58px">อำเภอ</th>
+            </tr>
+            ${visits.map((x, i) => `
+              <tr>
+                <td style="border:1px solid #000;padding:4px;text-align:center">${toThaiNum(i + 1)}</td>
+                <td style="border:1px solid #000;padding:4px;text-align:center">${x.st.code || "-"}</td>
+                <td style="border:1px solid #000;padding:4px">${x.st.prefix || ""}${x.st.firstName} ${x.st.lastName}</td>
+                <td style="border:1px solid #000;padding:4px;text-align:center">${(x.v && x.v.nickname) || "-"}</td>
+                <td style="border:1px solid #000;padding:4px;text-align:center">${(x.v && x.v.birthDate) || "-"}</td>
+                <td style="border:1px solid #000;padding:4px;text-align:center">${(x.v && x.v.houseNo) || "-"}</td>
+                <td style="border:1px solid #000;padding:4px;text-align:center">${(x.v && x.v.moo) || "1"}</td>
+                <td style="border:1px solid #000;padding:4px;text-align:center">${(x.v && x.v.tambon) || "จันทึก"}</td>
+                <td style="border:1px solid #000;padding:4px;text-align:center">${(x.v && x.v.amphoe) || "ปากช่อง"}</td>
+              </tr>`).join("")}
+          </table>
+        `);
+
+        // หน้า 4: แบบแสดงความคิดเห็น/ข้อเสนอแนะ ครูที่ปรึกษาชั้น... (ตามร่างเป๊ะ)
+        pages.push(`
+          <div style="text-align:center;font-size:18pt;font-weight:700;margin-bottom:2px">แบบแสดงความคิดเห็น/ข้อเสนอแนะ</div>
+          <div style="text-align:center;font-size:17pt;font-weight:700;margin-bottom:14px">ครูที่ปรึกษาชั้น${gradeFull}</div>
+          <div style="text-indent:2cm;text-align:justify;margin-bottom:12px">การเยี่ยมบ้านนักเรียน เป็นวิธีการหนึ่งที่จะทำให้ครูรู้จักนักเรียนอย่างลึกซึ้งอย่างแท้จริงเป็นรายบุคคล การเยี่ยมบ้านนักเรียนเป็นการสร้างสัมพันธภาพที่ดีระหว่างครูกับผู้ปกครอง ซึ่งนับเป็นภารกิจสำคัญประการหนึ่งของ “ระบบดูแลช่วยเหลือนักเรียน” โดยปีการศึกษา ${ui.year} นี้ โรงเรียนบ้านป่าไผ่ ได้จัดให้${teacherName} เป็นที่ปรึกษานักเรียนชั้น${gradeFull} ทางโรงเรียนบ้านป่าไผ่ มีกำหนดเยี่ยมบ้านนักเรียน ในระหว่างวันที่ ${rm.dateRange} นี้ โดยมีภารกิจในการเยี่ยมบ้านนักเรียน คือการให้ครูเข้าไปเยี่ยมเยียนสถานที่อยู่อาศัยของนักเรียนที่ตนรับผิดชอบดูแล จัดเป็นวิธีการศึกษารวบรวมข้อมูลอีกวิธีการหนึ่งที่ช่วยให้ครูได้ทราบสภาพแวดล้อมทางบ้านของนักเรียนอย่างแท้จริง และยังทำให้ครูมีโอกาสได้พบปะสนทนากับผู้ปกครองนักเรียน ทำให้ทราบเจตคติของผู้ปกครองที่มีต่อนักเรียนและสถานศึกษา ถือเป็นการแลกเปลี่ยนความรู้ ความคิดเห็น ซึ่งกันและกัน รวมทั้งเป็นการสร้างสัมพันธภาพอันดีระหว่างบ้านและสถานศึกษา ครูจะได้รับข้อมูลที่ชัดเจนยิ่งขึ้น โดยเฉพาะในกรณีที่นักเรียนมีปัญหากับพ่อแม่ ผู้ปกครอง และผู้ปกครองไม่ยอมไปพบครูที่โรงเรียน ครูจึงต้องไปเยี่ยมบ้าน เพื่อพูดคุยหรือทำความเข้าใจปัญหานักเรียน พร้อมทั้งช่วยพูดโน้มน้าวให้ครอบครัวมีความร่วมมือในการช่วยเหลือนักเรียน</div>
+          <div style="text-indent:2cm;text-align:justify;margin-bottom:36px">ในครั้งนี้ทางครูที่ปรึกษานักเรียนชั้น${gradeFull} มีความรู้สึกดีใจมาก ที่ได้ไปเยี่ยมบ้านนักเรียนทั้งหมด ${classStudents.length} คน เป็นนักเรียนชาย ${maleCount} คน และนักเรียนหญิง ${femaleCount} คน ได้ทำการเยี่ยมบ้านนักเรียนแล้วจำนวน ${visited.length} คน ผลปรากฏว่า ทำความเข้าใจและทำความรู้จักกับผู้ปกครอง ได้ทราบความรู้สึกของผู้ปกครองที่มีต่อโรงเรียน รวมทั้งได้ศึกษาเด็กๆ นักเรียน ที่ตัวเองเป็นที่ปรึกษา ให้ชัดเจนและเข้าใจกันมากขึ้น โดยสถานะทางครอบครัวของนักเรียนส่วนมากมีความลำบากในการใช้ชีวิต และมีปัญหาทางครอบครัว ทำให้ครูที่ปรึกษาต้องทำการประชุมกันเพื่อดำเนินการช่วยเหลือ หรือหาทางแก้ไขต่อไป</div>
+          <div style="text-align:center;margin-left:44%">
+            <div>...................................................</div>
+            <div>(${teacherName})</div>
+            <div>ครูที่ปรึกษานักเรียนชั้น${gradeFull}</div>
+            <div>โรงเรียนบ้านป่าไผ่</div>
+          </div>
+        `);
+
+        // หน้า 5: รายงานเยี่ยมบ้านนักเรียน (หลักการฯ, วัตถุประสงค์, เป้าหมาย, แนวคิดหลัก, ผลการดำเนินงาน, ปัญหา/ข้อเสนอแนะ, อภิปราย)
+        pages.push(`
+          <div style="text-align:center;font-size:18pt;font-weight:700;margin-bottom:8px">รายงานเยี่ยมบ้านนักเรียน</div>
+          <div style="font-weight:700">หลักการและเหตุผล</div>
+          <div style="text-indent:1.5cm;text-align:justify;margin-bottom:4px">ในการพัฒนานักเรียนให้มีความสมบูรณ์พร้อมทั้งร่างกาย จิตใจ สติปัญญา ความรู้ คุณธรรม จริยธรรม และการดำรงตนให้มีความสุขได้ในสังคมปัจจุบัน ต้องมีการร่วมมือระหว่างโรงเรียน ครูและผู้ปกครองนักเรียน โดยทางโรงเรียนต้องมีการจัดระบบการดูแลช่วยเหลือนักเรียนในด้านต่างๆขึ้นเพื่อช่วยเหลือส่งเสริม ให้นักเรียนเป็นบุคคลที่มีความรู้ มีคุณธรรม จริยธรรมและสามารถดำรงชีวิตให้มีความสุขในสังคมได้</div>
+          <div style="text-indent:1.5cm;text-align:justify;margin-bottom:6px">กิจกรรม การเยี่ยมบ้านนักเรียน เป็นอีกกิจกรรมหนึ่งในระบบดูแลช่วยเหลือนักเรียนที่มีความสำคัญเป็นอย่างมาก โดยเป็นการสร้างความสัมพันธ์ที่ดี ระหว่างบ้านกับโรงเรียน ผู้ปกครองกับครูที่ปรึกษา ซึ่งจะช่วยเหลือให้ผู้ปกครองนักเรียนและครู ได้ทราบรายละเอียดเกี่ยวกับตัวนักเรียนในด้านการเรียน อุปนิสัย การคบเพื่อน การเล่น โดยเฉพาะอย่างยิ่ง ได้เห็นชีวิต ความเป็นอยู่ที่แท้จริงของนักเรียน ขณะอยู่ที่บ้าน และเพื่อเป็นแนวทางสร้างความร่วมมือที่ดีในการช่วยเหลือป้องกันแก้ไข และพัฒนานักเรียน ที่อยู่ในความปกครอง ให้เป็นคนดี มีคุณธรรม จริยธรรมของสังคมต่อไป</div>
+          <div style="font-weight:700">วัตถุประสงค์ในการเยี่ยมบ้านนักเรียน</div>
+          <div style="padding-left:22px;margin-bottom:6px">
+            1. เพื่อสร้างความสัมพันธ์ที่ดีระหว่างบ้านกับโรงเรียน ผู้ปกครองกับครูที่ปรึกษา<br>
+            2. เพื่อให้ผู้ปกครองได้ทราบถึงพฤติกรรมของบุตรหลานของตนเองในขณะที่อยู่โรงเรียน<br>
+            3. เพื่อให้ครูที่ปรึกษา ได้ทราบถึงพฤติกรรมอันพึงและไม่พึงประสงค์ของนักเรียนในขณะที่อยู่บ้าน<br>
+            4. เพื่อให้ครูได้เห็นสภาพชีวิตความเป็นอยู่ที่แท้จริงของนักเรียนและผู้ปกครอง<br>
+            5. เพื่อนำข้อมูลที่ได้จากการเยี่ยมบ้านนักเรียนมาคัดกรอง ช่วยเหลือนักเรียนที่มีปัญหาทางด้านต่างๆ<br>
+            6. เพื่อนำข้อมูลที่ได้จากการเยี่ยมบ้านนักเรียน หรือข้อมูลการสัมภาษณ์ผู้ปกครองนักเรียนมาส่งเสริมความสามารถของนักเรียนที่มีความสามารถตามศักยภาพ
+          </div>
+          <div style="font-weight:700">เป้าหมาย</div>
+          <div style="padding-left:22px;margin-bottom:6px">
+            1. ผู้ปกครองจำนวน ${classStudents.length} คน และครูที่ปรึกษามีความสัมพันธ์ที่ดีต่อกัน มีความเข้าใจและให้ความร่วมมือกัน ในการดูแลช่วยเหลือนักเรียนที่อยู่ในความปกครอง<br>
+            2. นักเรียนจำนวน ${classStudents.length} คน ได้รับการเยี่ยมบ้านและได้รับการช่วยเหลือ และส่งเสริมตามลักษณะความสามารถของแต่ละบุคคล
+          </div>
+          <div style="font-weight:700">แนวคิดหลัก</div>
+          <div style="text-indent:1.5cm;text-align:justify;margin-bottom:6px">รายงานการเยี่ยมบ้านนักเรียน เป็นการสรุปผลการปฏิบัติงานของครูที่ปรึกษาในการรวบรวมข้อมูล ข้อปัญหาต่าง ๆ และอุปสรรคที่พบตั้งแต่เริ่มต้นออกเยี่ยมบ้านจนบรรลุผลสำเร็จ รวมทั้งใช้เป็นแนวทางในการปฏิบัติงาน ปรับปรุง แก้ไขและพัฒนางานในปีต่อๆไป</div>
+          <div style="font-weight:700">ผลการดำเนินงานการเยี่ยมบ้านนักเรียน</div>
+          <div style="text-indent:1.5cm;margin-bottom:4px">จากการดำเนินการเยี่ยมบ้านนักเรียนชั้น${gradeFull} จำนวน ${classStudents.length} คน ใน 1 ตำบล คือ ${rm.subdistrict} บังเกิดผลดีต่อครู ผู้ปกครองและนักเรียนดังต่อไปนี้</div>
+          <div style="padding-left:22px;margin-bottom:6px">
+            <strong>ผลดีต่อครู:</strong> ได้รู้จักนักเรียนเป็นรายบุคคล, ได้เห็นสภาพชีวิต สภาพบ้าน ชุมชน และความเป็นอยู่ที่แท้จริง, ได้ทราบพฤติกรรมและกิจกรรมที่นักเรียนทำในขณะอยู่ที่บ้าน<br>
+            <strong>ผลดีต่อผู้ปกครอง:</strong> ได้ทราบพฤติกรรมของนักเรียนขณะที่อยู่โรงเรียน, สามารถติดต่อสอบถามหรือปรึกษาปัญหาของบุตรหลานกับครูที่ปรึกษาได้โดยตรง, ได้บอกเล่าปัญหาหรือพฤติกรรมของนักเรียนและช่วยหาทางแก้ไข<br>
+            <strong>ผลดีต่อนักเรียน:</strong> นักเรียนที่มีความสามารถด้านต่างๆได้รับการส่งเสริมและพัฒนาตามศักยภาพ, นักเรียนได้พัฒนาตนเองให้เหมาะสมขณะอยู่ที่บ้าน
+          </div>
+          <div style="font-weight:700">6. ปัญหา/อุปสรรค/ข้อเสนอแนะ</div>
+          <div style="padding-left:22px;margin-bottom:6px">
+            <strong>ปัญหา/อุปสรรค:</strong> ไม่พบผู้ปกครองในวันที่ออกไปเยี่ยมบ้าน • บ้านของนักเรียนอยู่ในซอยที่เล็ก รถเข้าไปไม่ถึง • ไม่ทราบเส้นทางไปบ้านนักเรียน<br>
+            <strong>ข้อเสนอแนะ:</strong> ควรมีการวางแผนนัดเวลากับนักเรียนผู้ปกครองก่อนออกไปเยี่ยมบ้าน • นำรถจักรยานยนต์ออกเยี่ยมบ้าน • สอบถามจากบ้านเพื่อนหรือคนที่รู้จัก
+          </div>
+          <div style="font-weight:700">7. อภิปรายและสรุปผล</div>
+          <div style="text-indent:1.5cm;text-align:justify">การออกเยี่ยมบ้านนักเรียน มีเป้าหมายหลักคือ ต้องการทราบพฤติกรรมเกี่ยวกับตัวนักเรียนได้เห็นชีวิตความเป็นอยู่ ทราบปัญหาของนักเรียน เพื่อที่จะได้นำมาร่วมมือกันแก้ไขปัญหานักเรียนเป็นรายบุคคลต่อไป</div>
+        `);
+
+        // หน้า 6: แบบสรุปผลการออกเยี่ยมบ้านนักเรียนรายชั้น (ข้อ 1–3 ครบทุกตารางตามร่างเป๊ะ!)
+        pages.push(`
+          <div style="text-align:center;font-size:17.5pt;font-weight:700">แบบสรุปผลการออกเยี่ยมบ้านนักเรียนรายชั้น</div>
+          <div style="text-align:center">ชื่อครูที่ปรึกษา ${teacherName}</div>
+          <div style="text-align:center;margin-bottom:10px">รายงานผลการเยี่ยมบ้านนักเรียน โรงเรียนบ้านป่าไผ่ วันที่ ${rm.dateRange} ชั้น ${ui.grade}</div>
+
+          <div style="font-weight:700">1. ข้อมูลทั่วไป</div>
+          <div style="padding-left:20px;margin-bottom:6px">
+            จำนวนนักเรียนในชั้นเรียน&nbsp;&nbsp;${classStudents.length}&nbsp;&nbsp;คน&nbsp;&nbsp;&nbsp;ชาย ${maleCount} คน&nbsp;&nbsp;&nbsp;หญิง ${femaleCount} คน<br>
+            จำนวนครอบครัวที่ไปเยี่ยม&nbsp;&nbsp;${visited.length}&nbsp;&nbsp;ครอบครัว&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;จำนวนนักเรียนที่เข้าเยี่ยม&nbsp;&nbsp;${visited.length}&nbsp;&nbsp;คน
+          </div>
+
+          <div style="font-weight:700">2. ลักษณะการดำเนินชีวิตและกิจกรรมเมื่อนักเรียนอยู่ที่บ้าน</div>
+          <div style="padding-left:20px;margin-bottom:6px">
+            งานอดิเรก&nbsp;&nbsp;เล่นกีฬา จำนวน ${cnt(v => (v.hobbies||[]).includes("เล่นกีฬา"))} คน &nbsp;|&nbsp; อ่านหนังสือ จำนวน ${cnt(v => (v.hobbies||[]).includes("อ่านหนังสือ"))} คน<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;เล่นเกม จำนวน ${cnt(v => (v.hobbies||[]).includes("เล่นเกม"))} คน &nbsp;|&nbsp; เล่นดนตรี จำนวน ${cnt(v => (v.hobbies||[]).includes("เล่นดนตรี"))} คน<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ดูทีวี จำนวน ${cnt(v => (v.hobbies||[]).includes("ดูทีวี"))} คน &nbsp;|&nbsp; อื่น ๆ จำนวน ........ คน<br>
+            การช่วยพ่อแม่ทำงาน จำนวน ${cnt(v => v.helpParents)} คน &nbsp;|&nbsp; หารายได้พิเศษ จำนวน ........ คน
+          </div>
+
+          <div style="font-weight:700">3. ความสัมพันธ์ในครอบครัว</div>
+          <div style="padding-left:16px;margin-bottom:4px">
+            <strong>3.1 เวลาที่อยู่ร่วมกันในครอบครัว</strong><br>
+            • 5 – 10 ชั่วโมง/วัน: ${cnt(v => v.familyTime === "5 – 10 ชั่วโมง/วัน")} คน &nbsp;|&nbsp;
+            11 – 15 ชั่วโมง/วัน: ${cnt(v => v.familyTime === "11 – 15 ชั่วโมง/วัน")} คน &nbsp;|&nbsp;
+            มากกว่า 15 ชั่วโมง/วัน: ${cnt(v => v.familyTime === "มากกว่า 15 ชั่วโมง/วัน")} คน
+          </div>
+          <div style="padding-left:16px;margin-bottom:6px">
+            <strong>3.2 ความสัมพันธ์ระหว่างนักเรียนกับสมาชิกในครอบครัว</strong>
+            <table style="width:100%;border-collapse:collapse;font-size:13.5pt;margin-top:4px">
               <tr style="background:#f3f4f6">
-                <th style="border:1px solid #000;padding:4px">ที่</th>
-                <th style="border:1px solid #000;padding:4px">รหัส</th>
-                <th style="border:1px solid #000;padding:4px">ชื่อ - นามสกุล</th>
-                <th style="border:1px solid #000;padding:4px">ชื่อเล่น</th>
-                <th style="border:1px solid #000;padding:4px">บ้านเลขที่/หมู่/ตำบล</th>
+                <th style="border:1px solid #000;padding:3px;text-align:left">สมาชิก</th>
+                <th style="border:1px solid #000;padding:3px">สนิทสนม (คน)</th>
+                <th style="border:1px solid #000;padding:3px">เฉยๆ (คน)</th>
+                <th style="border:1px solid #000;padding:3px">ห่างเหิน (คน)</th>
+                <th style="border:1px solid #000;padding:3px">ขัดแย้ง (คน)</th>
+                <th style="border:1px solid #000;padding:3px">ไม่มี (คน)</th>
               </tr>
-              ${visits.map((x, i) => `
-                <tr>
-                  <td style="border:1px solid #000;padding:4px;text-align:center">${i + 1}</td>
-                  <td style="border:1px solid #000;padding:4px;text-align:center">${x.st.code || "-"}</td>
-                  <td style="border:1px solid #000;padding:4px">${x.st.prefix || ""}${x.st.firstName} ${x.st.lastName}</td>
-                  <td style="border:1px solid #000;padding:4px;text-align:center">${(x.v && x.v.nickname) || "-"}</td>
-                  <td style="border:1px solid #000;padding:4px">${x.v && x.v.houseNo ? `${x.v.houseNo} ม.${x.v.moo || "1"} ต.${x.v.tambon || "จันทึก"} อ.ปากช่อง` : "-"}</td>
-                </tr>`).join("")}
+              <tr><td style="border:1px solid #000;padding:3px">บิดา</td><td style="border:1px solid #000;text-align:center">${cNum(v=>v.relFather==="สนิทสนม")}</td><td style="border:1px solid #000;text-align:center">${cNum(v=>v.relFather==="เฉยๆ")}</td><td style="border:1px solid #000;text-align:center">${cNum(v=>v.relFather==="ห่างเหิน")}</td><td style="border:1px solid #000;text-align:center">${cNum(v=>v.relFather==="ขัดแย้ง")}</td><td style="border:1px solid #000;text-align:center">${cNum(v=>v.relFather==="ไม่มี")}</td></tr>
+              <tr><td style="border:1px solid #000;padding:3px">มารดา</td><td style="border:1px solid #000;text-align:center">${cNum(v=>v.relMother==="สนิทสนม")}</td><td style="border:1px solid #000;text-align:center">${cNum(v=>v.relMother==="เฉยๆ")}</td><td style="border:1px solid #000;text-align:center">${cNum(v=>v.relMother==="ห่างเหิน")}</td><td style="border:1px solid #000;text-align:center">${cNum(v=>v.relMother==="ขัดแย้ง")}</td><td style="border:1px solid #000;text-align:center">${cNum(v=>v.relMother==="ไม่มี")}</td></tr>
+              <tr><td style="border:1px solid #000;padding:3px">พี่ชาย/น้องชาย</td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td></tr>
+              <tr><td style="border:1px solid #000;padding:3px">พี่สาว/น้องสาว</td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td></tr>
+              <tr><td style="border:1px solid #000;padding:3px">ปู่/ย่า/ตา/ยาย</td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td></tr>
+              <tr><td style="border:1px solid #000;padding:3px">ญาติ</td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td><td style="border:1px solid #000"></td></tr>
             </table>
+          </div>
+          <div style="padding-left:16px;margin-bottom:4px">
+            <strong>3.3 กรณีผู้ปกครองไม่อยู่บ้านฝากเด็กอยู่กับใคร:</strong> ญาติ ${cnt(v=>v.caregiverAway==="ญาติ")} คน | เพื่อนบ้าน ${cnt(v=>v.caregiverAway==="เพื่อนบ้าน")} คน | อยู่บ้านด้วยตนเอง ${cnt(v=>v.caregiverAway==="นักเรียนอยู่บ้านด้วยตนเอง")} คน | อื่นๆ ${cnt(v=>v.caregiverAway==="อื่นๆ")} คน
+          </div>
+          <div style="padding-left:16px;margin-bottom:4px">
+            <strong>3.4 รายได้ครัวเรือนเฉลี่ยต่อคน:</strong> ต่ำกว่า 5,000: ${cnt(v=>v.incomeBand==="ต่ำกว่า 5,000 บาท")} คน | 5,100–10,000: ${cnt(v=>v.incomeBand==="5,100 – 10,000 บาท")} คน | 11,000–20,000: ${cnt(v=>v.incomeBand==="11,000 – 20,000 บาท")} คน | 21,000–30,000: ${cnt(v=>v.incomeBand==="21,000 – 30,000 บาท")} คน | 31,000–40,000: ${cnt(v=>v.incomeBand==="31,000 – 40,000 บาท")} คน | >41,000: ${cnt(v=>v.incomeBand==="มากกว่า 41,000 บาท")} คน
+          </div>
+          <div style="padding-left:16px;margin-bottom:4px">
+            <strong>3.5 สิ่งที่ผู้ปกครองต้องการให้โรงเรียนช่วยเหลือ:</strong> ด้านการเรียน ${cnt(v=>(v.needHelp||[]).includes("ด้านการเรียน"))} คน | ด้านพฤติกรรม ${cnt(v=>(v.needHelp||[]).includes("ด้านพฤติกรรม"))} คน | ด้านเศรษฐกิจ ${cnt(v=>(v.needHelp||[]).includes("ด้านเศรษฐกิจ"))} คน | อื่นๆ ${cnt(v=>(v.needHelp||[]).includes("อื่นๆ"))} คน
+          </div>
+          <div style="padding-left:16px">
+            <strong>3.6 ความช่วยเหลือจากหน่วยงาน:</strong> เบี้ยผู้สูงอายุ ........ คน | เบี้ยพิการ ........ คน | อื่น ๆ ........ คน
+          </div>
+        `);
 
-            <!-- หน้า 3: แบบสรุปผลการออกเยี่ยมบ้านนักเรียนรายชั้น -->
-            <div style="page-break-before:always"></div>
-            <div style="text-align:center;font-size:17pt;font-weight:700">แบบสรุปผลการออกเยี่ยมบ้านนักเรียนรายชั้น</div>
-            <div style="text-align:center;margin-bottom:8px">ครูที่ปรึกษา ${teacherName} • วันที่ ${rm.dateRange} • ชั้น ${ui.grade}</div>
-            <div><strong>1. ข้อมูลทั่วไป:</strong> นักเรียนทั้งหมด ${classStudents.length} คน (ชาย ${maleCount} คน หญิง ${femaleCount} คน) • เยี่ยมบ้านแล้ว ${visited.length} ครอบครัว (${visited.length} คน)</div>
-            <div><strong>2. งานอดิเรกและกิจกรรมที่บ้าน:</strong> เล่นกีฬา ${cnt(v => (v.hobbies||[]).includes("เล่นกีฬา")) || 0} คน | อ่านหนังสือ ${cnt(v => (v.hobbies||[]).includes("อ่านหนังสือ")) || 0} คน | ดูทีวี ${cnt(v => (v.hobbies||[]).includes("ดูทีวี")) || 0} คน | ช่วยพ่อแม่ทำงาน ${cnt(v => v.helpParents) || 0} คน</div>
-            <div><strong>3. ความสัมพันธ์ในครอบครัว & รายได้:</strong></div>
-            <div style="padding-left:16px">• อยู่ร่วมกัน 5–10 ชม./วัน: ${cnt(v => v.familyTime === "5 – 10 ชั่วโมง/วัน") || 0} คน | 11–15 ชม./วัน: ${cnt(v => v.familyTime === "11 – 15 ชั่วโมง/วัน") || 0} คน | >15 ชม./วัน: ${cnt(v => v.familyTime === "มากกว่า 15 ชั่วโมง/วัน") || 0} คน</div>
-            <div style="padding-left:16px">• รายได้ <5,000 บ.: ${cnt(v => v.incomeBand === "ต่ำกว่า 5,000 บาท") || 0} | 5,100–10,000 บ.: ${cnt(v => v.incomeBand === "5,100 – 10,000 บาท") || 0} | 11,000–20,000 บ.: ${cnt(v => v.incomeBand === "11,000 – 20,000 บาท") || 0} คน</div>
-            <div style="padding-left:16px">• ต้องการช่วยเหลือ: ด้านการเรียน ${cnt(v => (v.needHelp||[]).includes("ด้านการเรียน")) || 0} | ด้านพฤติกรรม ${cnt(v => (v.needHelp||[]).includes("ด้านพฤติกรรม")) || 0} | ด้านเศรษฐกิจ ${cnt(v => (v.needHelp||[]).includes("ด้านเศรษฐกิจ")) || 0} คน</div>
-            <div><strong>4. พฤติกรรม ความเสี่ยง และสภาพที่อยู่อาศัย:</strong></div>
-            <div style="padding-left:16px">• สภาพบ้านปกติมีห้องส้วม: ${cnt(v => String(v.housing).includes("ปกติ")) || 0} คน | บ้านชำรุด/ไม่มีห้องส้วม: ${cnt(v => !String(v.housing).includes("ปกติ")) || 0} คน</div>
-            <div style="padding-left:16px">• ระยะทาง <1 กม.: ${cnt(v => v.distance === "ไม่ถึง 1 กิโลเมตร") || 0} | 1–5 กม.: ${cnt(v => v.distance === "ระยะทาง 1 - 5 กิโลเมตร") || 0} | >5 กม.: ${cnt(v => String(v.distance).includes("6") || String(v.distance).includes("มากกว่า")) || 0} คน</div>
-            <div style="padding-left:16px">• เข้าถึงอินเทอร์เน็ตที่บ้านได้: ${cnt(v => String(v.internetHome).includes("สามารถ")) || 0} คน | พ่อแม่แยกทาง/แต่งงานใหม่: ${cnt(v => (v.safetyRisks||[]).some(r => r.includes("แยกทาง"))) || 0} คน</div>
-            <div style="margin-top:24px;text-align:center;margin-left:45%">
-              <div>ลงชื่อ......................................................</div>
-              <div>(${teacherName})</div>
-              <div>ครูที่ปรึกษานักเรียนชั้น${gradeFull}</div>
+        // หน้า 7: ส่วนที่ 4 พฤติกรรมและความเสี่ยง (ข้อ 4.1–4.12 ครบทุกหัวข้อ + ลงชื่อ)
+        pages.push(`
+          <div style="font-weight:700;margin-bottom:4px">4. พฤติกรรมและความเสี่ยง</div>
+          <div style="padding-left:14px;font-size:14.5pt;line-height:1.25">
+            <div><strong>4.1 สุขภาพ:</strong> ไม่มี ${visited.length} คน | มี (ร่างกายไม่แข็งแรง / โรคประจำตัว / ทุพโภชนาการ / โรคร้ายแรง / สมรรถภาพต่ำ) ........ คน</div>
+            <div><strong>4.2 สวัสดิการหรือความปลอดภัย:</strong> พ่อแม่แยกทาง/แต่งงานใหม่ ${cnt(v=>(v.safetyRisks||[]).some(r=>r.includes("แยกทาง")))} คน | บุคคลในครอบครัวเล่นการพนัน ${cnt(v=>(v.safetyRisks||[]).some(r=>r.includes("พนัน")))} คน | ขัดแย้ง/ทะเลาะกันในครอบครัว ${cnt(v=>(v.safetyRisks||[]).some(r=>r.includes("ขัดแย้ง")))} คน | ไม่มีผู้ดูแล ${cnt(v=>(v.safetyRisks||[]).some(r=>r.includes("ไม่มีผู้ดูแล")))} คน | สารเสพติด/ทารุณ/ล่วงละเมิด ........ คน</div>
+            <div><strong>4.3 ระยะทางระหว่างบ้านไปโรงเรียน (ไป/กลับ):</strong> ไม่ถึง 1 กม. ${cnt(v=>v.distance==="ไม่ถึง 1 กิโลเมตร")} คน | 1–5 กม. ${cnt(v=>v.distance==="ระยะทาง 1 - 5 กิโลเมตร")} คน | 6–10 กม. ${cnt(v=>v.distance==="ระยะทาง 6 - 10 กิโลเมตร")} คน | มากกว่า 10 กม. ${cnt(v=>v.distance==="มากกว่า 10 กิโลเมตร")} คน</div>
+            <div><strong>4.4 การเดินทางมาโรงเรียน:</strong> ผู้ปกครองมาส่ง ${cnt(v=>v.travel==="ผู้ปกครองมาส่ง")} คน | เดิน ${cnt(v=>v.travel==="เดิน")} คน | รถจักรยานยนต์ ${cnt(v=>v.travel==="รถจักรยานยนต์")} คน | รถจักรยาน ${cnt(v=>v.travel==="รถจักรยาน")} คน | รถโรงเรียน ${cnt(v=>v.travel==="รถโรงเรียน")} คน | รถโดยสาร/รถยนต์ ........ คน</div>
+            <div><strong>4.5 สภาพที่อยู่อาศัย:</strong> สภาพบ้านปกติและมีห้องส้วม ${cnt(v=>String(v.housing).includes("ปกติ"))} คน | บ้านชำรุดทรุดโทรม ${cnt(v=>String(v.housing).includes("ชำรุด"))} คน | ไม่มีห้องส้วม ${cnt(v=>String(v.housing).includes("ไม่มีห้องส้วม"))} คน</div>
+            <div><strong>4.6 ภาระงานความรับผิดชอบต่อครอบครัว:</strong> ช่วยงานบ้าน ${cnt(v=>v.helpParents)} คน | ช่วยค้าขาย/นาไร่/ดูแลผู้ป่วย/ทำงานแถวบ้าน ........ คน</div>
+            <div><strong>4.7 กิจกรรมยามว่างหรืองานอดิเรก:</strong> ดูทีวี/ฟังเพลง ${cnt(v=>(v.hobbies||[]).includes("ดูทีวี"))} คน | อ่านหนังสือ ${cnt(v=>(v.hobbies||[]).includes("อ่านหนังสือ"))} คน | เล่นเกมคอม/มือถือ ${cnt(v=>(v.hobbies||[]).includes("เล่นเกม"))} คน | เล่นกีฬา ${cnt(v=>(v.hobbies||[]).includes("เล่นกีฬา"))} คน</div>
+            <div><strong>4.8 พฤติกรรมการใช้สารเสพติด:</strong> คบเพื่อนกลุ่มเสี่ยง / ครอบครัวเกี่ยวข้อง / สภาพแวดล้อมเสี่ยง / ติดบุหรี่สุรา ........ คน</div>
+            <div><strong>4.9 พฤติกรรมการใช้ความรุนแรงและพฤติกรรมทางเพศ:</strong> ทะเลาะวิวาท / ก้าวร้าว / ทำร้ายผู้อื่น-ตนเอง / พฤติกรรมทางเพศ ........ คน</div>
+            <div><strong>4.10 การติดเกม:</strong> เล่นเกมเกินวันละ 1 ชม. ${cnt(v=>(v.hobbies||[]).includes("เล่นเกม"))} คน | เกิน 2 ชม. / อยู่ในกลุ่มเพื่อนเล่นเกม / หมกมุ่น / ใช้เงินผิดปกติ ........ คน</div>
+            <div><strong>4.11 การเข้าถึงสื่อคอมพิวเตอร์และอินเทอร์เน็ตที่บ้าน:</strong> สามารถเข้าถึง Internet ได้จากที่บ้าน ${cnt(v=>String(v.internetHome).includes("สามารถ"))} คน | ไม่สามารถเข้าถึง ${cnt(v=>String(v.internetHome).includes("ไม่สามารถ"))} คน</div>
+            <div><strong>4.12 การใช้เครื่องมือสื่อสารอิเล็กทรอนิกส์:</strong> ใช้ LINE / Facebook / Chat เกินวันละ 1 ชม. ........ คน | เกินวันละ 2 ชม. ........ คน | ไม่มีเครื่องมือสื่อสาร ........ คน</div>
+          </div>
+          <div style="margin-top:34px;text-align:center;margin-left:44%">
+            <div>...................................................</div>
+            <div>(${teacherName})</div>
+            <div>ครูที่ปรึกษานักเรียนชั้น${gradeFull}</div>
+            <div>โรงเรียนบ้านป่าไผ่</div>
+          </div>
+        `);
+
+        // หน้า 8: หน้าคั่น ภาคผนวก (ตรงกลางหน้าสวยงาม)
+        pages.push(`
+          <div style="min-height:980px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+            <div style="border:3px double #0D9488;border-radius:36px;padding:48px 64px;max-width:520px;width:100%">
+              <div style="font-size:32pt;font-weight:700;margin-bottom:14px">ภาคผนวก</div>
+              <div style="font-size:20pt">- ภาพการเยี่ยมบ้าน</div>
+              <div style="font-size:20pt">- แบบบันทึกการเยี่ยมบ้าน</div>
             </div>
+          </div>
+        `);
 
-            ${photoCards.length ? `
-              <div style="page-break-before:always"></div>
-              <div style="text-align:center;font-size:18pt;font-weight:700;margin-bottom:10px">ภาคผนวก : ภาพการเยี่ยมบ้านนักเรียนชั้น${gradeFull} ปีการศึกษา ${ui.year}</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                ${photoCards.map((pc) => `
-                  <div style="text-align:center;border:1px solid #ddd;padding:6px;border-radius:6px">
-                    <img src="${pc.src}" style="width:100%;height:175px;object-fit:cover;border-radius:4px" />
-                    <div style="margin-top:4px;font-size:14pt">${pc.caption}</div>
+        // หน้า 9+: ภาคผนวกภาพการเยี่ยมบ้าน (2 ภาพต่อหน้า A4 ใหญ่ชัด พร้อมคำบรรยายใต้ภาพ!)
+        if (photoCards.length) {
+          for (let i = 0; i < photoCards.length; i += 2) {
+            const pair = photoCards.slice(i, i + 2);
+            pages.push(`
+              <div style="text-align:center;font-size:18pt;font-weight:700;margin-bottom:2px">ภาพการเยี่ยมบ้าน</div>
+              <div style="text-align:center;font-size:16pt;font-weight:700;margin-bottom:16px">นักเรียนชั้น${gradeFull} ปีการศึกษา ${toThaiNum(ui.year)}</div>
+              <div style="display:flex;flex-direction:column;gap:22px;align-items:center">
+                ${pair.map((pc) => `
+                  <div style="width:92%;text-align:center">
+                    <img src="${pc.src}" style="width:100%;height:380px;object-fit:cover;border:1px solid #cbd5e1;border-radius:4px" />
+                    <div style="margin-top:6px;font-size:16pt;font-weight:700">${pc.caption}</div>
                   </div>`).join("")}
-              </div>` : ""}
-          </div>`;
+              </div>
+            `);
+          }
+        }
 
-        if (window.BPP_PDF && window.BPP_PDF.exportA4) {
-          await window.BPP_PDF.exportA4({ html, fileName: `รายงานการเยี่ยมบ้าน_${ui.grade}_${ui.year}.pdf`, onStatus: showToast });
+        if (window.BPP_PDF && window.BPP_PDF.exportMultiPageA4) {
+          await window.BPP_PDF.exportMultiPageA4(pages, `รายงานการเยี่ยมบ้าน_${ui.grade}_${ui.year}.pdf`, { shareToAdmin: true, onStatus: showToast });
         } else {
           window.print();
         }

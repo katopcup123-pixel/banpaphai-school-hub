@@ -32,10 +32,11 @@ window.BPP_PDF = {
     );
   },
 
-  showPreviewModal({ previewDataUrl, pdfBlob, fileName, shareToAdmin, onStatus }) {
+  showPreviewModal({ previewDataUrl, previewPages, pdfBlob, fileName, shareToAdmin, onStatus }) {
     const notify = (m) => { if (typeof onStatus === "function") onStatus(m); };
     const kb = Math.max(1, Math.round(pdfBlob.size / 1024));
     const sizeLabel = kb >= 1024 ? `${(kb / 1024).toFixed(2)} MB` : `${kb} KB`;
+    const pages = Array.isArray(previewPages) && previewPages.length ? previewPages : [previewDataUrl];
     const pdfFile = new File([pdfBlob], fileName, { type: "application/pdf" });
     const canNativeShare = Boolean(navigator.canShare && navigator.canShare({ files: [pdfFile] }));
 
@@ -45,13 +46,17 @@ window.BPP_PDF = {
     modal.innerHTML = `
       <div style="flex-shrink:0;background:#111827;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid rgba(255,255,255,0.12)">
         <div style="min-width:0">
-          <div style="font-size:14.5px;font-weight:700">ตรวจสอบตัวอย่างเอกสาร PDF</div>
+          <div style="font-size:14.5px;font-weight:700">ตรวจสอบตัวอย่างเอกสาร PDF (${pages.length} หน้า)</div>
           <div style="font-size:11.5px;color:#9CA3AF;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fileName} • ขนาด ${sizeLabel}</div>
         </div>
         <button type="button" id="bppPdfCloseTop" style="border:none;background:rgba(255,255,255,0.14);color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;flex-shrink:0">✕</button>
       </div>
-      <div style="flex:1;overflow:auto;padding:16px 12px;display:flex;justify-content:center;align-items:flex-start;-webkit-overflow-scrolling:touch">
-        <img src="${previewDataUrl}" alt="ตัวอย่างเอกสาร A4" style="width:100%;max-width:680px;height:auto;background:#fff;border-radius:6px;box-shadow:0 12px 36px rgba(0,0,0,0.45)" />
+      <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:14px;-webkit-overflow-scrolling:touch">
+        ${pages.map((src, idx) => `
+          <div style="width:100%;max-width:680px;text-align:center">
+            ${pages.length > 1 ? `<div style="font-size:11px;color:#CBD5E1;margin-bottom:4px">หน้า ${idx + 1} / ${pages.length}</div>` : ""}
+            <img src="${src}" alt="หน้า ${idx + 1}" style="width:100%;height:auto;background:#fff;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,0.42)" />
+          </div>`).join("")}
       </div>
       <div style="flex-shrink:0;background:#111827;padding:12px 14px calc(14px + env(safe-area-inset-bottom));display:flex;gap:8px;flex-wrap:wrap;justify-content:center;border-top:1px solid rgba(255,255,255,0.12)">
         ${shareToAdmin && canNativeShare ? `<button type="button" id="bppPdfShareBtn" style="flex:1;min-width:150px;border:none;background:#007AFF;color:#fff;font:inherit;font-size:13.5px;font-weight:700;padding:11px 14px;border-radius:12px;cursor:pointer">📤 ส่งให้ธุรการ (LINE / แชร์)</button>` : ""}
@@ -97,6 +102,76 @@ window.BPP_PDF = {
 
   async exportA4({ html, fileName, onStatus } = {}) {
     return this.exportOrShare(html || "", fileName || "document.pdf", { shareToAdmin: true, onStatus });
+  },
+
+  async exportMultiPageA4(pagesHtml, fileName, { shareToAdmin = true, onStatus } = {}) {
+    const notify = (m) => { if (typeof onStatus === "function") onStatus(m); };
+    const list = (Array.isArray(pagesHtml) ? pagesHtml : [pagesHtml]).filter(Boolean);
+    if (!list.length) return;
+
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;z-index:9998;background:rgba(15,23,42,0.78);overflow:auto;display:flex;flex-direction:column;align-items:center;padding:12px;";
+    const statusBar = document.createElement("div");
+    statusBar.style.cssText = "position:sticky;top:0;background:#1C1C1E;color:#fff;font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;margin-bottom:10px;z-index:2;";
+    statusBar.textContent = `⏳ กำลังจัดหน้าเอกสาร A4 (0/${list.length} หน้า)...`;
+    const hostEl = document.createElement("div");
+    hostEl.style.cssText = "width:794px;background:#ffffff;color:#000000;box-sizing:border-box;";
+    overlay.appendChild(statusBar);
+    overlay.appendChild(hostEl);
+    document.body.appendChild(overlay);
+
+    try {
+      await this.ensureLibs();
+      if (document.fonts) {
+        try {
+          await Promise.all([
+            document.fonts.load('400 16pt "TH SarabunIT9"'),
+            document.fonts.load('700 16pt "TH SarabunIT9"')
+          ]);
+          await document.fonts.ready;
+        } catch (_) {}
+      }
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
+      const previewPages = [];
+
+      for (let i = 0; i < list.length; i++) {
+        statusBar.textContent = `⏳ กำลังสร้างเอกสาร A4 หน้า ${i + 1}/${list.length}...`;
+        hostEl.innerHTML = `<div style="width:794px;min-height:1123px;background:#ffffff;color:#000000;padding:34px 48px 34px 62px;box-sizing:border-box;font-family:'TH SarabunIT9','TH Sarabun New',serif;font-size:16pt;line-height:1.28;text-align:left;-webkit-text-size-adjust:100%;text-size-adjust:100%;">${list[i]}</div>`;
+        await this.waitImages(hostEl);
+        await new Promise((r) => setTimeout(r, 80));
+
+        const targetEl = hostEl.firstElementChild;
+        const jpegDataUrl = await window.modernScreenshot.domToJpeg(targetEl, {
+          scale: 1.4,
+          quality: 0.78,
+          backgroundColor: "#ffffff",
+          fetch: { requestInit: { mode: "cors" } }
+        });
+        previewPages.push(jpegDataUrl);
+
+        const img = new Image();
+        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = jpegDataUrl; });
+        if (i > 0) pdf.addPage();
+        const pageW = 210, pageH = 297;
+        let drawW = pageW;
+        let drawH = (img.naturalHeight / img.naturalWidth) * drawW;
+        if (drawH > pageH) {
+          const ratio = pageH / drawH;
+          drawW = drawW * ratio;
+          drawH = pageH;
+        }
+        pdf.addImage(jpegDataUrl, "JPEG", (pageW - drawW) / 2, 0, drawW, drawH, undefined, "FAST");
+      }
+
+      const pdfBlob = pdf.output("blob");
+      overlay.remove();
+      this.showPreviewModal({ previewPages, pdfBlob, fileName, shareToAdmin, onStatus });
+    } catch (err) {
+      overlay.remove();
+      notify("สร้าง PDF ไม่สำเร็จ: " + (err && err.message ? err.message : String(err)));
+    }
   },
 
   async exportOrShare(htmlContent, fileName, { shareToAdmin = false, onStatus } = {}) {

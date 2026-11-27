@@ -155,13 +155,16 @@
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // อัปเกรดลิงก์ e-Budget และนิเทศภายในมาใช้หน้าในแอป + นำ 3 ระบบที่ปิดไว้ชั่วคราวออก + เติมระบบใหม่ v2.9 อัตโนมัติ
+          // อัปเกรดลิงก์ e-Budget และนิเทศภายในมาใช้หน้าในแอป + คุมโทนสีตามฝ่าย + นำ 3 ระบบที่ปิดไว้ชั่วคราวออก + เติมระบบใหม่ v2.9 อัตโนมัติ
           const builtInUrls = { "e-budget": "./ebudget.html", "supervision": "./supervision.html" };
+          const defaultColorById = Object.fromEntries((config.systems || []).map((x) => [x.id, x.color]));
           const cleaned = parsed
             .filter((s) => !removedIds.has(s.id))
-            .map((s) => (builtInUrls[s.id] && String(s.url || "").includes("script.google.com"))
-              ? { ...s, url: builtInUrls[s.id] }
-              : s);
+            .map((s) => {
+              const nextUrl = (builtInUrls[s.id] && String(s.url || "").includes("script.google.com")) ? builtInUrls[s.id] : s.url;
+              const nextColor = defaultColorById[s.id] || s.color;
+              return { ...s, url: nextUrl, color: nextColor };
+            });
           const seen = new Set(cleaned.map((s) => s.id));
           ["executive-brief", "academic-hub"].forEach((newId) => {
             if (!seen.has(newId)) {
@@ -190,8 +193,11 @@
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          const defaultById = Object.fromEntries((config.users || []).map((u) => [u.id, u]));
           const seen = new Set(parsed.map((u) => u.id));
-          const merged = [...parsed];
+          const merged = parsed.map((u) => (!u.avatar && defaultById[u.id] && defaultById[u.id].avatar)
+            ? { ...u, avatar: defaultById[u.id].avatar }
+            : u);
           (config.users || []).forEach((u) => {
             if (!seen.has(u.id)) merged.push({ ...u });
           });
@@ -884,10 +890,38 @@
           .map(([dt, name]) => `<div class="cal-holiday-pill">🏛️ ${dt.split("-").reverse().join("/")} • ${name}</div>`)
           .join("");
 
+    // โหมดกระชับหน้าหลัก: แสดงการ์ดกิจกรรมวันนี้/สัปดาห์นี้ 1-2 บรรทัด กดขยายดูทั้งเดือนได้ทันที
+    if (!state.calExpanded) {
+      const todayHoliday = THAI_HOLIDAYS[todayStr] || "";
+      const upcoming = state.events
+        .filter((ev) => ev.date && ev.date >= todayStr)
+        .sort((a, b) => a.date.localeCompare(b.date));
+      const nextEv = upcoming[0] || state.events[0] || null;
+      const summaryLine = todayHoliday
+        ? `🏛️ วันนี้เป็นวันหยุดราชการ: ${todayHoliday}`
+        : nextEv
+          ? `${nextEv.date === todayStr ? "วันนี้" : nextEv.date.split("-").reverse().join("/")}${nextEv.time ? ` • ${nextEv.time} น.` : ""} — ${nextEv.title}`
+          : "ยังไม่มีกิจกรรมที่กำลังจะมาถึง";
+
+      return `
+        <div class="cal-compact-card">
+          <div class="cal-compact-left" id="calExpandBtn" role="button" tabindex="0">
+            <div class="cal-compact-ico">📅</div>
+            <div class="cal-compact-text">
+              <strong>ปฏิทินวิชาการ • ${THAI_MONTHS[month]} ${year + 543}</strong>
+              <span>${summaryLine}</span>
+            </div>
+          </div>
+          <div class="cal-compact-actions">
+            <button type="button" class="admin-mini-btn" id="calExpandBtn2">ดูทั้งเดือน ▾</button>
+          </div>
+        </div>`;
+    }
+
     return `
       <div class="section-header">
         <h2 class="section-title">ปฏิทินวิชาการ</h2>
-        <span class="section-sub">${agendaLabel}</span>
+        <button type="button" class="admin-mini-btn" id="calCollapseBtn">ย่อเก็บ ▴</button>
       </div>
       <div class="cal-widget">
         <div class="cal-top">
@@ -2718,6 +2752,20 @@
 
     if (e.target.id === "openUserManualBtn") {
       openUserManualSheet();
+      return;
+    }
+    if (e.target.closest("#calExpandBtn") || e.target.id === "calExpandBtn2") {
+      haptic();
+      state.calExpanded = true;
+      const anchor = document.getElementById("calAnchor");
+      if (anchor) anchor.innerHTML = renderCalendarWidget();
+      return;
+    }
+    if (e.target.id === "calCollapseBtn") {
+      haptic();
+      state.calExpanded = false;
+      const anchor = document.getElementById("calAnchor");
+      if (anchor) anchor.innerHTML = renderCalendarWidget();
       return;
     }
     if (e.target.id === "toggleFbFeedBtn") {

@@ -855,6 +855,46 @@
     .official-doc.dense .official-signatures { margin-top: 26px; }
     .official-signatures.two-col { grid-template-columns: repeat(2, 1fr); }
   }
+
+  /* iOS-style Mobile Bottom Tab Bar for one-thumb navigation */
+  .sup-mobile-bottombar { display: none; }
+  @media (max-width: 900px) {
+    .lector-main { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
+    .sup-mobile-bottombar {
+      display: flex;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 140;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: saturate(180%) blur(20px);
+      border-top: 0.5px solid rgba(15, 23, 42, 0.1);
+      padding: 6px 6px calc(8px + env(safe-area-inset-bottom));
+      justify-content: space-around;
+      gap: 4px;
+      box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.06);
+    }
+    .sup-mobile-bottombar .nav-pill {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 6px 4px;
+      margin: 0;
+      border-radius: 12px;
+      font-size: 10.5px;
+      font-weight: 600;
+      background: transparent !important;
+      color: #64748B;
+      border: none;
+    }
+    .sup-mobile-bottombar .nav-pill.active {
+      color: #007AFF !important;
+      background: rgba(0, 122, 255, 0.1) !important;
+    }
+    .sup-mobile-bottombar .nav-pill .mb-ico { font-size: 17px; line-height: 1; }
+  }
 </style>
 
 </head>
@@ -3345,7 +3385,7 @@
 
     function updateAssignedEvalMenu() {
       const evalLabel = document.getElementById('sidebar-eval-label');
-      const evalBtn = document.getElementById('nav-btn-evaluate');
+      const evalBtn = document.getElementById('nav-btn-evaluate'); const mbEvalBtn = document.getElementById('mb-nav-evaluate'); if (mbEvalBtn && evalBtn) setTimeout(() => mbEvalBtn.classList.toggle('hidden', evalBtn.classList.contains('hidden')), 0);
       const evalText = document.getElementById('nav-eval-text');
       const banner = document.getElementById('dash-assigned-banner');
       const bannerTitle = document.getElementById('dash-assigned-title');
@@ -4898,5 +4938,13 @@
   })();
 </script>
 
+
+  <nav class="sup-mobile-bottombar no-print" aria-label="เมนูหลักนิเทศภายใน">
+    <button type="button" class="nav-pill active" data-view="dashboard"><span class="mb-ico">📊</span><span>ภาพรวม</span></button>
+    <button type="button" class="nav-pill" data-view="files"><span class="mb-ico">📁</span><span>ส่งไฟล์</span></button>
+    <button type="button" class="nav-pill hidden" id="mb-nav-evaluate" data-view="evaluate"><span class="mb-ico">✍️</span><span>ประเมิน</span></button>
+    <button type="button" class="nav-pill hidden" id="mb-nav-ind-report" data-view="individual-report"><span class="mb-ico">📄</span><span>รายงาน</span></button>
+    <button type="button" class="nav-pill admin-only hidden" data-view="admin"><span class="mb-ico">⚙️</span><span>จัดการ</span></button>
+  </nav>
 </body>
 </html>

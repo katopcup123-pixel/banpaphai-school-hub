@@ -1,6 +1,6 @@
 // ตั้งค่าแอป BPP Connect — โรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)
 window.SCHOOL_CONFIG = {
-  appVersion: "2.9.0",
+  appVersion: "2.9.5",
   schoolName: "BPP Connect",
   schoolSubtitle: "โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4",
   logoUrl: "./icons/school-logo.png",
@@ -83,7 +83,7 @@ window.SCHOOL_CONFIG = {
       role: "teacher",
       pin: "1234",
       color: "rose",
-      avatar: ""
+      avatar: "./icons/avatar-pattaraya.png"
     },
     {
       id: "kun",
@@ -93,7 +93,7 @@ window.SCHOOL_CONFIG = {
       role: "teacher",
       pin: "1234",
       color: "slate",
-      avatar: ""
+      avatar: "./icons/avatar-kun.png"
     }
   ],
 
@@ -216,7 +216,7 @@ window.SCHOOL_CONFIG = {
       division: "academic",
       url: "https://script.google.com/macros/s/AKfycbw6zyCd02fw_bubPn_gJcqk2u9u7xLTc3qjPRniX6_3gYDez9RTO0cvNfwZ7HuUC1R6/exec",
       icon: "award",
-      color: "amber",
+      color: "sky",
       pinned: true,
       directorOnly: false
     },
@@ -252,7 +252,7 @@ window.SCHOOL_CONFIG = {
       division: "academic",
       url: "./attendance.html",
       icon: "users",
-      color: "indigo",
+      color: "blue",
       pinned: true,
       directorOnly: false
     },
@@ -264,7 +264,7 @@ window.SCHOOL_CONFIG = {
       division: "general",
       url: "./album.html",
       icon: "image",
-      color: "sky",
+      color: "purple",
       pinned: true,
       directorOnly: false
     },
@@ -276,7 +276,7 @@ window.SCHOOL_CONFIG = {
       division: "general",
       url: "https://script.google.com/macros/s/AKfycbzien_zQXulkWhOmpULBzZ-a4bQcTaGcYTnkcpDbPP-gqsdIVpVvxc9y3577WfWDY-rMg/exec",
       icon: "utensils",
-      color: "rose",
+      color: "indigo",
       pinned: false,
       directorOnly: false,
       openExternal: true
@@ -301,7 +301,7 @@ window.SCHOOL_CONFIG = {
       division: "academic",
       url: "./scores.html",
       icon: "barChart",
-      color: "emerald",
+      color: "sky",
       pinned: true,
       directorOnly: false
     }

@@ -6,7 +6,7 @@
   <title>ระบบการลา & ออกนอกโรงเรียน — BPP Connect</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #F2F4F8;
@@ -203,17 +203,46 @@
     .toast.show { display: block; }
     .hidden { display: none !important; }
 
-    /* Print Slip (Hidden on screen, crisp A4 on print) */
+    /* Official Thai Government Memo Print Layout (A4 Portrait) */
     #printSlipArea { display: none; }
     @media print {
-      @page { size: A4 portrait; margin: 16mm; }
+      @page { size: A4 portrait; margin: 14mm 18mm 14mm 22mm; }
       html, body { height: auto; background: #FFF !important; color: #000 !important; }
       .app, .backdrop, .toast { display: none !important; }
-      #printSlipArea { display: block !important; color: #111; font-size: 14px; line-height: 1.75; }
-      .slip-head { text-align: center; margin-bottom: 18px; }
-      .slip-head img { width: 58px; height: 58px; object-fit: contain; margin-bottom: 6px; }
-      .slip-head h2 { margin: 0; font-size: 18px; }
-      .slip-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 44px; text-align: center; }
+      #printSlipArea {
+        display: block !important;
+        font-family: "TH Sarabun New", "Sarabun", "Noto Sans Thai", serif;
+        color: #000;
+        font-size: 15.5pt;
+        line-height: 1.38;
+      }
+      .memo-stamp-wrap { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+      .memo-stamp {
+        border: 1px solid #000;
+        padding: 4px 10px;
+        font-size: 12pt;
+        line-height: 1.35;
+        width: 205px;
+      }
+      .memo-header { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 6px; position: relative; }
+      .memo-garuda { width: 54px; height: auto; filter: grayscale(100%) contrast(220%) brightness(0.15); }
+      .memo-title { flex: 1; text-align: center; font-size: 25pt; font-weight: 700; margin-right: 54px; line-height: 1; }
+      .memo-meta-row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 4px; }
+      .memo-field-line { margin: 2px 0; }
+      .memo-indent { text-indent: 1.8cm; text-align: justify; margin: 6px 0 4px; }
+      .memo-table { width: 100%; border-collapse: collapse; margin: 6px 0 8px; font-size: 14pt; }
+      .memo-table th, .memo-table td { border: 1px solid #000; padding: 3px 6px; text-align: center; height: 24px; }
+      .memo-table td.left { text-align: left; }
+      .memo-sign-right { width: 56%; margin-left: auto; text-align: center; margin-top: 12px; line-height: 1.35; }
+      .memo-hr-box { margin-top: 10px; line-height: 1.35; }
+      .memo-sign-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center; margin-top: 14px; }
+      .memo-dir-box { margin-top: 12px; line-height: 1.35; }
+      .memo-footnote { margin-top: 10px; font-size: 13pt; font-style: italic; }
+      .chk-box { display: inline-block; width: 13px; height: 13px; border: 1px solid #000; text-align: center; line-height: 12px; font-size: 11pt; margin: 0 3px; vertical-align: middle; }
+      .slip-head { text-align: center; margin-bottom: 16px; }
+      .slip-head img { width: 54px; height: 54px; object-fit: contain; margin-bottom: 4px; }
+      .slip-head h2 { margin: 0; font-size: 19pt; }
+      .slip-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 38px; text-align: center; }
     }
 
     @keyframes popIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
@@ -595,19 +624,42 @@
         <div class="row-2">
           <div><label class="lbl">${isOff ? "วันที่" : "ตั้งแต่วันที่"}</label><input class="field" id="fStartDate" type="date" value="${today}" /></div>
           ${isOff
-            ? `<div><label class="lbl">สถานที่ที่จะไป</label><input class="field" id="fDest" placeholder="เช่น ธนาคาร / เขตพื้นที่" /></div>`
+            ? `<div><label class="lbl">วิทยฐานะ (ถ้ามี)</label><input class="field" id="fRank" placeholder="เช่น ชำนาญการ / -" /></div>`
             : `<div><label class="lbl">ถึงวันที่</label><input class="field" id="fEndDate" type="date" value="${today}" /></div>`}
         </div>
         ${isOff ? `
+          <label class="lbl">สถานที่ที่จะไป</label>
+          <input class="field" id="fDest" placeholder="เช่น ธนาคารกรุงไทย สาขาปากช่อง / สพป.นม.4" />
           <div class="row-2">
-            <div><label class="lbl">เวลาออก</label><input class="field" id="fStartTime" type="time" value="${nowH}:00" /></div>
-            <div><label class="lbl">เวลากลับ</label><input class="field" id="fEndTime" type="time" value="${nextH}:00" /></div>
+            <div><label class="lbl">ตั้งแต่เวลา</label><input class="field" id="fStartTime" type="time" value="${nowH}:00" /></div>
+            <div><label class="lbl">ถึงเวลา</label><input class="field" id="fEndTime" type="time" value="${nextH}:00" /></div>
+          </div>
+          <label class="lbl">ภาระงานการเรียนการสอน</label>
+          <div style="display:flex;gap:16px;margin-bottom:10px;font-size:13.5px">
+            <label><input type="radio" name="fWorkload" value="no" checked /> ไม่มีภาระงาน</label>
+            <label><input type="radio" name="fWorkload" value="yes" /> มีภาระงาน (มอบหมายสอนแทน)</label>
+          </div>
+          <div id="workloadBox" class="hidden" style="margin-bottom:8px">
+            <label class="lbl">รายการมอบหมายงานสอน (กรอกได้สูงสุด 4 คาบ)</label>
+            ${[1, 2, 3, 4].map((n) => `
+              <div style="display:grid;grid-template-columns:52px 1fr 56px 1fr;gap:4px;margin-bottom:5px">
+                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlPeriod${n}" placeholder="คาบ" />
+                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlTask${n}" placeholder="วิชา/งาน" />
+                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlGrade${n}" placeholder="ชั้น" />
+                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlSub${n}" placeholder="ผู้สอนแทน" />
+              </div>`).join("")}
           </div>` : ""}
-        <label class="lbl">เหตุผล / ภารกิจ</label>
-        <textarea class="textarea-field" id="fReason" rows="2" placeholder="ระบุเหตุผลสั้นๆ..."></textarea>
+        <label class="lbl">มีความจำเป็นเนื่องจาก (ระบุ)</label>
+        <textarea class="textarea-field" id="fReason" rows="2" placeholder="ระบุเหตุผล/ภารกิจ..."></textarea>
         <button type="button" class="btn-primary" id="fSubmitBtn" style="width:100%;margin-bottom:8px">ยืนยันส่งคำขอ</button>
         <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
       `);
+
+      if (isOff) {
+        document.querySelectorAll('input[name="fWorkload"]').forEach((r) => {
+          r.onchange = () => $("workloadBox").classList.toggle("hidden", r.value !== "yes");
+        });
+      }
 
       $("fCancelBtn").onclick = closeSheet;
       $("fSubmitBtn").onclick = () => {
@@ -617,6 +669,18 @@
         const startTime = isOff ? $("fStartTime").value : "";
         const endTime = isOff ? $("fEndTime").value : "";
         const destination = isOff ? $("fDest").value.trim() : "";
+        const academicRank = isOff ? ($("fRank").value.trim() || "-") : "";
+        const hasWorkload = isOff ? (document.querySelector('input[name="fWorkload"]:checked')?.value === "yes") : false;
+        const workloadRows = [];
+        if (isOff && hasWorkload) {
+          for (let n = 1; n <= 4; n++) {
+            const period = $("wlPeriod" + n).value.trim();
+            const task = $("wlTask" + n).value.trim();
+            const grade = $("wlGrade" + n).value.trim();
+            const sub = $("wlSub" + n).value.trim();
+            if (period || task || grade || sub) workloadRows.push({ period, task, grade, sub });
+          }
+        }
         const reason = $("fReason").value.trim();
         if (!reason) { showToast("กรุณาระบุเหตุผล"); return; }
 
@@ -626,12 +690,15 @@
           userId: teacher.id,
           userName: teacher.name,
           position: teacher.position || "ครู",
+          academicRank,
           startDate,
           endDate,
           startTime,
           endTime,
           reason,
           destination,
+          hasWorkload,
+          workloadRows,
           status: "pending",
           approvedBy: "",
           createdAt: new Date().toLocaleString("th-TH")
@@ -648,35 +715,163 @@
       };
     }
 
+    const THAI_MONTHS_FULL = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+    function toThaiDigits(str) {
+      return String(str || "").replace(/\d/g, (d) => "๐๑๒๓๔๕๖๗๘๙"[Number(d)]);
+    }
+    function formatThaiMemoDate(ymd) {
+      if (!ymd || !ymd.includes("-")) return ".............................................";
+      const [y, m, d] = ymd.split("-").map(Number);
+      return toThaiDigits(`${d} ${THAI_MONTHS_FULL[m - 1] || ""} ${y + 543}`);
+    }
+    function calcHoursText(st, et) {
+      if (!st || !et) return "............";
+      const [sh, sm] = st.split(":").map(Number);
+      const [eh, em] = et.split(":").map(Number);
+      const diffMin = (eh * 60 + em) - (sh * 60 + sm);
+      if (diffMin <= 0) return "............";
+      const hrs = diffMin / 60;
+      return toThaiDigits(Number.isInteger(hrs) ? String(hrs) : hrs.toFixed(1));
+    }
+
     function printLeaveSlip(item) {
+      if (item.type === "offcampus") {
+        const rows = Array.isArray(item.workloadRows) ? item.workloadRows : [];
+        const tableRowsHtml = [0, 1, 2, 3].map((i) => {
+          const r = rows[i] || {};
+          return `<tr><td>${toThaiDigits(r.period || "")}</td><td class="left">${r.task || ""}</td><td>${r.grade || ""}</td><td>${r.sub || ""}</td></tr>`;
+        }).join("");
+        const hasWL = Boolean(item.hasWorkload || rows.length > 0);
+        const dateThai = formatThaiMemoDate(item.startDate);
+        const startT = item.startTime ? toThaiDigits(item.startTime) : "...............";
+        const endT = item.endTime ? toThaiDigits(item.endTime) : "...............";
+        const totalHrs = calcHoursText(item.startTime, item.endTime);
+
+        $("printSlipArea").innerHTML = `
+          <div class="memo-stamp-wrap">
+            <div class="memo-stamp">
+              <div><strong>กลุ่มบริหารงานบุคคล</strong></div>
+              <div>รับที่………………………………….</div>
+              <div>วันที่.....................................</div>
+              <div>เวลา...................................น.</div>
+            </div>
+          </div>
+
+          <div class="memo-header">
+            <img class="memo-garuda" src="./icons/garuda.svg" alt="ตราครุฑ" />
+            <div class="memo-title">บันทึกข้อความ</div>
+          </div>
+
+          <div class="memo-field-line">
+            <strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่&nbsp;&nbsp;&nbsp;&nbsp;อำเภอปากช่อง&nbsp;&nbsp;สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔
+          </div>
+          <div class="memo-meta-row">
+            <div><strong>ที่</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+            <div><strong>วันที่</strong>&nbsp;&nbsp;${dateThai}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+          </div>
+          <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;ขออนุญาตออกนอกบริเวณโรงเรียน</div>
+          <div class="memo-field-line" style="margin-top:4px"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+
+          <div class="memo-indent">
+            ด้วยข้าพเจ้า&nbsp;${item.userName || "....................................................................."}&nbsp;
+            ตำแหน่ง&nbsp;${item.position || "........................"}&nbsp;
+            วิทยฐานะ&nbsp;${item.academicRank || ".........................."}&nbsp;
+            โรงเรียนบ้านป่าไผ่ มีความจำเป็นเนื่องจาก (ระบุ)&nbsp;${item.reason || "........................................................................"}&nbsp;
+            จึงขออนุญาตออกนอกบริเวณโรงเรียน ไปที่&nbsp;${item.destination || "...................................................................."}&nbsp;
+            ในวันที่&nbsp;${dateThai}&nbsp;ตั้งแต่เวลา&nbsp;${startT}&nbsp;ถึงเวลา&nbsp;${endT}&nbsp;น. รวม&nbsp;${totalHrs}&nbsp;ชั่วโมง
+          </div>
+
+          <div class="memo-field-line" style="margin-top:4px">
+            <strong>ภาระงาน</strong>&nbsp;&nbsp;&nbsp;
+            <span class="chk-box">${hasWL ? "✓" : ""}</span> มี&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="chk-box">${!hasWL ? "✓" : ""}</span> ไม่มี
+          </div>
+          <div class="memo-field-line">โดยได้มอบหมายภาระงานการเรียนการสอน/งานพิเศษ ดังนี้</div>
+
+          <table class="memo-table">
+            <thead>
+              <tr>
+                <th style="width:12%">คาบ</th>
+                <th style="width:42%">งานสอน/ภาระงาน</th>
+                <th style="width:14%">ชั้น</th>
+                <th style="width:32%">ผู้สอนแทน (ลงชื่อ)</th>
+              </tr>
+            </thead>
+            <tbody>${tableRowsHtml}</tbody>
+          </table>
+
+          <div class="memo-indent" style="margin-top:4px">จึงเรียนมาเพื่อโปรดทราบและพิจารณา</div>
+
+          <div class="memo-sign-right">
+            <div>ลงชื่อ...................................................ผู้ขออนุญาต</div>
+            <div>(${item.userName || "................................................................"})</div>
+            <div>ตำแหน่ง ${item.position || "………………………………………………"}</div>
+          </div>
+
+          <div class="memo-hr-box">
+            <div><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong></div>
+            <div style="text-indent:0.8cm">- เพื่อโปรดทราบ</div>
+            <div>………………………………………………………………………………</div>
+            <div>………………………………………………………………………………</div>
+            <div class="memo-sign-2col">
+              <div>
+                <div>ลงชื่อ.........................................................</div>
+                <div>(นางสาวนริศรา พืชผักหวาน)</div>
+                <div>เจ้าหน้าที่ทะเบียนและสถิติ</div>
+              </div>
+              <div>
+                <div>ลงชื่อ............................................................</div>
+                <div>(นายธานครินทร์ สุเมธาลังการ)</div>
+                <div>หัวหน้ากลุ่มบริหารงานบุคคล</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="memo-dir-box">
+            <div><strong>ความเห็นของผู้อำนวยการโรงเรียน</strong></div>
+            <div style="margin-top:2px">
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="chk-box">${item.status === "approved" ? "✓" : ""}</span> อนุญาต&nbsp;&nbsp;&nbsp;&nbsp;
+              <span class="chk-box">${item.status === "rejected" ? "✓" : ""}</span> ไม่อนุญาต เนื่องจาก..................................................................................
+            </div>
+            <div class="memo-sign-right" style="margin-top:14px">
+              <div>ลงชื่อ............................................................</div>
+              <div>(นางสาวนภาพร คงแสนคำ)</div>
+              <div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
+            </div>
+          </div>
+
+          <div class="memo-footnote">*หมายเหตุ ให้ผู้อำนวยการอนุญาตก่อนออกนอกบริเวณโรงเรียน</div>
+        `;
+        window.print();
+        return;
+      }
+
       const tLabel = (TYPE_MAP[item.type] || {}).label || item.type;
-      const dateRange = item.startDate === item.endDate ? item.startDate : `${item.startDate} ถึง ${item.endDate}`;
-      const timeText = item.startTime ? ` ตั้งแต่เวลา ${item.startTime} น. ถึง ${item.endTime} น.` : "";
+      const dateRange = item.startDate === item.endDate ? formatThaiMemoDate(item.startDate) : `${formatThaiMemoDate(item.startDate)} ถึง ${formatThaiMemoDate(item.endDate)}`;
       $("printSlipArea").innerHTML = `
         <div class="slip-head">
           <img src="./icons/school-logo.png" alt="" />
           <h2>แบบ${tLabel}</h2>
-          <div>โรงเรียนบ้านป่าไผ่ สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</div>
+          <div>โรงเรียนบ้านป่าไผ่ สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
         </div>
-        <p style="text-align:right">วันที่เขียนแบบฟอร์ม: ${item.createdAt || todayYmd()}</p>
+        <p style="text-align:right">วันที่เขียนแบบฟอร์ม: ${formatThaiMemoDate(item.startDate)}</p>
         <p><strong>เรียน</strong> ผู้อำนวยการโรงเรียนบ้านป่าไผ่</p>
-        <p style="text-indent:36px">
+        <p class="memo-indent">
           ข้าพเจ้า <strong>${item.userName}</strong> ตำแหน่ง ${item.position || "ครู"} โรงเรียนบ้านป่าไผ่
           มีความประสงค์ขออนุญาต <strong>${tLabel}</strong>
-          ในวันที่ <strong>${dateRange}</strong>${timeText}
-          ${item.destination ? ` ณ <strong>${item.destination}</strong>` : ""}
+          ในวันที่ <strong>${dateRange}</strong>
           เนื่องจาก ${item.reason}
         </p>
-        <p style="text-indent:36px">จึงเรียนมาเพื่อโปรดพิจารณาอนุญาต</p>
+        <p class="memo-indent">จึงเรียนมาเพื่อโปรดพิจารณาอนุญาต</p>
         <div class="slip-sign">
           <div>
             <div>ลงชื่อ..............................................ผู้ขออนุญาต</div>
-            <div style="margin-top:26px">(${item.userName})</div>
+            <div style="margin-top:24px">(${item.userName})</div>
             <div>${item.position || "ครูโรงเรียนบ้านป่าไผ่"}</div>
           </div>
           <div>
-            <div>ความเห็นผู้อำนวยการ: [ ${item.status === "approved" ? "✓" : " "} ] อนุญาต  [ ${item.status === "rejected" ? "✓" : " "} ] ไม่อนุญาต</div>
-            <div style="margin-top:26px">ลงชื่อ..............................................</div>
+            <div>ความเห็นผู้อำนวยการ: <span class="chk-box">${item.status === "approved" ? "✓" : ""}</span> อนุญาต &nbsp;<span class="chk-box">${item.status === "rejected" ? "✓" : ""}</span> ไม่อนุญาต</div>
+            <div style="margin-top:24px">ลงชื่อ..............................................</div>
             <div>(นางสาวนภาพร คงแสนคำ)</div>
             <div>ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
           </div>

@@ -141,7 +141,15 @@
           <h1>บันทึกคะแนนนักเรียน (50+50)</h1>
           <div class="user-sub" id="userSub">โรงเรียนบ้านป่าไผ่ • DMC หลัก</div>
         </div>
-        <button type="button" class="btn-green" id="saveScoresBtn" style="padding:7px 12px;font-size:12px">💾 บันทึก</button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select class="select-field" id="yearSelect" style="width:auto;padding:6px 9px;font-size:12px">
+            <option value="2569">ปี 2569</option>
+            <option value="2570">ปี 2570</option>
+            <option value="2571">ปี 2571</option>
+            <option value="2572">ปี 2572</option>
+          </select>
+          <button type="button" class="btn-green" id="saveScoresBtn" style="padding:7px 11px;font-size:12px">💾 บันทึก</button>
+        </div>
       </div>
       <div class="seg-tabs">
         <button type="button" class="seg-tab active" data-tab="entry">กรอกคะแนน</button>
@@ -158,10 +166,11 @@
         <div class="ctrl-row">
           <select class="select-field" id="termSelect">
             <option value="t2">ภาคเรียนที่ 2 (เต็ม 50)</option>
-            <option value="t1">ภาคเรียนที่ 1 (เต็ม 50)</option>
+            <option value="t1">ภาคเรียนที่ 1 (ล็อกแล้ว 🔒)</option>
           </select>
           <select class="select-field" id="subjectSelect"></select>
         </div>
+        <div id="termLockBanner" class="card hidden" style="background:rgba(217,119,6,0.12);border-color:rgba(217,119,6,0.3);color:var(--amber);font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"></div>
         <div id="entryList"></div>
       </section>
 
@@ -258,17 +267,21 @@
     }
 
     const teacher = getTeacher();
+    const isAdmin = teacher.id === "thanakarin" && teacher.role === "admin";
     const backendUrl = ((window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
     const $ = (id) => document.getElementById(id);
 
-    function loadInitialScores() {
-      const seed = window.BPP_TERM1_SCORES || {};
+    function storageKeyForYear(yr) {
+      return yr === "2569" ? STORAGE_KEY : `bpp_scores_${yr}_v1`;
+    }
+
+    function loadScoresForYear(yr) {
+      const seed = yr === "2569" ? (window.BPP_TERM1_SCORES || {}) : {};
       let local = { t1: {}, t2: {} };
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(storageKeyForYear(yr));
         if (raw) local = { t1: {}, t2: {}, ...JSON.parse(raw) };
       } catch (_) {}
-      // Merge Term 1 seed scores cleanly without overwriting user edits
       const mergedT1 = { ...seed };
       Object.keys(local.t1 || {}).forEach((code) => {
         mergedT1[code] = { ...(mergedT1[code] || {}), ...(local.t1[code] || {}) };
@@ -278,14 +291,20 @@
 
     const state = {
       tab: "entry",
+      acadYear: "2569",
       grade: HOMEROOM_PRIMARY[teacher.id] || "ป.1",
       term: "t2",
       subjIdx: 0,
+      adminUnlockT1: false,
       repStuId: "",
       repMode: "year",
       students: window.BPP_STUDENTS_HELPER.loadStudents().filter((s) => PRIMARY_GRADES.includes(s.grade)),
-      scores: loadInitialScores()
+      scores: loadScoresForYear("2569")
     };
+
+    function isTerm1Locked() {
+      return state.term === "t1" && !(isAdmin && state.adminUnlockT1);
+    }
 
     function showToast(m) {
       const el = $("toast"); el.textContent = m; el.classList.add("show");
@@ -312,26 +331,28 @@
     }
 
     function saveAll(notify = true) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.scores)); } catch (_) {}
+      const yr = state.acadYear;
+      try { localStorage.setItem(storageKeyForYear(yr), JSON.stringify(state.scores)); } catch (_) {}
       if (backendUrl) {
         fetch(backendUrl, {
           method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({ action: "save_kv", key: "scores_2569_v1", value: state.scores })
+          body: JSON.stringify({ action: "save_kv", key: `scores_${yr}_v1`, value: state.scores })
         }).catch(() => {});
       }
-      if (notify) showToast("บันทึกคะแนนนักเรียนเรียบร้อย!");
+      if (notify) showToast(`บันทึกคะแนนปีการศึกษา ${yr} เรียบร้อย!`);
     }
 
     async function syncCloud() {
       if (!backendUrl) return;
+      const yr = state.acadYear;
       try {
-        const res = await fetch(`${backendUrl}?action=get_kv&key=scores_2569_v1`, { cache: "no-store" });
+        const res = await fetch(`${backendUrl}?action=get_kv&key=scores_${yr}_v1`, { cache: "no-store" });
         const json = await res.json();
         if (json && json.ok && json.value && typeof json.value === "object") {
           const v = json.value;
           if (v.t1) state.scores.t1 = { ...state.scores.t1, ...v.t1 };
           if (v.t2) state.scores.t2 = { ...state.scores.t2, ...v.t2 };
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.scores)); } catch (_) {}
+          try { localStorage.setItem(storageKeyForYear(yr), JSON.stringify(state.scores)); } catch (_) {}
           render();
         }
       } catch (_) {}
@@ -353,6 +374,19 @@
       $("termSelect").value = state.term;
       $("subjectSelect").innerHTML = subjs.map((s) => `<option value="${s.idx}" ${state.subjIdx === s.idx ? "selected" : ""}>${s.code} ${s.name}</option>`).join("");
 
+      const locked = isTerm1Locked();
+      const lockBanner = $("termLockBanner");
+      if (state.term === "t1") {
+        lockBanner.classList.remove("hidden");
+        lockBanner.innerHTML = `
+          <span>🔒 คะแนนภาคเรียนที่ 1 ถูกล็อกไว้ (ห้ามแก้ไข)</span>
+          ${isAdmin ? `<button type="button" class="btn-soft" id="toggleT1LockBtn" style="padding:4px 9px;font-size:11.5px">${state.adminUnlockT1 ? "ล็อกกลับ 🔒" : "ปลดล็อก (แอดมิน)"}</button>` : ""}`;
+        const tBtn = document.getElementById("toggleT1LockBtn");
+        if (tBtn) tBtn.onclick = () => { state.adminUnlockT1 = !state.adminUnlockT1; renderEntry(); };
+      } else {
+        lockBanner.classList.add("hidden");
+      }
+
       const list = getGradeStudents();
       $("entryList").innerHTML = list.map((s, i) => {
         const c = getCell(state.term, s.code, state.subjIdx);
@@ -369,11 +403,11 @@
             <div class="score-grid">
               <div>
                 <label class="sc-lbl">คะแนนเก็บ</label>
-                <input class="sc-in" type="number" step="0.5" min="0" max="50" data-code="${s.code}" data-f="k" value="${c.k}" placeholder="0" />
+                <input class="sc-in" type="number" step="0.5" min="0" max="50" data-code="${s.code}" data-f="k" value="${c.k}" placeholder="0" ${locked ? "disabled" : ""} />
               </div>
               <div>
                 <label class="sc-lbl">คะแนนสอบ</label>
-                <input class="sc-in" type="number" step="0.5" min="0" max="50" data-code="${s.code}" data-f="s" value="${c.s}" placeholder="0" />
+                <input class="sc-in" type="number" step="0.5" min="0" max="50" data-code="${s.code}" data-f="s" value="${c.s}" placeholder="0" ${locked ? "disabled" : ""} />
               </div>
               <div>
                 <label class="sc-lbl" style="text-align:center">รวม/50</label>
@@ -417,10 +451,10 @@
       const subjs = getSubjectsForGrade(state.grade);
       const isYear = state.repMode === "year";
       const termTitle = isYear
-        ? "ปีการศึกษา 2569 (รวมภาคเรียนที่ 1 และ 2)"
+        ? `ปีการศึกษา ${state.acadYear} (รวมภาคเรียนที่ 1 และ 2)`
         : state.repMode === "t1"
-          ? "ภาคเรียนที่ 1 ปีการศึกษา 2569"
-          : "ภาคเรียนที่ 2 ปีการศึกษา 2569";
+          ? `ภาคเรียนที่ 1 ปีการศึกษา ${state.acadYear}`
+          : `ภาคเรียนที่ 2 ปีการศึกษา ${state.acadYear}`;
       const fullPerSubj = isYear ? 100 : 50;
 
       let sumGot = 0, sumFull = 0;
@@ -496,6 +530,15 @@
     }
 
     // Events
+    $("yearSelect").value = state.acadYear;
+    $("yearSelect").onchange = (e) => {
+      state.acadYear = e.target.value;
+      state.adminUnlockT1 = false;
+      state.scores = loadScoresForYear(state.acadYear);
+      render();
+      syncCloud();
+      showToast(`เปลี่ยนเป็นปีการศึกษา ${state.acadYear} แล้ว`);
+    };
     document.querySelectorAll("[data-tab]").forEach((b) => { b.onclick = () => { state.tab = b.dataset.tab; render(); }; });
     $("gradeBarWrap").addEventListener("click", (e) => {
       const b = e.target.closest("[data-g]"); if (!b) return;
@@ -508,6 +551,7 @@
     $("repModeSelect").onchange = (e) => { state.repMode = e.target.value; renderReport(); };
 
     $("entryList").addEventListener("input", (e) => {
+      if (isTerm1Locked()) return;
       const inp = e.target.closest("[data-code]"); if (!inp) return;
       setCell(state.term, inp.dataset.code, state.subjIdx, inp.dataset.f, inp.value);
       const tot = getSubjTotal(state.term, inp.dataset.code, state.subjIdx);
@@ -531,7 +575,7 @@
         return `<tr><td>${i + 1}</td><td>${s.code}</td><td class="left">${s.prefix}${s.firstName} ${s.lastName}</td><td>${t1}</td><td>${t2}</td><td>${yr}</td><td>${calcThaiGrade(yr).g}</td></tr>`;
       }).join("");
       const html = `<div class="report-paper" style="padding:0;border:none;box-shadow:none">
-        <div style="text-align:center;font-weight:700;margin-bottom:6px">สรุปคะแนนและผลการเรียน ปีการศึกษา 2569<br/>วิชา ${subj.code} ${subj.name} • ชั้น ${state.grade} โรงเรียนบ้านป่าไผ่</div>
+        <div style="text-align:center;font-weight:700;margin-bottom:6px">สรุปคะแนนและผลการเรียน ปีการศึกษา ${state.acadYear}<br/>วิชา ${subj.code} ${subj.name} • ชั้น ${state.grade} โรงเรียนบ้านป่าไผ่</div>
         <table class="rep-table"><thead><tr><th>ที่</th><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>เทอม 1 (50)</th><th>เทอม 2 (50)</th><th>รวม (100)</th><th>เกรด</th></tr></thead><tbody>${rowsHtml}</tbody></table>
       </div>`;
       window.BPP_PDF.exportOrShare(html, `สรุปคะแนน_${state.grade}_${subj.code}.pdf`, { shareToAdmin: true, onStatus: showToast });

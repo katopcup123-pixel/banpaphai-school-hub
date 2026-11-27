@@ -220,34 +220,34 @@
     .toast.show { display: block; }
     .hidden { display: none !important; }
 
-    /* Shared Official Thai Government Document Styles (TH SarabunIT9 — Exact 1-Page Microsoft Word Match!) */
+    /* Shared Official Thai Government Document Styles (TH SarabunIT9 — Exact 1-Page Microsoft Word Scale!) */
     .doc-memo {
       position: relative;
       font-family: "TH SarabunIT9", "TH Sarabun New", serif;
       color: #000;
-      font-size: 15.5pt;
-      line-height: 1.26;
+      font-size: 13.5pt;
+      line-height: 1.28;
       text-align: left;
       width: 100%;
       box-sizing: border-box;
     }
     .memo-stamp-wrap { position: absolute; top: 0; right: 0; margin: 0; }
-    .memo-stamp { border: 1px solid #000; padding: 2px 8px; font-size: 12pt; line-height: 1.18; width: 188px; background: #fff; }
+    .memo-stamp { border: 1px solid #000; padding: 2px 8px; font-size: 11pt; line-height: 1.2; width: 180px; background: #fff; }
     .memo-header { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 4px; padding-top: 8px; }
-    .memo-garuda { width: 58px; height: auto; flex-shrink: 0; }
-    .memo-title { flex: 1; text-align: center; font-size: 27pt; font-weight: 700; padding-right: 58px; line-height: 0.95; }
+    .memo-garuda { width: 52px; height: auto; flex-shrink: 0; }
+    .memo-title { flex: 1; text-align: center; font-size: 23pt; font-weight: 700; padding-right: 52px; line-height: 0.95; }
     .memo-meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 3px; }
     .memo-field-line { margin: 1px 0; text-align: left; }
-    .memo-indent { text-indent: 52px; text-align: left; margin: 3px 0 2px; }
-    .memo-table { width: 100%; border-collapse: collapse; margin: 4px 0 4px; font-size: 14pt; table-layout: fixed; }
+    .memo-indent { text-indent: 48px; text-align: left; margin: 3px 0 2px; }
+    .memo-table { width: 100%; border-collapse: collapse; margin: 4px 0 4px; font-size: 12.5pt; table-layout: fixed; }
     .memo-table th, .memo-table td { border: 1px solid #000; padding: 2px 5px; text-align: center; height: 22px; word-wrap: break-word; }
     .memo-table td.left { text-align: left; }
-    .memo-sign-right { width: 54%; margin-left: auto; text-align: center; margin-top: 8px; line-height: 1.22; }
-    .memo-sign-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; margin-top: 8px; line-height: 1.22; }
-    .memo-box-2x2 { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 13.5pt; table-layout: fixed; }
-    .memo-box-2x2 td { border: 1px solid #000; width: 50%; vertical-align: top; padding: 3px 6px; line-height: 1.22; }
-    .chk-box { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; text-align: center; line-height: 11px; font-size: 10px; margin: 0 3px; vertical-align: middle; font-family: sans-serif; }
-    .memo-footnote { margin-top: 5px; font-size: 13.5pt; font-style: italic; }
+    .memo-sign-right { width: 54%; margin-left: auto; text-align: center; margin-top: 8px; line-height: 1.24; }
+    .memo-sign-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; margin-top: 8px; line-height: 1.24; }
+    .memo-box-2x2 { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12pt; table-layout: fixed; }
+    .memo-box-2x2 td { border: 1px solid #000; width: 50%; vertical-align: top; padding: 3px 6px; line-height: 1.24; }
+    .chk-box { display: inline-block; width: 11px; height: 11px; border: 1px solid #000; text-align: center; line-height: 10px; font-size: 9.5px; margin: 0 3px; vertical-align: middle; font-family: sans-serif; }
+    .memo-footnote { margin-top: 5px; font-size: 12pt; font-style: italic; }
 
     #printSlipArea { display: none; }
     @media print {
@@ -796,7 +796,7 @@
         type,
         userId: teacher.id,
         userName: teacher.name,
-        position: teacher.position || "ครู",
+        position: getOfficialPosition(teacher.id, teacher.position),
         academicRank: meta.academicRank || "",
         hasWorkload: Boolean(meta.hasWorkload),
         workloadRows: Array.isArray(meta.workloadRows) ? meta.workloadRows : [],
@@ -823,9 +823,24 @@
       return (m >= 10 || m <= 3) ? 1 : 2; // 1 = 1 ต.ค.-31 มี.ค., 2 = 1 เม.ย.-30 ก.ย.
     }
 
+    // ตำแหน่งราชการจริงสำหรับเอกสาร (ไม่มี /แอดมิน)
+    const OFFICIAL_POS = {
+      napaporn: "ผู้อำนวยการโรงเรียนบ้านป่าไผ่",
+      pacharasaran: "ครู",
+      thanakarin: "ครู",
+      namphet: "ครู",
+      narisara: "ครูผู้ช่วย",
+      nantaphat: "ครูอัตราจ้าง"
+    };
+    function getOfficialPosition(userId, fallbackPos) {
+      if (OFFICIAL_POS[userId]) return OFFICIAL_POS[userId];
+      return String(fallbackPos || "ครู").replace(/\/แอดมิน/g, "").trim() || "ครู";
+    }
+
     function buildOfficialDocHtml(item) {
       const m = item.meta || {};
       const rank = item.academicRank || m.academicRank || "..................";
+      const pos = getOfficialPosition(item.userId, item.position);
 
       // 1. บันทึกข้อความ ขออนุญาตออกนอกบริเวณโรงเรียน
       if (item.type === "offcampus") {
@@ -847,12 +862,12 @@
           <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong> ${dateThai}</div></div>
           <div class="memo-field-line"><strong>เรื่อง</strong> ขออนุญาตออกนอกบริเวณโรงเรียน</div>
           <div class="memo-field-line"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
-          <div class="memo-indent">ด้วยข้าพเจ้า ${item.userName} ตำแหน่ง ${item.position || "ครู"} วิทยฐานะ ${rank} โรงเรียนบ้านป่าไผ่ มีความจำเป็นเนื่องจาก (ระบุ) ${item.reason} จึงขออนุญาตออกนอกบริเวณโรงเรียน ไปที่ ${item.destination || ".........................."} ในวันที่ ${dateThai} ตั้งแต่เวลา ${startT} ถึงเวลา ${endT} น. รวม ${totalHrs} ชั่วโมง</div>
+          <div class="memo-indent">ด้วยข้าพเจ้า ${item.userName} ตำแหน่ง ${pos} วิทยฐานะ ${rank} โรงเรียนบ้านป่าไผ่ มีความจำเป็นเนื่องจาก (ระบุ) ${item.reason} จึงขออนุญาตออกนอกบริเวณโรงเรียน ไปที่ ${item.destination || ".........................."} ในวันที่ ${dateThai} ตั้งแต่เวลา ${startT} ถึงเวลา ${endT} น. รวม ${totalHrs} ชั่วโมง</div>
           <div class="memo-field-line"><strong>ภาระงาน</strong>&nbsp;&nbsp;<span class="chk-box">${hasWL ? "✓" : ""}</span> มี&nbsp;&nbsp;&nbsp;<span class="chk-box">${!hasWL ? "✓" : ""}</span> ไม่มี</div>
           <div class="memo-field-line">โดยได้มอบหมายภาระงานการเรียนการสอน/งานพิเศษ ดังนี้</div>
           <table class="memo-table"><thead><tr><th style="width:12%">คาบ</th><th style="width:42%">งานสอน/ภาระงาน</th><th style="width:14%">ชั้น</th><th style="width:32%">ผู้สอนแทน (ลงชื่อ)</th></tr></thead><tbody>${tableRowsHtml}</tbody></table>
           <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบและพิจารณา</div>
-          <div class="memo-sign-right"><div>ลงชื่อ...................................................ผู้ขออนุญาต</div><div>(${item.userName})</div><div>ตำแหน่ง ${item.position || "ครู"}</div></div>
+          <div class="memo-sign-right"><div>ลงชื่อ...................................................ผู้ขออนุญาต</div><div>(${item.userName})</div><div>ตำแหน่ง ${pos}</div></div>
           <div style="margin-top:8px"><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong><div style="text-indent:0.8cm">- เพื่อโปรดทราบ</div><div>………………………………………………………………………………</div><div>………………………………………………………………………………</div></div>
           <div class="memo-sign-2col">
             <div><div>ลงชื่อ.........................................................</div><div>(นางสาวนริศรา พืชผักหวาน)</div><div>เจ้าหน้าที่ทะเบียนและสถิติ</div></div>
@@ -890,7 +905,7 @@
           <div style="text-align:right">วันที่&nbsp;${sp.d}&nbsp;เดือน&nbsp;${sp.m}&nbsp;พ.ศ.&nbsp;${sp.y}</div>
           <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;${subj}</div>
           <div class="memo-field-line"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
-          <div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${item.position || "ครู"}&nbsp;โรงเรียนบ้านป่าไผ่ สังกัดสำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4 สังกัดสำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน กระทรวงศึกษาธิการ</div>
+          <div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${pos}&nbsp;โรงเรียนบ้านป่าไผ่ สังกัดสำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4 สังกัดสำนักงานคณะกรรมการการศึกษาขั้นพื้นฐาน กระทรวงศึกษาธิการ</div>
           <div style="margin-left:1.2cm">
             <div>ขอลา&nbsp;&nbsp;( ${item.type === "sick" ? "✓" : "&nbsp;&nbsp;"} ) ป่วย&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;เนื่องจาก ${item.type === "sick" ? item.reason : "................................................................................."}</div>
             <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( ${item.type === "personal" ? "✓" : "&nbsp;&nbsp;"} ) กิจส่วนตัว&nbsp;&nbsp;&nbsp;เนื่องจาก ${item.type === "personal" ? item.reason : "................................................................................."}</div>
@@ -900,7 +915,7 @@
           <div class="memo-field-line">ข้าพเจ้าได้ลา ( ${lastSame && lastSame.type === "sick" ? "✓" : "&nbsp;"} ) ป่วย ( ${lastSame && lastSame.type === "personal" ? "✓" : "&nbsp;"} ) กิจส่วนตัว ( ${lastSame && lastSame.type === "maternity" ? "✓" : "&nbsp;"} ) คลอดบุตร ครั้งสุดท้ายตั้งแต่วันที่ ${lp1 ? `${lp1.d} เดือน ${lp1.m} พ.ศ. ${lp1.y}` : "...... เดือน ............ พ.ศ. ......"} ถึงวันที่ ${lp2 ? `${lp2.d} เดือน ${lp2.m} พ.ศ. ${lp2.y}` : "...... เดือน ............ พ.ศ. ......"} กำหนด ${lastDays} วัน</div>
           <div class="memo-field-line">ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่&nbsp;${m.contactAddr || "...................................................................................................."}</div>
           <div class="memo-field-line">โทร&nbsp;${m.phone || "........................................................................"}</div>
-          <div class="memo-sign-right"><div>ขอแสดงความนับถือ</div><div style="margin-top:16px">............................................................</div><div>(${item.userName})</div><div>ตำแหน่ง ${item.position || "ครู"}</div></div>
+          <div class="memo-sign-right"><div>ขอแสดงความนับถือ</div><div style="margin-top:16px">............................................................</div><div>(${item.userName})</div><div>ตำแหน่ง ${pos}</div></div>
           <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:14px;margin-top:12px;align-items:start">
             <div>
               <div><strong>สถิติการลา</strong> ( ${half === 1 ? "✓" : "&nbsp;"} ) 1 ต.ค. - 31 มี.ค. ( ${half === 2 ? "✓" : "&nbsp;"} ) 1 เม.ย. - 30 ก.ย.</div>
@@ -945,7 +960,7 @@
           <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong>&nbsp;&nbsp;${formatThaiDate(item.startDate)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
           <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;ขออนุญาตไปราชการ</div>
           <div class="memo-field-line"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
-          <div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${item.position || "ครู"}&nbsp;ข้าราชการครูและบุคลากรทางการศึกษากลุ่มสาระการเรียนรู้&nbsp;${m.dept || "........................"}&nbsp;พร้อมด้วยข้าราชการครูและบุคลากรทางการศึกษา จำนวน&nbsp;${comps.length || "......"}&nbsp;คน ได้แก่</div>
+          <div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${pos}&nbsp;ข้าราชการครูและบุคลากรทางการศึกษากลุ่มสาระการเรียนรู้&nbsp;${m.dept || "........................"}&nbsp;พร้อมด้วยข้าราชการครูและบุคลากรทางการศึกษา จำนวน&nbsp;${comps.length || "......"}&nbsp;คน ได้แก่</div>
           ${compRows}
           <div style="margin-top:4px;font-size:13.5pt">
             มีความประสงค์ขออนุญาตไปราชการเพื่อ&nbsp;
@@ -962,7 +977,7 @@
           <div class="memo-field-line"><strong>สถานที่</strong>&nbsp;${item.destination || ".........................."}&nbsp;<strong>อำเภอ</strong>&nbsp;${m.amphoe || "ปากช่อง"}&nbsp;<strong>จังหวัด</strong>&nbsp;${m.province || "นครราชสีมา"}</div>
           <div class="memo-field-line">โดยขออนุญาตเดินทางไปราชการระหว่างวันที่&nbsp;${sp.d}&nbsp;เดือน&nbsp;${sp.m}&nbsp;พ.ศ.&nbsp;${sp.y}&nbsp;ถึงวันที่&nbsp;${ep.d}&nbsp;เดือน&nbsp;${ep.m}&nbsp;พ.ศ.&nbsp;${ep.y}&nbsp;จำนวน&nbsp;${days}&nbsp;วัน เดินทางโดยพาหนะ&nbsp;${m.vehicle || "รถยนต์ส่วนตัว"}&nbsp;ตั้งแต่เวลา&nbsp;${item.startTime || "08:30"}&nbsp;น. ถึงเวลา&nbsp;${item.endTime || "16:30"}&nbsp;น. โดยขออนุมัติค่าใช้จ่ายไปราชการจำนวน&nbsp;${m.budget || "-"}&nbsp;บาท (${m.budgetText || "-"}) จึงขอความอนุเคราะห์ผู้อำนวยการโรงเรียนพิจารณามอบหมายฝ่ายธุรการดำเนินการออกคำสั่งให้ข้าพเจ้าได้ไปปฏิบัติราชการตามความประสงค์</div>
           <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบและพิจารณา</div>
-          <div class="memo-sign-right"><div>ลงชื่อ………………………………………………..</div><div>(${item.userName})</div><div>ตำแหน่ง ${item.position || "ครู"}</div></div>
+          <div class="memo-sign-right"><div>ลงชื่อ………………………………………………..</div><div>(${item.userName})</div><div>ตำแหน่ง ${pos}</div></div>
           <table class="memo-box-2x2">
             <tr>
               <td><strong>ความเห็นของหัวหน้างานพัฒนาบุคลากร</strong><br/>......................................................................<div style="text-align:center;margin-top:12px">ลงชื่อ................................................<br/>(นางสาวนริศรา พืชผักหวาน)<br/>........../................../..........</div></td>
@@ -989,10 +1004,10 @@
         <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;${isIn ? "ชี้แจงการมาลงเวลาปฏิบัติราชการ" : "ชี้แจงการไม่ลงเวลากลับจากการปฏิบัติราชการ"}</div>
         <div class="memo-field-line"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
         ${isIn
-          ? `<div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${item.position || "ครู"}&nbsp;วิทยฐานะ&nbsp;${rank}&nbsp;โรงเรียนบ้านป่าไผ่ ไม่ได้มาลงเวลาปฏิบัติราชการภายในเวลา 08.15 น. เมื่อวันที่&nbsp;${formatThaiDate(item.startDate)}&nbsp;เนื่องจาก (ระบุความจำเป็น)&nbsp;${item.reason}&nbsp;ทั้งนี้ ข้าพเจ้าได้มาปฏิบัติงานในวันดังกล่าว ตั้งแต่เวลา&nbsp;${item.startTime || "08:00"}&nbsp;น. ซึ่งมี&nbsp;${m.witness || ".........................................."}&nbsp;เป็นผู้ร่วมปฏิบัติงานกับข้าพเจ้า</div>`
-          : `<div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${item.position || "ครู"}&nbsp;วิทยฐานะ&nbsp;${rank}&nbsp;โรงเรียนบ้านป่าไผ่ ได้จัดทำบันทึกข้อความชี้แจงเหตุผลการไม่ลงเวลากลับจากการปฏิบัติราชการ เวลา 16.30 น. เมื่อวันที่&nbsp;${sp.d}&nbsp;เดือน&nbsp;${sp.m}&nbsp;พ.ศ.&nbsp;${sp.y}&nbsp;เนื่องจาก&nbsp;${item.reason}</div>`}
+          ? `<div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${pos}&nbsp;วิทยฐานะ&nbsp;${rank}&nbsp;โรงเรียนบ้านป่าไผ่ ไม่ได้มาลงเวลาปฏิบัติราชการภายในเวลา 08.15 น. เมื่อวันที่&nbsp;${formatThaiDate(item.startDate)}&nbsp;เนื่องจาก (ระบุความจำเป็น)&nbsp;${item.reason}&nbsp;ทั้งนี้ ข้าพเจ้าได้มาปฏิบัติงานในวันดังกล่าว ตั้งแต่เวลา&nbsp;${item.startTime || "08:00"}&nbsp;น. ซึ่งมี&nbsp;${m.witness || ".........................................."}&nbsp;เป็นผู้ร่วมปฏิบัติงานกับข้าพเจ้า</div>`
+          : `<div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${pos}&nbsp;วิทยฐานะ&nbsp;${rank}&nbsp;โรงเรียนบ้านป่าไผ่ ได้จัดทำบันทึกข้อความชี้แจงเหตุผลการไม่ลงเวลากลับจากการปฏิบัติราชการ เวลา 16.30 น. เมื่อวันที่&nbsp;${sp.d}&nbsp;เดือน&nbsp;${sp.m}&nbsp;พ.ศ.&nbsp;${sp.y}&nbsp;เนื่องจาก&nbsp;${item.reason}</div>`}
         <div class="memo-indent">จึงเรียนมาเพื่อโปรดทราบ</div>
-        <div class="memo-sign-right"><div>ลงชื่อ............................................................</div><div>(${item.userName})</div><div>ตำแหน่ง ${item.position || "ครู"}</div></div>
+        <div class="memo-sign-right"><div>ลงชื่อ............................................................</div><div>(${item.userName})</div><div>ตำแหน่ง ${pos}</div></div>
         <div style="margin-top:12px"><strong>เรียน ผู้อำนวยการโรงเรียนบ้านป่าไผ่</strong></div>
         <div class="memo-indent">ด้วย ${item.userName} ${isIn ? "บันทึกชี้แจงการมาลงเวลาปฏิบัติราชการ และขออนุญาตลงเวลาภายหลัง โดยถือว่ามาปฏิบัติงานในเวลาราชการ" : `บันทึกชี้แจงการไม่ลงเวลากลับจากการปฏิบัติราชการ เวลา 16.30 น. เมื่อวันที่ ${formatThaiDate(item.startDate)}`}</div>
         <div style="margin-top:6px"><strong>สถิติการบันทึกชี้แจง</strong>&nbsp;&nbsp;[ ${half === 1 ? "✓" : "&nbsp;"} ] 1 ต.ค. – 31 มี.ค. &nbsp;[ ${half === 2 ? "✓" : "&nbsp;"} ] 1 เม.ย. – 30 ก.ย.</div>

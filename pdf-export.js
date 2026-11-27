@@ -45,7 +45,7 @@ window.BPP_PDF = {
 
     // 794px = exact A4 width (210mm at 96dpi) with official Thai government margins & embedded TH SarabunIT9 16pt
     const pageEl = document.createElement("div");
-    pageEl.style.cssText = "width:794px;background:#ffffff;color:#000000;padding:26px 46px 26px 60px;box-sizing:border-box;font-family:'TH SarabunIT9','TH Sarabun New',serif;font-size:15.5pt;line-height:1.26;text-align:left;";
+    pageEl.style.cssText = "width:794px;background:#ffffff;color:#000000;padding:26px 46px 26px 60px;box-sizing:border-box;font-family:'TH SarabunIT9','TH Sarabun New',serif;font-size:13.5pt;line-height:1.28;text-align:left;";
     pageEl.innerHTML = htmlContent;
 
     overlay.appendChild(statusBar);

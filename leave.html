@@ -239,7 +239,8 @@
     .memo-header { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 6px; padding-top: 26px; }
     .memo-garuda { width: 54px; height: auto; flex-shrink: 0; }
     .memo-title { flex: 1; text-align: center; font-size: 26pt; font-weight: 700; padding-right: 54px; line-height: 0.9; }
-    .memo-meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 3px; }
+    .memo-meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 1px; margin-bottom: 2px; }
+    .memo-subject-line { margin: 1px 0 4px; padding-bottom: 3px; border-bottom: 1px solid #000; text-align: left; font-size: 16pt; }
     .memo-field-line { margin: 1px 0; text-align: left; font-size: 16pt; }
     .memo-indent { text-indent: 52px; text-align: left; margin: 3px 0 2px; font-size: 16pt; }
     .memo-table { width: 100%; border-collapse: collapse; margin: 4px 0 4px; font-size: 16pt; table-layout: fixed; }
@@ -896,7 +897,9 @@
       thanakarin: "ครู",
       namphet: "ครู",
       narisara: "ครูผู้ช่วย",
-      nantaphat: "ครูอัตราจ้าง"
+      nantaphat: "ครูอัตราจ้าง",
+      pattaraya: "เจ้าหน้าที่ธุรการ",
+      kun: "นักการภารโรง"
     };
     function getOfficialPosition(userId, fallbackPos) {
       if (OFFICIAL_POS[userId]) return OFFICIAL_POS[userId];
@@ -926,7 +929,7 @@
           <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-official.jpg" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
           <div class="memo-field-line"><strong>ส่วนราชการ</strong> โรงเรียนบ้านป่าไผ่ อำเภอปากช่อง สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
           <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong> ${dateThai}</div></div>
-          <div class="memo-field-line"><strong>เรื่อง</strong> ขออนุญาตออกนอกบริเวณโรงเรียน</div>
+          <div class="memo-subject-line"><strong>เรื่อง</strong> ขออนุญาตออกนอกบริเวณโรงเรียน</div>
           <div class="memo-field-line"><strong>เรียน</strong> ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
           <div class="memo-indent">ด้วยข้าพเจ้า ${item.userName} ตำแหน่ง ${pos} วิทยฐานะ ${rank} โรงเรียนบ้านป่าไผ่ มีความจำเป็นเนื่องจาก (ระบุ) ${item.reason} จึงขออนุญาตออกนอกบริเวณโรงเรียน ไปที่ ${item.destination || ".........................."} ในวันที่ ${dateThai} ตั้งแต่เวลา ${startT} ถึงเวลา ${endT} น. รวม ${totalHrs} ชั่วโมง</div>
           <div class="memo-field-line"><strong>ภาระงาน</strong>&nbsp;&nbsp;<span class="chk-box">${hasWL ? "✓" : ""}</span> มี&nbsp;&nbsp;&nbsp;<span class="chk-box">${!hasWL ? "✓" : ""}</span> ไม่มี</div>
@@ -1024,7 +1027,7 @@
           <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-official.jpg" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
           <div class="memo-field-line"><strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่&nbsp;&nbsp;สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 4</div>
           <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong>&nbsp;&nbsp;${formatThaiDate(item.startDate)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
-          <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;ขออนุญาตไปราชการ</div>
+          <div class="memo-subject-line"><strong>เรื่อง</strong>&nbsp;&nbsp;ขออนุญาตไปราชการ</div>
           <div class="memo-field-line"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
           <div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${pos}&nbsp;ข้าราชการครูและบุคลากรทางการศึกษากลุ่มสาระการเรียนรู้&nbsp;${m.dept || "........................"}&nbsp;พร้อมด้วยข้าราชการครูและบุคลากรทางการศึกษา จำนวน&nbsp;${comps.length || "......"}&nbsp;คน ได้แก่</div>
           ${compRows}
@@ -1067,7 +1070,7 @@
         <div class="memo-header"><img class="memo-garuda" src="./icons/garuda-official.jpg" alt="" /><div class="memo-title">บันทึกข้อความ</div></div>
         <div class="memo-field-line"><strong>ส่วนราชการ</strong>&nbsp;&nbsp;โรงเรียนบ้านป่าไผ่&nbsp;&nbsp;&nbsp;&nbsp;อำเภอปากช่อง&nbsp;&nbsp;สำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต ๔</div>
         <div class="memo-meta-row"><div><strong>ที่</strong></div><div><strong>วันที่</strong>&nbsp;&nbsp;${formatThaiDate(item.startDate, true)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></div>
-        <div class="memo-field-line"><strong>เรื่อง</strong>&nbsp;&nbsp;${isIn ? "ชี้แจงการมาลงเวลาปฏิบัติราชการ" : "ชี้แจงการไม่ลงเวลากลับจากการปฏิบัติราชการ"}</div>
+        <div class="memo-subject-line"><strong>เรื่อง</strong>&nbsp;&nbsp;${isIn ? "ชี้แจงการมาลงเวลาปฏิบัติราชการ" : "ชี้แจงการไม่ลงเวลากลับจากการปฏิบัติราชการ"}</div>
         <div class="memo-field-line"><strong>เรียน</strong>&nbsp;&nbsp;ผู้อำนวยการโรงเรียนบ้านป่าไผ่</div>
         ${isIn
           ? `<div class="memo-indent">ข้าพเจ้า&nbsp;${item.userName}&nbsp;ตำแหน่ง&nbsp;${pos}&nbsp;วิทยฐานะ&nbsp;${rank}&nbsp;โรงเรียนบ้านป่าไผ่ ไม่ได้มาลงเวลาปฏิบัติราชการภายในเวลา 08.15 น. เมื่อวันที่&nbsp;${formatThaiDate(item.startDate)}&nbsp;เนื่องจาก (ระบุความจำเป็น)&nbsp;${item.reason}&nbsp;ทั้งนี้ ข้าพเจ้าได้มาปฏิบัติงานในวันดังกล่าว ตั้งแต่เวลา&nbsp;${item.startTime || "08:00"}&nbsp;น. ซึ่งมี&nbsp;${m.witness || ".........................................."}&nbsp;เป็นผู้ร่วมปฏิบัติงานกับข้าพเจ้า</div>`

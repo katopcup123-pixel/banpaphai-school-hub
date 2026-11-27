@@ -172,7 +172,14 @@
       const raw = localStorage.getItem(STORAGE_USERS);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const seen = new Set(parsed.map((u) => u.id));
+          const merged = [...parsed];
+          (config.users || []).forEach((u) => {
+            if (!seen.has(u.id)) merged.push({ ...u });
+          });
+          return merged;
+        }
       }
     } catch (_) {}
     return config.users.map((u) => ({ ...u }));

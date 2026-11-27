@@ -95,6 +95,10 @@ window.BPP_PDF = {
     }
   },
 
+  async exportA4({ html, fileName, onStatus } = {}) {
+    return this.exportOrShare(html || "", fileName || "document.pdf", { shareToAdmin: true, onStatus });
+  },
+
   async exportOrShare(htmlContent, fileName, { shareToAdmin = false, onStatus } = {}) {
     const notify = (m) => { if (typeof onStatus === "function") onStatus(m); };
     notify("กำลังเตรียมตัวอย่าง PDF (A4)...");

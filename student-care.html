@@ -8,6 +8,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
+    @font-face {
+      font-family: "TH SarabunIT9";
+      src: url("./fonts/THSarabunIT9.ttf") format("truetype");
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: "TH SarabunIT9";
+      src: url("./fonts/THSarabunIT9-Bold.ttf") format("truetype");
+      font-weight: 700;
+    }
     :root {
       --bg: #F4F6FB;
       --surface: #FFFFFF;
@@ -31,13 +41,16 @@
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
-      margin: 0; padding: 0; height: 100%;
+      margin: 0; padding: 0; width: 100%; max-width: 100vw; height: 100%;
       background: var(--bg); color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
       -webkit-font-smoothing: antialiased;
       overflow: hidden;
+      overflow-x: hidden;
+      overscroll-behavior: none;
+      touch-action: pan-y;
     }
-    .app { max-width: 560px; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; }
+    .app { max-width: 560px; width: 100%; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
     .topbar {
       flex-shrink: 0; background: var(--glass); backdrop-filter: saturate(180%) blur(24px);
       border-bottom: 0.5px solid var(--border);
@@ -58,7 +71,8 @@
     .seg-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08); }
 
     .body-scroll {
-      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: none; touch-action: pan-y;
       padding: 14px 16px calc(32px + env(safe-area-inset-bottom));
       scrollbar-width: none;
     }
@@ -79,10 +93,12 @@
     .meta { font-size: 11.5px; color: var(--secondary); }
 
     .field, .select-field, .textarea-field {
-      width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text);
-      border-radius: 12px; padding: 9px 12px; font-family: inherit; font-size: 14.5px;
+      width: 100%; max-width: 100%; min-width: 0;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
+      border-radius: 12px; padding: 9px 11px; font-family: inherit; font-size: 16px;
       margin-bottom: 8px; outline: none;
     }
+    .sheet > *, .sheet div { min-width: 0; }
     .field:focus, .select-field:focus, .textarea-field:focus { border-color: var(--accent); }
     .lbl { display: block; font-size: 12px; font-weight: 600; color: var(--secondary); margin: 6px 0 4px; }
 
@@ -128,9 +144,12 @@
     }
     .backdrop.open { opacity: 1; pointer-events: auto; }
     .sheet {
-      width: 100%; max-width: 560px; max-height: 90dvh; overflow-y: auto;
+      width: 100%; max-width: 560px; max-height: 90dvh;
+      overflow-y: auto; overflow-x: hidden;
+      overscroll-behavior: contain; overscroll-behavior-x: none;
+      touch-action: pan-y; -webkit-overflow-scrolling: touch;
       background: var(--surface); border-radius: 24px 24px 0 0;
-      padding: 12px 18px calc(28px + env(safe-area-inset-bottom));
+      padding: 12px 16px calc(28px + env(safe-area-inset-bottom));
       transform: translateY(100%); transition: transform 0.32s var(--spring);
     }
     .backdrop.open .sheet { transform: translateY(0); }
@@ -231,7 +250,12 @@
         // ซิงก์ขึ้นคลาวด์โดยตัดรูปใหญ่เกินเพื่อไม่ให้เกินขีดจำกัดเซลล์ Google Sheets
         const lightVisits = {};
         Object.entries(db.visits || {}).forEach(([k, v]) => {
-          lightVisits[k] = { ...v, photo: v.photo && v.photo.length < 18000 ? v.photo : "" };
+          lightVisits[k] = {
+            ...v,
+            photo: "",
+            photo1: v.photo1 && v.photo1.length < 12000 ? v.photo1 : "",
+            photo2: v.photo2 && v.photo2.length < 12000 ? v.photo2 : ""
+          };
         });
         fetch(apiUrl, {
           method: "POST",
@@ -311,7 +335,11 @@
 
       if (ui.tab === "visit") {
         const visitedCount = classStudents.filter((s) => db.visits && db.visits[keyFor(s.id)]).length;
-        const photoCount = classStudents.filter((s) => db.visits && db.visits[keyFor(s.id)] && db.visits[keyFor(s.id)].photo).length;
+        const photoCount = classStudents.reduce((acc, s) => {
+          const v = db.visits && db.visits[keyFor(s.id)];
+          if (!v) return acc;
+          return acc + ((v.photo1 || v.photo) ? 1 : 0) + (v.photo2 ? 1 : 0);
+        }, 0);
         const rmKey = `${ui.year}_${ui.grade}`;
         const rm = (db.reportMeta && db.reportMeta[rmKey]) || {
           docNo: `พิเศษ/${ui.year}`,
@@ -349,7 +377,7 @@
                 <div class="stu-row" data-visit-stu="${st.id}">
                   <div>
                     <div class="stu-name">${idx + 1}. ${st.prefix || ""}${st.firstName} ${st.lastName} ${v && v.nickname ? `(${v.nickname})` : ""}</div>
-                    <div class="meta">รหัส ${st.code || "-"} ${v ? `• ${v.houseNo ? `บ้านเลขที่ ${v.houseNo} ม.${v.moo || "1"}` : "บันทึกแล้ว"} ${v.photo ? "📸" : ""}` : "• ยังไม่ได้บันทึกเยี่ยมบ้าน"}</div>
+                    <div class="meta">รหัส ${st.code || "-"} ${v ? `• ${v.houseNo ? `บ้านเลขที่ ${v.houseNo} ม.${v.moo || "1"}` : "บันทึกแล้ว"} ${(v.photo1 || v.photo || v.photo2) ? `📸${((v.photo1 || v.photo) ? 1 : 0) + (v.photo2 ? 1 : 0)}` : ""}` : "• ยังไม่ได้บันทึกเยี่ยมบ้าน"}</div>
                   </div>
                   <span class="badge ${v ? "ok" : ""}">${v ? "เยี่ยมแล้ว ✓" : "บันทึก →"}</span>
                 </div>`;
@@ -413,7 +441,8 @@
         socialRisk: ["เข้าใช้ line, Facebook, twitter หรือ chat (เกินวันละ 1 ชั่วโมง)"],
         note: ""
       };
-      let photoData = v.photo || "";
+      let photo1Data = v.photo1 || v.photo || "";
+      let photo2Data = v.photo2 || "";
       const has = (arr, val) => Array.isArray(arr) && arr.includes(val);
 
       openSheet(`
@@ -431,12 +460,16 @@
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
           <input class="field" id="vfGps" placeholder="พิกัด GPS บ้านนักเรียน" value="${v.gps || ""}" style="margin:0;flex:1" />
-          <button type="button" class="btn-soft" id="vfGetGpsBtn">📍 ดึง GPS</button>
+          <button type="button" class="btn-soft" id="vfGetGpsBtn" style="flex-shrink:0">📍 ดึง GPS</button>
         </div>
 
-        <label class="lbl">📸 ภาพถ่ายการเยี่ยมบ้าน (ใช้ใส่ในภาคผนวก PDF อัตโนมัติ)</label>
-        <input type="file" id="vfPhotoIn" accept="image/*" class="field" />
-        <img id="vfPhotoPrev" class="photo-preview" src="${photoData}" style="${photoData ? "" : "display:none"}" alt="" />
+        <label class="lbl">📸 ภาพถ่ายการเยี่ยมบ้าน รูปที่ 1 (หน้าบ้าน / ถ่ายคู่ผู้ปกครอง)</label>
+        <input type="file" id="vfPhoto1In" accept="image/*" class="field" />
+        <img id="vfPhoto1Prev" class="photo-preview" src="${photo1Data}" style="${photo1Data ? "" : "display:none"}" alt="" />
+
+        <label class="lbl">📸 ภาพถ่ายการเยี่ยมบ้าน รูปที่ 2 (สภาพบ้าน / บริเวณโดยรอบ)</label>
+        <input type="file" id="vfPhoto2In" accept="image/*" class="field" />
+        <img id="vfPhoto2Prev" class="photo-preview" src="${photo2Data}" style="${photo2Data ? "" : "display:none"}" alt="" />
 
         <label class="lbl">2. งานอดิเรก / กิจกรรมที่บ้าน</label>
         <div class="check-grid">
@@ -528,12 +561,19 @@
           () => showToast("ไม่สามารถดึงพิกัด GPS ได้")
         );
       };
-      document.getElementById("vfPhotoIn").onchange = async (e) => {
+      document.getElementById("vfPhoto1In").onchange = async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
-        photoData = await compressPhoto(file);
-        const img = document.getElementById("vfPhotoPrev");
-        img.src = photoData; img.style.display = "block";
+        photo1Data = await compressPhoto(file);
+        const img = document.getElementById("vfPhoto1Prev");
+        img.src = photo1Data; img.style.display = "block";
+      };
+      document.getElementById("vfPhoto2In").onchange = async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        photo2Data = await compressPhoto(file);
+        const img = document.getElementById("vfPhoto2Prev");
+        img.src = photo2Data; img.style.display = "block";
       };
       document.getElementById("vfSaveBtn").onclick = () => {
         const checkedVals = (name) => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map((x) => x.value);
@@ -546,7 +586,9 @@
           tambon: document.getElementById("vfTambon").value.trim() || "จันทึก",
           amphoe: "ปากช่อง",
           gps: document.getElementById("vfGps").value.trim(),
-          photo: photoData,
+          photo: photo1Data,
+          photo1: photo1Data,
+          photo2: photo2Data,
           hobbies: checkedVals("vfHobby"),
           helpParents: document.getElementById("vfHelpParents").checked,
           familyTime: document.getElementById("vfFamTime").value,
@@ -641,10 +683,17 @@
         const visits = classStudents.map((st) => ({ st, v: (db.visits && db.visits[keyFor(st.id)]) || null }));
         const visited = visits.filter((x) => x.v);
         const cnt = (pred) => visited.filter((x) => pred(x.v)).length || "";
-        const withPhotos = visited.filter((x) => x.v.photo);
+        const photoCards = [];
+        visited.forEach((x) => {
+          const p1 = x.v.photo1 || x.v.photo;
+          const p2 = x.v.photo2;
+          const fullName = `${x.st.prefix || ""}${x.st.firstName} ${x.st.lastName}`;
+          if (p1) photoCards.push({ src: p1, caption: `ภาพถ่ายการเยี่ยมบ้าน ${fullName} (รูปที่ 1)` });
+          if (p2) photoCards.push({ src: p2, caption: `ภาพถ่ายการเยี่ยมบ้าน ${fullName} (รูปที่ 2)` });
+        });
 
         const html = `
-          <div style="font-family:'THSarabunIT9',sans-serif;font-size:16pt;line-height:1.35;color:#000">
+          <div style="font-family:'TH SarabunIT9',sans-serif;font-size:16pt;line-height:1.35;color:#000">
             <!-- หน้า 1: บันทึกข้อความ -->
             <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:4px">
               <img src="./icons/garuda-official.jpg" style="width:52px;height:56px;object-fit:contain" />
@@ -717,20 +766,20 @@
               <div>ครูที่ปรึกษานักเรียนชั้น${gradeFull}</div>
             </div>
 
-            ${withPhotos.length ? `
+            ${photoCards.length ? `
               <div style="page-break-before:always"></div>
               <div style="text-align:center;font-size:18pt;font-weight:700;margin-bottom:10px">ภาคผนวก : ภาพการเยี่ยมบ้านนักเรียนชั้น${gradeFull} ปีการศึกษา ${ui.year}</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                ${withPhotos.map((x) => `
+                ${photoCards.map((pc) => `
                   <div style="text-align:center;border:1px solid #ddd;padding:6px;border-radius:6px">
-                    <img src="${x.v.photo}" style="width:100%;height:175px;object-fit:cover;border-radius:4px" />
-                    <div style="margin-top:4px;font-size:14pt">ภาพถ่ายการเยี่ยมบ้าน ${x.st.prefix || ""}${x.st.firstName} ${x.st.lastName}</div>
+                    <img src="${pc.src}" style="width:100%;height:175px;object-fit:cover;border-radius:4px" />
+                    <div style="margin-top:4px;font-size:14pt">${pc.caption}</div>
                   </div>`).join("")}
               </div>` : ""}
           </div>`;
 
         if (window.BPP_PDF && window.BPP_PDF.exportA4) {
-          await window.BPP_PDF.exportA4({ html, fileName: `รายงานการเยี่ยมบ้าน_${ui.grade}_${ui.year}.pdf`, title: `รายงานการเยี่ยมบ้าน ${ui.grade}` });
+          await window.BPP_PDF.exportA4({ html, fileName: `รายงานการเยี่ยมบ้าน_${ui.grade}_${ui.year}.pdf`, onStatus: showToast });
         } else {
           window.print();
         }
@@ -767,7 +816,7 @@
             </div>
           </div>`;
         if (window.BPP_PDF && window.BPP_PDF.exportA4) {
-          await window.BPP_PDF.exportA4({ html, fileName: `คัดกรอง_กสศ_${ui.grade}_${ui.year}.pdf`, title: `คัดกรอง กสศ. ${ui.grade}` });
+          await window.BPP_PDF.exportA4({ html, fileName: `คัดกรอง_กสศ_${ui.grade}_${ui.year}.pdf`, onStatus: showToast });
         } else {
           window.print();
         }

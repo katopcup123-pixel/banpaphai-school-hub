@@ -149,20 +149,23 @@
   const config = window.SCHOOL_CONFIG;
 
   function loadSystems() {
+    const removedIds = new Set(["project-approval", "procurement", "finance-report"]);
     try {
       const raw = localStorage.getItem(STORAGE_OVERRIDE);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // อัปเกรดลิงก์ e-Budget และนิเทศภายในจาก GAS เดิมมาใช้หน้าในแอปอัตโนมัติ (ไม่ต้องล็อกอินซ้ำ)
+          // อัปเกรดลิงก์ e-Budget และนิเทศภายในมาใช้หน้าในแอป + นำ 3 ระบบที่ปิดไว้ชั่วคราวออกอัตโนมัติ
           const builtInUrls = { "e-budget": "./ebudget.html", "supervision": "./supervision.html" };
-          return parsed.map((s) => (builtInUrls[s.id] && String(s.url || "").includes("script.google.com"))
-            ? { ...s, url: builtInUrls[s.id] }
-            : s);
+          return parsed
+            .filter((s) => !removedIds.has(s.id))
+            .map((s) => (builtInUrls[s.id] && String(s.url || "").includes("script.google.com"))
+              ? { ...s, url: builtInUrls[s.id] }
+              : s);
         }
       }
     } catch (_) {}
-    return [...config.systems];
+    return config.systems.filter((s) => !removedIds.has(s.id));
   }
 
   const savedFavs = (() => {
@@ -1724,10 +1727,10 @@
     const pinnedHtml = showPinned
       ? `
         <div class="section-header">
-          <h2 class="section-title">ใช้บ่อย</h2>
+          <h2 class="section-title">เมนูลัดใช้บ่อย</h2>
           <span class="section-sub">แตะ 1 ครั้งเปิดทันที</span>
         </div>
-        <div class="ios-widget-card">
+        <div class="ios-widget-card pinned-dock-card">
           <div class="pinned-strip">
             ${pinnedList
               .map(
@@ -1748,17 +1751,19 @@
     const filtersHtml = `
       <div class="filter-bar" role="tablist" aria-label="ฝ่ายบริหาร">
         ${config.divisions
-          .map(
-            (d) => `
+          .map((d) => {
+            const cnt = filterSystems(state.systems, { division: d.id, query: "", role, favoritesOnly: false, favoritesSet: state.favorites }).length;
+            return `
             <button class="filter-chip ${state.division === d.id ? "active" : ""}" data-div="${d.id}" role="tab">
-              ${d.label}
-            </button>`
-          )
+              <span>${d.label}</span>
+              <span class="chip-count">${cnt}</span>
+            </button>`;
+          })
           .join("")}
       </div>`;
 
     const currentDivLabel = config.divisions.find((d) => d.id === state.division)?.label || "ทั้งหมด";
-    const sectionHeading = state.division === "all" ? "ระบบงานทั้งหมด" : `ฝ่ายบริหารงาน${currentDivLabel}`;
+    const sectionHeading = state.division === "all" ? "เมนูระบบงานทั้งหมด" : `ฝ่ายบริหารงาน${currentDivLabel}`;
 
     let bodyHtml = "";
     if (visible.length === 0) {
@@ -1766,21 +1771,23 @@
     } else if (!isListMode) {
       bodyHtml = `
         <div class="section-header">
-          <h2 class="section-title">${sectionHeading}</h2>
+          <h2 class="section-title">${sectionHeading} <span class="section-count-pill">${visible.length}</span></h2>
           <button type="button" class="admin-mini-btn" id="toggleJiggleBtn">${state.jiggleMode ? "เสร็จสิ้น ✓" : "จัดหมุด"}</button>
         </div>
         <div class="apps-grid ${state.jiggleMode ? "jiggle-active" : ""}">
           ${visible
             .map((s, i) => {
               const isFav = state.favorites.has(s.id);
+              const divName = config.divisions.find((d) => d.id === s.division)?.label || "";
               return `
-                <div class="grid-card" style="animation-delay:${i * 24}ms" data-open="${s.id}" role="button" tabindex="0">
+                <div class="grid-card" style="animation-delay:${i * 22}ms" data-open="${s.id}" role="button" tabindex="0">
                   ${s.directorOnly ? '<span class="director-tag">ผู้บริหาร</span>' : ""}
                   ${state.jiggleMode ? `<span class="jiggle-pin-badge ${isFav ? "pinned" : ""}">${isFav ? "★" : "+"}</span>` : ""}
                   <div class="squircle squircle-lg c-${s.color}">
-                    ${iconSvg(s.icon, 27)}
+                    ${iconSvg(s.icon, 26)}
                   </div>
                   <span class="icon-label">${s.shortName}</span>
+                  ${divName ? `<span class="grid-sub-tag">${divName}</span>` : ""}
                 </div>`;
             })
             .join("")}
@@ -1826,7 +1833,9 @@
       ${filtersHtml}
       ${bodyHtml}
       <div class="gas-badge">
-        <span>BPP Connect v${config.appVersion || "1.7.0"} • Google Workspace</span>
+        <span>BPP Connect v${config.appVersion || "2.8.0"}</span>
+        <span>•</span>
+        <button type="button" class="footer-guide-link" id="openUserManualBtn">📖 คู่มือใช้งาน</button>
       </div>`;
   }
 
@@ -1877,16 +1886,45 @@
     const segHtml = `
       <div class="ios-segmented" role="tablist">
         <button class="seg-btn ${!isObec ? "active" : ""}" data-newstab="school">ข่าวโรงเรียน</button>
-        <button class="seg-btn ${isObec ? "active" : ""}" data-newstab="obec">ข่าว สพฐ. สด</button>
+        <button class="seg-btn ${isObec ? "active" : ""}" data-newstab="obec">ข่าว สพฐ.</button>
       </div>`;
 
     if (!isObec) {
+      const fbOpen = Boolean(state.fbFeedOpen);
       els.main.innerHTML = `
         <div class="section-header">
           <h2 class="section-title">ข่าวสารและประกาศ</h2>
           <button class="admin-mini-btn" id="refreshNewsBtn">รีเฟรช</button>
         </div>
         ${segHtml}
+        <div class="school-channels-grid">
+          <a class="channel-card fb" href="https://www.facebook.com/bannpapai.school" target="_blank" rel="noopener">
+            <div class="channel-ico">f</div>
+            <div class="channel-text">
+              <strong>เพจ Facebook โรงเรียน</strong>
+              <span>bannpapai.school ↗</span>
+            </div>
+          </a>
+          <a class="channel-card web" href="https://www.banpaphai.ac.th" target="_blank" rel="noopener">
+            <div class="channel-ico">🌐</div>
+            <div class="channel-text">
+              <strong>เว็บไซต์โรงเรียน</strong>
+              <span>banpaphai.ac.th ↗</span>
+            </div>
+          </a>
+        </div>
+        <div class="fb-preview-card">
+          <div class="fb-preview-head">
+            <span>📣 ฟีดข่าวเพจโรงเรียนบ้านป่าไผ่ (Facebook)</span>
+            <button type="button" class="admin-mini-btn" id="toggleFbFeedBtn">${fbOpen ? "ซ่อนฟีด" : "เปิดดูในแอป"}</button>
+          </div>
+          ${fbOpen ? `
+            <div class="fb-iframe-wrap">
+              <iframe
+                src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fbannpapai.school&tabs=timeline&width=340&height=420&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=false"
+                width="100%" height="420" style="border:none;overflow:hidden;border-radius:12px" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+            </div>` : ""}
+        </div>
         <button class="btn-primary" id="openBroadcastBtn" style="margin:0 0 14px">+ แจ้งข่าวถึงครูและ ผอ. ทุกคน</button>
         ${state.announcements
           .map(
@@ -2091,86 +2129,94 @@
 
     const adminHtml = isAdmin
       ? `
-        <div class="info-card">
-          <h3>ฐานข้อมูลนักเรียน (${stuList.length} คน) <span class="admin-badge">เฉพาะแอดมิน</span></h3>
-          <div class="info-meta">${stuGradesSummary}</div>
-          <label class="btn-primary" style="display:block;text-align:center;cursor:pointer">
-            📂 นำเข้าไฟล์รายชื่อนักเรียน (.csv / DMC ปีใหม่)
-            <input type="file" id="adminImportStuCsv" accept=".csv,text/csv" style="display:none" />
-          </label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-            <button type="button" class="btn-secondary" id="adminAddStuBtn" style="margin:0">+ เพิ่มนักเรียน</button>
-            <button type="button" class="btn-secondary" id="adminManageStuBtn" style="margin:0">📋 แก้ไข / ลบ</button>
-          </div>
-          <button type="button" class="btn-secondary" id="adminResetStuBtn" style="margin-top:8px;font-size:12px">รีเซ็ตกลับรายชื่อตั้งต้น (${(window.BPP_DEFAULT_STUDENTS || []).length} คน)</button>
-        </div>
-        <div class="info-card">
-          <h3>จัดการผู้ใช้งาน <span class="admin-badge">เฉพาะแอดมิน</span></h3>
-          <div class="info-meta">เพิ่มผู้ใช้ หรือรีเซ็ตรหัสผ่านให้ครูที่ลืมรหัสได้ทันที</div>
-          <button class="btn-primary" id="adminAddUserBtn">+ เพิ่มผู้ใช้งานใหม่</button>
-          <div style="margin-top:12px">
-            ${state.users
-              .map(
-                (usr) => `
-                <div class="admin-sys-row">
-                  <div style="min-width:0;flex:1">
-                    <strong style="font-size:13px">${usr.name}</strong>
-                    <div class="info-meta" style="margin:0">${usr.position} • PIN: ${usr.pin}</div>
-                  </div>
-                  <button class="admin-mini-btn" data-adm-usr-edit="${usr.id}">แก้/รหัส</button>
-                  ${usr.id !== "thanakarin" ? `<button class="admin-mini-btn del" data-adm-usr-del="${usr.id}">ลบ</button>` : ""}
-                </div>`
-              )
-              .join("")}
-          </div>
-        </div>
-        <div class="info-card">
-          <h3>จัดการระบบงาน <span class="admin-badge">เฉพาะแอดมิน</span></h3>
-          <div class="info-meta">สิทธิ์เฉพาะ นายธานครินทร์ สุเมธาลังการ</div>
-          <button class="btn-primary" id="adminAddSysBtn">+ เพิ่มระบบงาน GAS ใหม่</button>
-          <div style="margin-top:12px">
-            ${state.systems
-              .map(
-                (s) => `
-                <div class="admin-sys-row">
-                  <div style="min-width:0;flex:1">
-                    <strong style="font-size:13px">${s.shortName}</strong>
-                    <div class="info-meta" style="margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.url.includes("REPLACE_WITH_") ? "ยังเป็นลิงก์ตัวอย่าง" : "เชื่อม GAS จริงแล้ว"}</div>
-                  </div>
-                  <button class="admin-mini-btn" data-adm-edit="${s.id}">แก้ไข</button>
-                  <button class="admin-mini-btn del" data-adm-del="${s.id}">ลบ</button>
-                </div>`
-              )
-              .join("")}
-          </div>
-          <div style="margin-top:12px;padding-top:10px;border-top:0.5px solid var(--ios-sep)">
-            <strong style="font-size:13px">เชื่อมต่อแจ้งเตือน Push จริง & ข่าวคลาวด์</strong>
-            <input class="admin-input" id="newsApiInput" placeholder="ลิงก์ GAS หลังบ้านข่าว (จาก gas-backend.gs)" value="${state.newsBackendUrl}" />
-            <input class="admin-input" id="oneSignalInput" placeholder="OneSignal App ID (สำหรับแจ้งเตือนข้ามเครื่อง)" value="${state.oneSignalAppId}" />
-            <input class="admin-input" id="remoteUrlInput" placeholder="ลิงก์ซิงก์รายการระบบ GAS JSON (ถ้ามี)" value="${state.remoteConfigUrl}" />
-            <button class="btn-secondary" id="saveRemoteUrlBtn">บันทึกการเชื่อมต่อคลาวด์</button>
-            <button class="btn-secondary" id="exportConfigBtn">คัดลอก apps-config.js (สำหรับอัปเดตผ่าน GitHub)</button>
-          </div>
+        <div class="settings-group-label">เครื่องมือผู้ดูแลระบบ (เฉพาะแอดมิน)</div>
+        <div class="info-card settings-acc-group">
+          <details class="settings-acc">
+            <summary>👨‍🎓 ฐานข้อมูลนักเรียน (${stuList.length} คน) <span class="acc-chev">›</span></summary>
+            <div class="settings-acc-body">
+              <div class="info-meta" style="margin-bottom:8px">${stuGradesSummary}</div>
+              <label class="btn-primary" style="display:block;text-align:center;cursor:pointer">
+                📂 นำเข้าไฟล์รายชื่อนักเรียน (.csv / DMC ปีใหม่)
+                <input type="file" id="adminImportStuCsv" accept=".csv,text/csv" style="display:none" />
+              </label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+                <button type="button" class="btn-secondary" id="adminAddStuBtn" style="margin:0">+ เพิ่มนักเรียน</button>
+                <button type="button" class="btn-secondary" id="adminManageStuBtn" style="margin:0">📋 แก้ไข / ลบ</button>
+              </div>
+              <button type="button" class="btn-secondary" id="adminResetStuBtn" style="margin-top:8px;font-size:12px">รีเซ็ตกลับรายชื่อตั้งต้น (${(window.BPP_DEFAULT_STUDENTS || []).length} คน)</button>
+            </div>
+          </details>
+          <details class="settings-acc">
+            <summary>👥 จัดการผู้ใช้งานและรหัส PIN (${state.users.length} คน) <span class="acc-chev">›</span></summary>
+            <div class="settings-acc-body">
+              <button class="btn-primary" id="adminAddUserBtn">+ เพิ่มผู้ใช้งานใหม่</button>
+              <div style="margin-top:10px">
+                ${state.users
+                  .map(
+                    (usr) => `
+                    <div class="admin-sys-row">
+                      <div style="min-width:0;flex:1">
+                        <strong style="font-size:13px">${usr.name}</strong>
+                        <div class="info-meta" style="margin:0">${usr.position} • PIN: ${usr.pin}</div>
+                      </div>
+                      <button class="admin-mini-btn" data-adm-usr-edit="${usr.id}">แก้/รหัส</button>
+                      ${usr.id !== "thanakarin" ? `<button class="admin-mini-btn del" data-adm-usr-del="${usr.id}">ลบ</button>` : ""}
+                    </div>`
+                  )
+                  .join("")}
+              </div>
+            </div>
+          </details>
+          <details class="settings-acc">
+            <summary>⚙️ จัดการระบบงาน & เชื่อมต่อคลาวด์ (${state.systems.length} ระบบ) <span class="acc-chev">›</span></summary>
+            <div class="settings-acc-body">
+              <button class="btn-primary" id="adminAddSysBtn">+ เพิ่มระบบงานใหม่</button>
+              <div style="margin-top:10px">
+                ${state.systems
+                  .map(
+                    (s) => `
+                    <div class="admin-sys-row">
+                      <div style="min-width:0;flex:1">
+                        <strong style="font-size:13px">${s.shortName}</strong>
+                        <div class="info-meta" style="margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.url.startsWith("./") ? "ระบบในแอป (โหลดทันที)" : "เชื่อมลิงก์ภายนอกแล้ว"}</div>
+                      </div>
+                      <button class="admin-mini-btn" data-adm-edit="${s.id}">แก้ไข</button>
+                      <button class="admin-mini-btn del" data-adm-del="${s.id}">ลบ</button>
+                    </div>`
+                  )
+                  .join("")}
+              </div>
+              <div style="margin-top:12px;padding-top:10px;border-top:0.5px solid var(--ios-sep)">
+                <strong style="font-size:13px">เชื่อมต่อแจ้งเตือน Push & ข่าวคลาวด์</strong>
+                <input class="admin-input" id="newsApiInput" placeholder="ลิงก์ GAS หลังบ้านข่าว" value="${state.newsBackendUrl}" />
+                <input class="admin-input" id="oneSignalInput" placeholder="OneSignal App ID" value="${state.oneSignalAppId}" />
+                <input class="admin-input" id="remoteUrlInput" placeholder="ลิงก์ซิงก์รายการระบบ JSON (ถ้ามี)" value="${state.remoteConfigUrl}" />
+                <button class="btn-secondary" id="saveRemoteUrlBtn">บันทึกการเชื่อมต่อคลาวด์</button>
+                <button class="btn-secondary" id="exportConfigBtn">คัดลอก apps-config.js</button>
+              </div>
+            </div>
+          </details>
         </div>`
       : "";
 
     const notifStatus = state.pushSubId
-      ? "✅ เชื่อมต่อ OneSignal Push สำเร็จแล้ว"
+      ? "✅ เชื่อมต่อแจ้งเตือนเรียบร้อยแล้ว"
       : "Notification" in window
         ? Notification.permission === "granted"
-          ? "อนุญาตในเครื่องแล้ว (กดปุ่มด้านล่างเพื่อซิงก์ OneSignal)"
+          ? "อนุญาตในเครื่องแล้ว (แตะปุ่มด้านล่างเพื่อซิงก์)"
           : Notification.permission === "denied"
             ? "ถูกปิดไว้ในการตั้งค่าเครื่อง"
             : "ยังไม่ได้เปิดรับแจ้งเตือน"
-        : "บน iPhone ต้องเพิ่มลงหน้าจอโฮมก่อน";
+        : "บน iPhone ให้เพิ่มลงหน้าจอโฮมก่อน";
 
     els.main.innerHTML = `
       <div class="section-header">
-        <h2 class="section-title">บัญชีและการตั้งค่า</h2>
+        <h2 class="section-title">การตั้งค่า</h2>
+        <span class="section-sub">v${config.appVersion || "2.8.0"}</span>
       </div>
       ${
         u
-          ? `<div class="info-card">
+          ? `<div class="info-card profile-hero-card">
               <div class="profile-card">
                 ${renderAvatarHtml(u)}
                 <div style="flex:1;min-width:0">
@@ -2178,32 +2224,36 @@
                   <div class="info-meta" style="margin:0">${u.position}</div>
                 </div>
               </div>
-              <button class="btn-secondary" id="editSelfProfileBtn" style="margin-top:12px">แก้ไขชื่อ / รูปโปรไฟล์ / เปลี่ยนรหัส PIN</button>
+              <button class="btn-secondary" id="editSelfProfileBtn" style="margin-top:12px">✏️ แก้ไขโปรไฟล์ / เปลี่ยนรหัส PIN</button>
             </div>`
           : ""
       }
-      <div class="info-card">
-        <div class="settings-row">
-          <div>
-            <strong>แจ้งเตือนข่าวบนมือถือ (Push)</strong>
-            <div class="info-meta" style="margin:0">สถานะ: ${notifStatus}</div>
-            ${state.pushDebug ? `<div class="info-meta" style="margin:2px 0 0;font-size:10.5px;opacity:0.75">${state.pushDebug}</div>` : ""}
+
+      <div class="settings-group-label">คู่มือและความช่วยเหลือ</div>
+      <div class="info-card manual-banner-card">
+        <div class="manual-banner-row">
+          <div class="manual-ico">📖</div>
+          <div style="flex:1;min-width:0">
+            <strong>คู่มือการใช้งานแอป BPP Connect</strong>
+            <div class="info-meta" style="margin:2px 0 0">แนะนำวิธีใช้ทุกระบบ การส่งใบลา เช็คชื่อ บันทึกคะแนน และติดตั้งบนมือถือ</div>
           </div>
         </div>
-        <button class="btn-primary" id="enablePushBtn">เปิดรับการแจ้งเตือนจริง (iPhone / Android)</button>
+        <button class="btn-primary" id="openUserManualBtn" style="margin-top:10px">เปิดคู่มือการใช้งานแอป</button>
       </div>
+
+      <div class="settings-group-label">การแสดงผลและการแจ้งเตือน</div>
       <div class="info-card">
         <div class="settings-row">
           <div>
             <strong>โหมดมืด (Dark Mode)</strong>
-            <div class="info-meta" style="margin:0">สลับธีมสว่าง / มืดแบบ iOS</div>
+            <div class="info-meta" style="margin:0">สลับธีมสว่าง / มืดสบายตา</div>
           </div>
           <button class="ios-switch ${isDark ? "on" : ""}" id="darkModeToggle" role="switch" aria-checked="${isDark}" aria-label="สลับโหมดมืด"></button>
         </div>
         <div class="settings-row">
           <div>
             <strong>เสียงเอฟเฟค iOS</strong>
-            <div class="info-meta" style="margin:0">เสียงแตะปุ่มและเสียงปลดล็อกเบาๆ</div>
+            <div class="info-meta" style="margin:0">เสียงแตะปุ่มเบาๆ</div>
           </div>
           <button class="ios-switch ${state.soundEnabled ? "on" : ""}" id="soundToggle" role="switch" aria-checked="${state.soundEnabled}" aria-label="เปิดปิดเสียงเอฟเฟค"></button>
         </div>
@@ -2215,21 +2265,92 @@
             ).join("")}
           </div>
         </div>
+        <div class="settings-row" style="display:block;border-bottom:none;padding-bottom:2px">
+          <strong>แจ้งเตือนข่าวบนมือถือ (Push)</strong>
+          <div class="info-meta" style="margin:2px 0 8px">${notifStatus}</div>
+          <button class="btn-secondary" id="enablePushBtn" style="margin:0">🔔 เปิดรับการแจ้งเตือน (iPhone / Android)</button>
+        </div>
       </div>
 
       ${adminHtml}
 
+      <div class="settings-group-label">ระบบและบัญชี</div>
       <div class="info-card">
-        <div class="settings-row">
-          <div>
-            <strong>อัปเดตแอป (OTA)</strong>
-            <div class="info-meta" style="margin:0">เวอร์ชันปัจจุบัน v${config.appVersion || "1.1.0"} • อัปเดตได้ทันทีโดยไม่ต้องลบลงใหม่</div>
-          </div>
-        </div>
-        <button class="btn-primary" id="checkUpdateBtn">ตรวจหาอัปเดตล่าสุด</button>
-        <button class="btn-secondary" id="replaySplashBtn">เล่นแอนิเมชันเปิดแอปอีกครั้ง</button>
+        <button class="btn-primary" id="checkUpdateBtn" style="margin-top:0">🔄 ตรวจหาอัปเดตล่าสุด (v${config.appVersion || "2.8.0"})</button>
         <button class="btn-danger" id="logoutBtn">ออกจากระบบ / เปลี่ยนผู้ใช้งาน</button>
       </div>`;
+  }
+
+  function openUserManualSheet() {
+    haptic();
+    const guides = [
+      {
+        ico: "🏠",
+        title: "หน้าหลัก & เมนูลัดใช้บ่อย",
+        body: "แตะไอคอนระบบงาน 1 ครั้งเพื่อเปิดใช้งานได้ทันทีโดยไม่ต้องล็อกอินซ้ำ • กดปุ่ม 'จัดหมุด' หรือแตะค้างที่ไอคอนเพื่อปักหมุดระบบที่ใช้บ่อยขึ้นด้านบนสุด • เลือกแท็บฝ่ายบริหารด้านบนเพื่อกรองดูเฉพาะฝ่าย"
+      },
+      {
+        ico: "📰",
+        title: "ข่าวโรงเรียน, Facebook, เว็บไซต์ & ข่าว สพฐ.",
+        body: "ไปที่แท็บ 'ข่าวสาร' ด้านล่าง • ในแท็บ 'ข่าวโรงเรียน' สามารถเปิดเพจ Facebook โรงเรียน (bannpapai.school), เว็บไซต์โรงเรียน (banpaphai.ac.th) และกด '+ แจ้งข่าวถึงครูและ ผอ. ทุกคน' เพื่อส่งแจ้งเตือนเข้ามือถือทุกคนได้ทันที • สลับไปแท็บ 'ข่าว สพฐ.' เพื่ออ่านข่าวจาก สพฐ."
+      },
+      {
+        ico: "📁",
+        title: "ระบบเอกสารธุรการ (โหลดไวทันที)",
+        body: "ค้นหาเอกสารตามชื่อเรื่อง/เลขที่/ผู้บันทึก หรือกรองตามหมวดหมู่ (ภายใน/ภายนอก) • กด '+ เพิ่มเอกสาร' เพื่อแนบไฟล์ PDF, Word, Excel หรือรูปจากมือถืออัปโหลดเข้า Google Drive ได้เลย • กดปุ่ม ↻ ด้านบนเพื่อดึงเอกสารล่าสุด"
+      },
+      {
+        ico: "✅",
+        title: "ระบบเช็คสถิตินักเรียน & ครูเวรประจำวัน",
+        body: "ครูประจำชั้นกดเช็คชื่อ มา/ขาด/ลา/ป่วย รายวัน (เปิดให้เช็ค จ.–ศ. เวลา 06.00–16.30 น.) พร้อมกราฟสรุปอัตโนมัติ • บันทึกรายงานครูเวรประจำวันและสั่งปริ้นรายงาน A4 รายวัน/รายเดือน/รายภาคเรียน/รายปีการศึกษาได้"
+      },
+      {
+        ico: "📝",
+        title: "ระบบการลา & ขอออกนอกโรงเรียน (5 แบบฟอร์มราชการ)",
+        body: "เลือกแบบฟอร์มราชการทั้ง 5 แบบ (ขอออกนอกโรงเรียน, ใบลาป่วย/กิจ/คลอด, ไปราชการ, ชี้แจงไม่ลงเวลาเข้า/กลับ) • กรอกข้อมูลแล้วกดดูตัวอย่าง PDF ขนาด A4 (ฟอนต์ TH SarabunIT๙ 16pt มาตรฐาน) และส่งเข้า LINE หรือบันทึกไฟล์ได้ทันที"
+      },
+      {
+        ico: "📊",
+        title: "บันทึกคะแนนนักเรียน (50+50)",
+        body: "เลือกปีการศึกษาและชั้นเรียน • คะแนนเทอม 1 ถูกล็อกป้องกันการแก้พลาด (แอดมินปลดล็อกได้) • กรอกคะแนนเทอม 2 ได้ทันที ระบบคำนวณคะแนนรวม 100 คะแนน เกรด 4–0 ลำดับที่ และออกใบรายงานผลรายบุคคล A4 อัตโนมัติ"
+      },
+      {
+        ico: "🧭",
+        title: "นิเทศภายใน & e-Budget (เข้าใช้อัตโนมัติ)",
+        body: "ทั้งสองระบบเชื่อมบัญชีกับ BPP Connect อัตโนมัติ ไม่ต้องกรอกรหัสผ่านซ้ำ • สิทธิ์การใช้งาน (ผอ. / หัวหน้าการเงิน / แอดมิน / ครู) ถูกตั้งให้อัตโนมัติตามบัญชีที่ล็อกอินอยู่"
+      },
+      {
+        ico: "🏫",
+        title: "ธุรการชั้นเรียน & ธุรการโรงเรียน",
+        body: "รวมงานธุรการประจำชั้น (เยี่ยมบ้าน, กสศ., สุขภาพ, เงินเรียนฟรี 15 ปี, พฤติกรรม, ออมทรัพย์, เวรทำความสะอาด) และงานธุรการโรงเรียน (ออกเลขคำสั่ง, เวรยาม, ปพ.7, ครุภัณฑ์, ย้ายนักเรียน, สมุดผู้มาติดต่อ) พร้อมออกเอกสาร PDF ราชการ"
+      },
+      {
+        ico: "📱",
+        title: "วิธีติดตั้งแอปลงหน้าจอมือถือ (iPhone / Android)",
+        body: "iPhone (Safari): แตะปุ่มแชร์ด้านล่าง (⬆️) → เลือก 'เพิ่มไปยังหน้าจอโฮม' → กด 'เพิ่ม' • Android: เปิดลิงก์ใน Chrome แล้วเลือก 'ติดตั้งแอป' หรือติดตั้งจากไฟล์ APK โรงเรียนบ้านป่าไผ่"
+      }
+    ];
+
+    els.sheetBody.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <h3 style="margin:0">📖 คู่มือการใช้งาน BPP Connect</h3>
+        <span class="section-sub">v${config.appVersion || "2.8.0"}</span>
+      </div>
+      <div class="manual-list">
+        ${guides
+          .map(
+            (g, i) => `
+            <details class="manual-item" ${i === 0 ? "open" : ""}>
+              <summary><span class="manual-item-ico">${g.ico}</span><span>${g.title}</span><span class="acc-chev">›</span></summary>
+              <p>${g.body}</p>
+            </details>`
+          )
+          .join("")}
+      </div>
+      <button type="button" class="btn-primary" id="closeManualBtn" style="margin-top:14px">เข้าใจแล้ว</button>
+    `;
+    document.getElementById("closeManualBtn").onclick = closeSheet;
+    els.sheetBackdrop.classList.add("open");
   }
 
   // --- Notification Balloon Popover & iPhone Home Screen Red Badge ---
@@ -2532,6 +2653,16 @@
       return;
     }
 
+    if (e.target.id === "openUserManualBtn") {
+      openUserManualSheet();
+      return;
+    }
+    if (e.target.id === "toggleFbFeedBtn") {
+      haptic();
+      state.fbFeedOpen = !state.fbFeedOpen;
+      render();
+      return;
+    }
     if (e.target.id === "logoutBtn") {
       haptic();
       state.currentUser = null;
@@ -2540,11 +2671,6 @@
       syncOneSignalUser(null);
       notifyIsland("ออกจากระบบแล้ว");
       showLoginScreen();
-      return;
-    }
-    if (e.target.id === "replaySplashBtn") {
-      haptic();
-      playSplashThenLogin();
       return;
     }
   });

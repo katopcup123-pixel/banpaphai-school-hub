@@ -847,6 +847,233 @@ input, textarea {
 .filter-chip:active { transform: scale(0.93); }
 .filter-chip.active { background: var(--ios-blue); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3); }
 
+/* Modern Upgraded Menu, News Channels, Clean Settings & User Manual */
+.pinned-dock-card {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.92), rgba(244, 248, 255, 0.86));
+  border: 1px solid rgba(0, 122, 255, 0.14);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+[data-theme="dark"] .pinned-dock-card {
+  background: linear-gradient(155deg, rgba(32, 34, 42, 0.92), rgba(24, 26, 32, 0.88));
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.chip-count {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ios-fill);
+  color: var(--ios-secondary);
+}
+.filter-chip.active .chip-count {
+  background: rgba(255, 255, 255, 0.24);
+  color: #FFFFFF;
+}
+.section-count-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--ios-blue-soft);
+  color: var(--ios-blue);
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.apps-grid {
+  gap: 11px 9px;
+}
+.grid-card {
+  padding: 14px 8px 11px;
+  border-radius: 22px;
+  border: 0.5px solid var(--ios-border-light);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 0.22s var(--spring), box-shadow 0.22s ease, border-color 0.2s;
+}
+.grid-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.09);
+  border-color: rgba(0, 122, 255, 0.24);
+}
+.grid-card .icon-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.grid-sub-tag {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--ios-secondary);
+  background: var(--ios-fill);
+  padding: 1.5px 7px;
+  border-radius: 999px;
+  margin-top: -2px;
+}
+.footer-guide-link {
+  border: none;
+  background: transparent;
+  color: var(--ios-blue);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+/* School News Channels (Facebook + Website) */
+.school-channels-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+.channel-card {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 11px;
+  border-radius: 18px;
+  text-decoration: none;
+  color: #FFFFFF;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+  transition: transform 0.2s var(--spring);
+}
+.channel-card:active { transform: scale(0.95); }
+.channel-card.fb { background: linear-gradient(135deg, #1877F2, #0C56B8); }
+.channel-card.web { background: linear-gradient(135deg, #059669, #0F766E); }
+.channel-ico {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.2);
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.channel-text { min-width: 0; }
+.channel-text strong { display: block; font-size: 12px; line-height: 1.25; }
+.channel-text span { display: block; font-size: 10.5px; opacity: 0.88; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.fb-preview-card {
+  background: var(--ios-surface);
+  border: 0.5px solid var(--ios-border-light);
+  border-radius: 18px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+}
+.fb-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ios-text);
+}
+.fb-iframe-wrap {
+  margin-top: 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+
+/* Simplified Grouped Settings & Collapsible Admin + User Manual */
+.settings-group-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ios-secondary);
+  margin: 14px 6px 6px;
+  letter-spacing: 0.01em;
+}
+.manual-banner-card {
+  border: 1px solid rgba(0, 122, 255, 0.16);
+}
+.manual-banner-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.manual-ico {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: var(--ios-blue-soft);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.settings-acc-group { padding: 4px 14px; }
+.settings-acc {
+  border-bottom: 0.5px solid var(--ios-sep);
+  padding: 10px 0;
+}
+.settings-acc:last-child { border-bottom: none; }
+.settings-acc summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--ios-text);
+}
+.settings-acc summary::-webkit-details-marker { display: none; }
+.acc-chev {
+  font-size: 18px;
+  color: var(--ios-secondary);
+  transition: transform 0.2s ease;
+}
+.settings-acc[open] .acc-chev,
+.manual-item[open] .acc-chev { transform: rotate(90deg); }
+.settings-acc-body { padding-top: 10px; }
+
+.manual-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 58dvh;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.manual-item {
+  background: var(--ios-fill);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.manual-item summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ios-text);
+  cursor: pointer;
+}
+.manual-item summary::-webkit-details-marker { display: none; }
+.manual-item summary span:nth-child(2) { flex: 1; }
+.manual-item-ico { font-size: 16px; }
+.manual-item p {
+  margin: 8px 0 2px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ios-secondary);
+}
+
 /* 3-Column iOS App Grid */
 .apps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 10px; }
 .grid-card {

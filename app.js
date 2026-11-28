@@ -1967,6 +1967,115 @@
     return state.currentUser ? state.currentUser.role : "teacher";
   }
 
+  function polarXY(cx, cy, r, deg) {
+    const rad = ((deg - 90) * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  function annularSectorPath(cx, cy, rInner, rOuter, startDeg, endDeg) {
+    const gap = 1.2;
+    const s = startDeg + gap / 2;
+    const e = endDeg - gap / 2;
+    const p1 = polarXY(cx, cy, rOuter, s);
+    const p2 = polarXY(cx, cy, rOuter, e);
+    const p3 = polarXY(cx, cy, rInner, e);
+    const p4 = polarXY(cx, cy, rInner, s);
+    const large = e - s > 180 ? 1 : 0;
+    return [
+      `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`,
+      `A ${rOuter} ${rOuter} 0 ${large} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`,
+      `L ${p3.x.toFixed(2)} ${p3.y.toFixed(2)}`,
+      `A ${rInner} ${rInner} 0 ${large} 0 ${p4.x.toFixed(2)} ${p4.y.toFixed(2)}`,
+      "Z"
+    ].join(" ");
+  }
+
+  function renderRadialMenu(visible, role) {
+    const cx = 210, cy = 210;
+    const catDefs = [
+      { id: "academic", label: "วิชาการ", color: "#007AFF", icon: "graduationCap" },
+      { id: "general", label: "ทั่วไป", color: "#7C3AED", icon: "folder" },
+      { id: "budget", label: "งบประมาณ", color: "#10B981", icon: "wallet" },
+      { id: "personnel", label: "บุคคล", color: "#0D9488", icon: "calendar" }
+    ];
+    if (canAccessExecutive(role) && visible.some((s) => s.directorOnly)) {
+      catDefs.push({ id: "executive", label: "ผู้บริหาร", color: "#C69214", icon: "barChart" });
+    }
+
+    const catSystems = {};
+    catDefs.forEach((c) => {
+      catSystems[c.id] = visible.filter((s) => {
+        if (c.id === "executive") return Boolean(s.directorOnly);
+        return !s.directorOnly && s.division === c.id;
+      });
+    });
+
+    if (!state.radialCat || !catSystems[state.radialCat] || catSystems[state.radialCat].length === 0) {
+      state.radialCat = (catDefs.find((c) => catSystems[c.id].length > 0) || catDefs[0]).id;
+    }
+
+    const nInner = catDefs.length;
+    const innerStep = 360 / nInner;
+    let activeMidDeg = 0;
+
+    const innerWedgesHtml = catDefs.map((cat, idx) => {
+      const startDeg = idx * innerStep - 90;
+      const endDeg = startDeg + innerStep;
+      const midDeg = (startDeg + endDeg) / 2;
+      const isActive = cat.id === state.radialCat;
+      if (isActive) activeMidDeg = midDeg;
+      const path = annularSectorPath(cx, cy, 52, 120, startDeg, endDeg);
+      const pos = polarXY(cx, cy, 86, midDeg);
+      const icoBody = ICONS[cat.icon] || ICONS.folder;
+      return `
+        <g class="radial-inner-wedge ${isActive ? "active" : ""}" data-radial-cat="${cat.id}" role="button" tabindex="0">
+          <path d="${path}" class="rw-inner-path" style="${isActive ? `--cat-col:${cat.color}` : ""}" />
+          <circle cx="${pos.x.toFixed(1)}" cy="${(pos.y - 8).toFixed(1)}" r="15" fill="${cat.color}" />
+          <g transform="translate(${(pos.x - 8.5).toFixed(1)}, ${(pos.y - 16.5).toFixed(1)}) scale(0.71)" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">${icoBody}</g>
+          <text x="${pos.x.toFixed(1)}" y="${(pos.y + 18).toFixed(1)}" text-anchor="middle" class="rw-label ${isActive ? "active" : ""}">${cat.label}</text>
+        </g>`;
+    }).join("");
+
+    const activeCatObj = catDefs.find((c) => c.id === state.radialCat) || catDefs[0];
+    const outerList = catSystems[state.radialCat] || [];
+    const nOut = outerList.length;
+    const slotDeg = nOut <= 2 ? 56 : nOut <= 4 ? 50 : Math.min(48, 300 / nOut);
+    const totalArc = nOut * slotDeg;
+    const outerStartBase = activeMidDeg - totalArc / 2;
+
+    const outerWedgesHtml = outerList.map((sys, idx) => {
+      const sDeg = outerStartBase + idx * slotDeg;
+      const eDeg = sDeg + slotDeg;
+      const mDeg = (sDeg + eDeg) / 2;
+      const path = annularSectorPath(cx, cy, 126, 204, sDeg, eDeg);
+      const pos = polarXY(cx, cy, 165, mDeg);
+      const icoBody = ICONS[sys.icon] || ICONS.folder;
+      const lbl = sys.shortName.length > 10 ? sys.shortName.slice(0, 9) + "…" : sys.shortName;
+      return `
+        <g class="radial-outer-wedge" data-open="${sys.id}" role="button" tabindex="0" style="animation-delay:${idx * 28}ms">
+          <path d="${path}" class="rw-outer-path" style="--cat-col:${activeCatObj.color}" />
+          <circle cx="${pos.x.toFixed(1)}" cy="${(pos.y - 9).toFixed(1)}" r="16" fill="${activeCatObj.color}" />
+          <g transform="translate(${(pos.x - 9).toFixed(1)}, ${(pos.y - 18).toFixed(1)}) scale(0.75)" stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">${icoBody}</g>
+          <text x="${pos.x.toFixed(1)}" y="${(pos.y + 18).toFixed(1)}" text-anchor="middle" class="rw-outer-label">${lbl}</text>
+        </g>`;
+    }).join("");
+
+    return `
+      <div class="radial-menu-card">
+        <svg class="radial-svg" viewBox="0 0 420 420" role="group" aria-label="เมนูวงแหวนแบ่งตามหมวดหมู่">
+          <g class="radial-outer-group">${outerWedgesHtml}</g>
+          <g class="radial-inner-group">${innerWedgesHtml}</g>
+          <g class="radial-center-hub">
+            <circle cx="${cx}" cy="${cy}" r="45" class="rw-center-circle" />
+            <circle cx="${cx}" cy="${cy - 14}" r="5" fill="${activeCatObj.color}" />
+            <text x="${cx}" y="${cy + 4}" text-anchor="middle" class="rw-center-title">${activeCatObj.label}</text>
+            <text x="${cx}" y="${cy + 20}" text-anchor="middle" class="rw-center-sub">${outerList.length} ระบบ</text>
+          </g>
+        </svg>
+        <div class="radial-hint">แตะวงในเพื่อเปลี่ยนหมวด • แตะวงนอกเพื่อเปิดระบบทันที</div>
+      </div>`;
+  }
+
   function renderHome() {
     const role = currentRole();
     const visible = filterSystems(state.systems, {
@@ -2030,14 +2139,19 @@
     const sectionHeading = state.division === "all" ? "เมนูระบบงานทั้งหมด" : `ฝ่ายบริหารงาน${currentDivLabel}`;
 
     let bodyHtml = "";
+    const isRadial = (state.menuView || "radial") === "radial" && !state.jiggleMode;
     if (visible.length === 0) {
       bodyHtml = `<div class="empty-state">ไม่พบระบบงานที่ค้นหา</div>`;
     } else if (!isListMode) {
       bodyHtml = `
         <div class="section-header">
           <h2 class="section-title">${sectionHeading} <span class="section-count-pill">${visible.length}</span></h2>
-          <button type="button" class="admin-mini-btn" id="toggleJiggleBtn">${state.jiggleMode ? "เสร็จสิ้น ✓" : "จัดหมุด"}</button>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button type="button" class="admin-mini-btn" id="toggleMenuViewBtn">${isRadial ? "⊞ ตาราง" : "🎡 วงแหวน"}</button>
+            ${!isRadial ? `<button type="button" class="admin-mini-btn" id="toggleJiggleBtn">${state.jiggleMode ? "เสร็จสิ้น ✓" : "จัดหมุด"}</button>` : ""}
+          </div>
         </div>
+        ${isRadial ? renderRadialMenu(visible, role) : `
         <div class="apps-grid ${state.jiggleMode ? "jiggle-active" : ""}">
           ${visible
             .map((s, i) => {
@@ -2055,7 +2169,7 @@
                 </div>`;
             })
             .join("")}
-        </div>`;
+        </div>`}`;
     } else {
       bodyHtml = `
         <div class="section-header">
@@ -2972,6 +3086,20 @@
       return;
     }
 
+    const radialCatBtn = e.target.closest("[data-radial-cat]");
+    if (radialCatBtn) {
+      haptic();
+      playSound("tap");
+      state.radialCat = radialCatBtn.dataset.radialCat;
+      render();
+      return;
+    }
+    if (e.target.id === "toggleMenuViewBtn") {
+      haptic();
+      state.menuView = (state.menuView || "radial") === "radial" ? "grid" : "radial";
+      render();
+      return;
+    }
     if (e.target.id === "openUserManualBtn") {
       openUserManualSheet();
       return;

@@ -752,14 +752,43 @@
     }
     if (state.tab === "home") render();
 
-    // 2) จับพิกัด GPS ของผู้ใช้ที่กำลังเปิดแอปอยู่ แล้วอัปเดตขึ้นคลาวด์ให้ทุกคนเห็น
+    // 2) จับพิกัด GPS ของผู้ใช้ (ไม่เด้งถามซ้ำทุกรอบ! ถามแค่ครั้งแรกหรือตอนกดปุ่มอัปเดตเอง)
     const u = state.currentUser;
     if (!u || !navigator.geolocation) {
       if (manualTrigger) notifyIsland("อุปกรณ์นี้ไม่รองรับการจับพิกัด GPS");
       return;
     }
+
+    const STORAGE_GPS_OPT = "bpp_gps_opt_in_v1";
+    const myPrev = (state.staffGps || {})[u.id];
+    const lastUpdated = (myPrev && myPrev.updatedAt) || 0;
+    const isFresh = (Date.now() - lastUpdated) < 60 * 60 * 1000; // ยังไม่เกิน 60 นาที
+
+    if (!manualTrigger) {
+      const savedOpt = localStorage.getItem(STORAGE_GPS_OPT);
+      if (savedOpt === "denied") return; // เคยปฏิเสธแล้ว ไม่รบกวนซ้ำ
+      if (savedOpt === "asked" && isFresh) return; // เคยขอแล้วและข้อมูลยังใหม่ ไม่เด้งถามซ้ำ
+      // ตรวจสิทธิ์ผ่าน Permissions API (ถ้าเครื่องรองรับและยังไม่เคย granted + เคยขอไปแล้ว ให้รอผู้ใช้กดเอง)
+      let permState = "unknown";
+      try {
+        if (navigator.permissions && navigator.permissions.query) {
+          const perm = await navigator.permissions.query({ name: "geolocation" });
+          permState = perm.state;
+        }
+      } catch (_) {}
+      if (permState === "denied") {
+        localStorage.setItem(STORAGE_GPS_OPT, "denied");
+        return;
+      }
+      if (permState !== "granted" && (savedOpt === "asked" || savedOpt === "granted")) {
+        return; // บน iPhone Safari ไม่เด้งขอซ้ำทุกครั้งที่เปิดแอป (กดอัปเดตเองได้เมื่อแตะรูปโปรไฟล์)
+      }
+    }
+
+    try { localStorage.setItem(STORAGE_GPS_OPT, "asked"); } catch (_) {}
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        try { localStorage.setItem(STORAGE_GPS_OPT, "granted"); } catch (_) {}
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         const hasSchoolPin = geo && geo.lat !== "" && geo.lng !== "" && !Number.isNaN(Number(geo.lat));
@@ -791,10 +820,13 @@
         if (manualTrigger) notifyIsland(atSchool ? `🟢 อยู่โรงเรียน (${dist} ม.)` : `🔴 ไม่อยู่โรงเรียน (ห่าง ${dist} ม.)`);
         if (state.tab === "home") render();
       },
-      () => {
+      (err) => {
+        if (err && err.code === 1) {
+          try { localStorage.setItem(STORAGE_GPS_OPT, "denied"); } catch (_) {}
+        }
         if (manualTrigger) notifyIsland("กรุณาอนุญาตการเข้าถึงตำแหน่ง GPS เพื่ออัปเดตสถานะ");
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
     );
   }
 
@@ -935,20 +967,6 @@
           })
           .catch(() => {});
       }, 15000);
-    }
-    if (navigator.geolocation && _gpsWatchId === null) {
-      try {
-        _gpsWatchId = navigator.geolocation.watchPosition(
-          () => {
-            if (Date.now() - _lastWatchPush > 25000 && state.currentUser) {
-              _lastWatchPush = Date.now();
-              syncStaffGpsPresence(false);
-            }
-          },
-          () => {},
-          { enableHighAccuracy: false, maximumAge: 20000, timeout: 10000 }
-        );
-      } catch (_) {}
     }
   }
 

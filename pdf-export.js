@@ -1,6 +1,79 @@
 // BPP Connect — Compact A4 PDF Export with Interactive Pre-Send Preview Modal
 window.BPP_PDF = {
   _libsPromise: null,
+  VAULT_KEY: "bpp_doc_vault_v1",
+
+  detectCategory(fileName, htmlStr) {
+    const s = `${fileName || ""} ${String(htmlStr || "").slice(0, 600)}`;
+    if (/ออกนอก/.test(s)) return "ขอออกนอกโรงเรียน";
+    if (/ไปราชการ/.test(s)) return "ไปราชการ";
+    if (/ชี้แจง|ไม่ลงเวลา/.test(s)) return "ชี้แจงลงเวลา";
+    if (/ใบลา|ลาป่วย|ลากิจ|ลาคลอด/.test(s)) return "ใบลา";
+    if (/เยี่ยมบ้าน|กสศ|คัดกรอง/.test(s)) return "เยี่ยมบ้าน / กสศ.";
+    if (/คะแนน|ผลการเรียน/.test(s)) return "คะแนนนักเรียน";
+    if (/สถิติ|มาเรียน|ครูเวร/.test(s)) return "สถิตินักเรียน";
+    if (/ผู้บริหาร|ตารางสอน|วPA|SAR|นิเทศ/.test(s)) return "ผู้บริหาร / วิชาการ";
+    return "ธุรการ / อื่นๆ";
+  },
+
+  saveToVault(pagesHtml, fileName) {
+    try {
+      const uid = localStorage.getItem("bpp_connect_user_v1") || "";
+      let authorName = "บุคลากรโรงเรียนบ้านป่าไผ่";
+      const users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+      const found = users.find((u) => u.id === uid);
+      if (found) authorName = found.name || found.shortName || authorName;
+
+      const list = (Array.isArray(pagesHtml) ? pagesHtml : [pagesHtml]).filter(Boolean);
+      const category = this.detectCategory(fileName, list[0] || "");
+      // ตัดรูป data:image ขนาดใหญ่มากออกเฉพาะตอนเก็บแคชคลัง เพื่อไม่ให้ localStorage เต็ม
+      const compactPages = list.map((h) => String(h).replace(/src="data:image\/[^"]{65000,}"/g, 'src=""'));
+      const now = new Date();
+      const thMonths = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+      const dateThai = `${now.getDate()} ${thMonths[now.getMonth()]} ${now.getFullYear() + 543} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")} น.`;
+
+      let vault = [];
+      try { vault = JSON.parse(localStorage.getItem(this.VAULT_KEY) || "[]"); } catch (_) {}
+      if (!Array.isArray(vault)) vault = [];
+
+      const entry = {
+        id: "doc-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+        title: String(fileName || "เอกสาร.pdf").replace(/\.pdf$/i, "").replace(/_/g, " "),
+        fileName: fileName || "document.pdf",
+        category,
+        authorId: uid,
+        authorName,
+        createdAt: now.getTime(),
+        dateThai,
+        pageCount: compactPages.length,
+        pagesHtml: compactPages
+      };
+      vault.unshift(entry);
+      vault = vault.slice(0, 60);
+      localStorage.setItem(this.VAULT_KEY, JSON.stringify(vault));
+
+      // ซิงก์ดัชนีเอกสาร (ไม่รวม HTML ยาวเกิน) ขึ้นคลาวด์ให้ ผอ. และแอดมินดูย้อนหลังข้ามเครื่องได้
+      const apiUrl = (localStorage.getItem("bpp_connect_news_api_v1") || (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
+      if (apiUrl) {
+        const cloudIndex = vault.slice(0, 35).map((it) => ({
+          id: it.id,
+          title: it.title,
+          fileName: it.fileName,
+          category: it.category,
+          authorId: it.authorId,
+          authorName: it.authorName,
+          createdAt: it.createdAt,
+          dateThai: it.dateThai,
+          pageCount: it.pageCount
+        }));
+        fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "save_kv", key: "bpp_doc_vault_index_v1", value: { updatedAt: Date.now(), items: cloudIndex } })
+        }).catch(() => {});
+      }
+    } catch (_) {}
+  },
 
   loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -104,10 +177,11 @@ window.BPP_PDF = {
     return this.exportOrShare(html || "", fileName || "document.pdf", { shareToAdmin: true, onStatus });
   },
 
-  async exportMultiPageA4(pagesHtml, fileName, { shareToAdmin = true, onStatus } = {}) {
+  async exportMultiPageA4(pagesHtml, fileName, { shareToAdmin = true, onStatus, skipVault = false } = {}) {
     const notify = (m) => { if (typeof onStatus === "function") onStatus(m); };
     const list = (Array.isArray(pagesHtml) ? pagesHtml : [pagesHtml]).filter(Boolean);
     if (!list.length) return;
+    if (!skipVault) this.saveToVault(list, fileName);
 
     const overlay = document.createElement("div");
     overlay.style.cssText = "position:fixed;inset:0;z-index:9998;background:rgba(15,23,42,0.78);overflow:auto;display:flex;flex-direction:column;align-items:center;padding:12px;";
@@ -174,8 +248,9 @@ window.BPP_PDF = {
     }
   },
 
-  async exportOrShare(htmlContent, fileName, { shareToAdmin = false, onStatus } = {}) {
+  async exportOrShare(htmlContent, fileName, { shareToAdmin = false, onStatus, skipVault = false } = {}) {
     const notify = (m) => { if (typeof onStatus === "function") onStatus(m); };
+    if (!skipVault) this.saveToVault([htmlContent], fileName);
     notify("กำลังเตรียมตัวอย่าง PDF (A4)...");
 
     const overlay = document.createElement("div");

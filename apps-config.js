@@ -1,6 +1,6 @@
 // ตั้งค่าแอป BPP Connect — โรงเรียนบ้านป่าไผ่ (สพป.นครราชสีมา เขต 4)
 window.SCHOOL_CONFIG = {
-  appVersion: "3.2.1",
+  appVersion: "3.3.0",
   schoolName: "BPP Connect",
   schoolSubtitle: "โรงเรียนบ้านป่าไผ่ • สพป.นครราชสีมา เขต 4",
   logoUrl: "./icons/school-logo.png",
@@ -169,6 +169,18 @@ window.SCHOOL_CONFIG = {
       url: "./academic-hub.html",
       icon: "graduationCap",
       color: "sky",
+      pinned: true,
+      directorOnly: false
+    },
+    {
+      id: "doc-vault",
+      name: "คลังเอกสารย้อนหลัง (PDF)",
+      shortName: "คลังเอกสาร",
+      description: "ดูย้อนหลังและพิมพ์ซ้ำทุกเอกสารที่ออก PDF จากแอป แยกหมวดใบขอออกนอก ใบลา เยี่ยมบ้าน ฯลฯ",
+      division: "general",
+      url: "./doc-vault.html",
+      icon: "fileCheck",
+      color: "purple",
       pinned: true,
       directorOnly: false
     },

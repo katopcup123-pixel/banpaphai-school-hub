@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>คลังเอกสารย้อนหลัง — BPP Connect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: "TH SarabunIT9";
+      src: url("./fonts/THSarabunIT9.ttf") format("truetype");
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: "TH SarabunIT9";
+      src: url("./fonts/THSarabunIT9-Bold.ttf") format("truetype");
+      font-weight: 700;
+    }
+    :root {
+      --bg: #F4F6FB;
+      --surface: #FFFFFF;
+      --glass: rgba(255, 255, 255, 0.88);
+      --fill: rgba(118, 118, 128, 0.11);
+      --border: rgba(15, 23, 42, 0.08);
+      --text: #0F172A;
+      --secondary: #64748B;
+      --accent: #7C3AED;
+      --accent-soft: rgba(124, 58, 237, 0.12);
+    }
+    [data-theme="dark"] {
+      --bg: #0B0D12;
+      --surface: #1C1C1E;
+      --glass: rgba(24, 24, 28, 0.88);
+      --fill: rgba(118, 118, 128, 0.24);
+      --border: rgba(255, 255, 255, 0.09);
+      --text: #F2F2F7;
+      --secondary: #AEAEB2;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans Thai", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden; overflow-x: hidden; touch-action: pan-y;
+    }
+    .app { max-width: 560px; width: 100%; margin: 0 auto; height: 100dvh; display: flex; flex-direction: column; }
+    .topbar {
+      flex-shrink: 0; background: var(--glass); backdrop-filter: saturate(180%) blur(24px);
+      border-bottom: 0.5px solid var(--border);
+      padding: calc(10px + env(safe-area-inset-top)) 16px 10px; z-index: 20;
+    }
+    .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .top-row h1 { margin: 0; font-size: 17.5px; font-weight: 700; letter-spacing: -0.02em; }
+    .sub-line { font-size: 11.5px; color: var(--secondary); margin-top: 2px; }
+    .scope-seg {
+      display: inline-flex; background: var(--fill); padding: 3px; border-radius: 10px; gap: 3px;
+    }
+    .scope-btn {
+      border: none; background: transparent; color: var(--secondary);
+      font-family: inherit; font-size: 11.5px; font-weight: 600;
+      padding: 5px 10px; border-radius: 8px; cursor: pointer;
+    }
+    .scope-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 5px rgba(0,0,0,0.08); }
+
+    .search-input {
+      width: 100%; height: 38px; border: none; background: var(--fill); color: var(--text);
+      border-radius: 12px; padding: 0 12px; font-family: inherit; font-size: 16px;
+      margin-top: 10px; outline: none;
+    }
+    .body-scroll {
+      flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+      padding: 12px 16px calc(32px + env(safe-area-inset-bottom)); scrollbar-width: none;
+    }
+    .body-scroll::-webkit-scrollbar { display: none; }
+
+    .cat-bar {
+      display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 12px; scrollbar-width: none;
+    }
+    .cat-bar::-webkit-scrollbar { display: none; }
+    .cat-pill {
+      flex-shrink: 0; border: 0.5px solid var(--border); background: var(--surface); color: var(--text);
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      padding: 7px 12px; border-radius: 999px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .cat-pill.active { background: var(--accent); color: #FFF; border-color: transparent; }
+    .cat-cnt {
+      font-size: 10.5px; padding: 1px 6px; border-radius: 999px;
+      background: var(--fill); color: var(--secondary);
+    }
+    .cat-pill.active .cat-cnt { background: rgba(255,255,255,0.25); color: #FFF; }
+
+    .doc-card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: 18px; padding: 13px 14px; margin-bottom: 10px;
+      box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+    }
+    .doc-top { display: flex; align-items: flex-start; gap: 11px; }
+    .doc-ico {
+      width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center;
+      font-size: 19px; flex-shrink: 0; background: var(--accent-soft);
+    }
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-cat-badge {
+      display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 8px;
+      border-radius: 999px; background: var(--accent-soft); color: var(--accent); margin-bottom: 4px;
+    }
+    .doc-title { margin: 0; font-size: 14px; font-weight: 700; line-height: 1.35; word-break: break-word; }
+    .doc-meta { font-size: 11.5px; color: var(--secondary); margin-top: 3px; }
+    .doc-actions { display: flex; gap: 7px; margin-top: 10px; }
+    .btn-view {
+      flex: 1; border: none; background: var(--accent); color: #FFF;
+      font-family: inherit; font-size: 12.5px; font-weight: 600;
+      padding: 8px 12px; border-radius: 11px; cursor: pointer;
+    }
+    .btn-view:active { transform: scale(0.97); }
+    .btn-del {
+      border: none; background: rgba(239, 68, 68, 0.12); color: #DC2626;
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      padding: 8px 12px; border-radius: 11px; cursor: pointer;
+    }
+    .empty {
+      text-align: center; padding: 42px 18px; color: var(--secondary); font-size: 13.5px; line-height: 1.6;
+    }
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.92); color: #FFF; font-size: 13px; font-weight: 600;
+      padding: 10px 18px; border-radius: 999px; display: none; z-index: 95;
+    }
+    .toast.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="top-row">
+        <div>
+          <h1>🗄️ คลังเอกสารย้อนหลัง</h1>
+          <div class="sub-line" id="userSub">เก็บทุกเอกสารที่ออก PDF จากแอปอัตโนมัติ</div>
+        </div>
+        <div class="scope-seg" id="scopeSeg">
+          <button type="button" class="scope-btn active" data-scope="mine">ของฉัน</button>
+          <button type="button" class="scope-btn" data-scope="all">ทั้งหมด</button>
+        </div>
+      </div>
+      <input type="search" class="search-input" id="searchIn" placeholder="🔍 ค้นหาชื่อเอกสาร, ประเภท, ชื่อครู..." />
+    </header>
+    <main class="body-scroll">
+      <div class="cat-bar" id="catBar"></div>
+      <div id="docList"></div>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script src="./apps-config.js"></script>
+  <script src="./pdf-export.js"></script>
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem("bpp_connect_theme_v1") || "light";
+
+    const CAT_ICONS = {
+      "ขอออกนอกโรงเรียน": "🚗",
+      "ใบลา": "🩺",
+      "ไปราชการ": "✈️",
+      "ชี้แจงลงเวลา": "⏰",
+      "เยี่ยมบ้าน / กสศ.": "🏠",
+      "คะแนนนักเรียน": "📊",
+      "สถิตินักเรียน": "✅",
+      "ผู้บริหาร / วิชาการ": "🧭",
+      "ธุรการ / อื่นๆ": "📄"
+    };
+    const CAT_ORDER = [
+      "ทั้งหมด", "ขอออกนอกโรงเรียน", "ใบลา", "ไปราชการ", "ชี้แจงลงเวลา",
+      "เยี่ยมบ้าน / กสศ.", "คะแนนนักเรียน", "สถิตินักเรียน", "ผู้บริหาร / วิชาการ", "ธุรการ / อื่นๆ"
+    ];
+
+    function getCurrentUser() {
+      const uid = localStorage.getItem("bpp_connect_user_v1");
+      const users = (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.users) || [];
+      return users.find((u) => u.id === uid) || users[0] || { id: "", name: "บุคลากร", shortName: "คุณครู", role: "teacher" };
+    }
+    const currentUser = getCurrentUser();
+    const isExecOrAdmin = currentUser.role === "admin" || currentUser.role === "director";
+    document.getElementById("userSub").textContent = `ผู้ใช้งาน: ${currentUser.shortName || currentUser.name}`;
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg; el.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.remove("show"), 2500);
+    }
+
+    const ui = {
+      scope: isExecOrAdmin ? "all" : "mine",
+      category: "ทั้งหมด",
+      query: "",
+      items: []
+    };
+
+    function loadAllVaultItems() {
+      const map = new Map();
+
+      // 1) เอกสาร PDF ที่บันทึกอัตโนมัติในเครื่อง (มี HTML ครบ สามารถเปิดพิมพ์ซ้ำ PDF ได้ทันที!)
+      let localVault = [];
+      try { localVault = JSON.parse(localStorage.getItem("bpp_doc_vault_v1") || "[]"); } catch (_) {}
+      (Array.isArray(localVault) ? localVault : []).forEach((it) => {
+        map.set(it.id, { ...it, source: "local_pdf" });
+      });
+
+      // 2) ดึงรายการยื่นใบลา/ขอออกนอกโรงเรียนเดิมจาก bpp_leaves_v1 มารวมด้วย
+      let leaves = [];
+      try { leaves = JSON.parse(localStorage.getItem("bpp_leaves_v1") || "[]"); } catch (_) {}
+      (Array.isArray(leaves) ? leaves : []).forEach((lv) => {
+        const lid = "lv-" + (lv.id || `${lv.userId || ""}_${lv.date || lv.startDate || ""}_${lv.type || ""}`);
+        if (map.has(lid)) return;
+        const t = String(lv.type || lv.formType || "ใบลา");
+        const cat = t.includes("ออกนอก") ? "ขอออกนอกโรงเรียน" : t.includes("ราชการ") ? "ไปราชการ" : t.includes("ชี้แจง") ? "ชี้แจงลงเวลา" : "ใบลา";
+        map.set(lid, {
+          id: lid,
+          title: `${t} — ${lv.reason || lv.destination || lv.teacherName || ""}`,
+          fileName: `${t}_${lv.teacherName || "doc"}.pdf`,
+          category: cat,
+          authorId: lv.userId || "",
+          authorName: lv.teacherName || lv.author || "-",
+          createdAt: lv.createdAt ? new Date(lv.createdAt).getTime() : Date.parse(lv.date || lv.startDate || "") || 0,
+          dateThai: lv.date || lv.startDate || "-",
+          pageCount: 1,
+          source: "leave_record",
+          leaveData: lv
+        });
+      });
+
+      ui.items = [...map.values()].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+
+    async function pullCloudIndex() {
+      const apiUrl = (localStorage.getItem("bpp_connect_news_api_v1") || (window.SCHOOL_CONFIG && window.SCHOOL_CONFIG.newsBackendUrl) || "").trim();
+      if (!apiUrl) return;
+      try {
+        const res = await fetch(`${apiUrl}?action=get_kv&key=bpp_doc_vault_index_v1`, { cache: "no-store" });
+        const json = await res.json();
+        if (json && json.ok && json.value && Array.isArray(json.value.items)) {
+          const existingIds = new Set(ui.items.map((x) => x.id));
+          json.value.items.forEach((it) => {
+            if (!existingIds.has(it.id)) ui.items.push({ ...it, source: "cloud_index" });
+          });
+          ui.items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          render();
+        }
+      } catch (_) {}
+    }
+
+    function scopedItems() {
+      return ui.items.filter((it) => {
+        if (ui.scope === "mine" && currentUser.id) {
+          return it.authorId === currentUser.id || it.authorName === currentUser.name;
+        }
+        return true;
+      });
+    }
+
+    function render() {
+      document.querySelectorAll(".scope-btn").forEach((b) => b.classList.toggle("active", b.dataset.scope === ui.scope));
+      const base = scopedItems();
+
+      // Category pills with live counts
+      const counts = { "ทั้งหมด": base.length };
+      base.forEach((it) => { counts[it.category] = (counts[it.category] || 0) + 1; });
+
+      document.getElementById("catBar").innerHTML = CAT_ORDER
+        .filter((c) => c === "ทั้งหมด" || (counts[c] || 0) > 0)
+        .map((c) => `
+          <button type="button" class="cat-pill ${ui.category === c ? "active" : ""}" data-cat="${c}">
+            <span>${c === "ทั้งหมด" ? "ทั้งหมด" : `${CAT_ICONS[c] || "📄"} ${c}`}</span>
+            <span class="cat-cnt">${counts[c] || 0}</span>
+          </button>`).join("");
+
+      const q = ui.query.trim().toLowerCase();
+      const filtered = base.filter((it) => {
+        if (ui.category !== "ทั้งหมด" && it.category !== ui.category) return false;
+        if (!q) return true;
+        return `${it.title} ${it.category} ${it.authorName} ${it.dateThai}`.toLowerCase().includes(q);
+      });
+
+      const listEl = document.getElementById("docList");
+      if (!filtered.length) {
+        listEl.innerHTML = `
+          <div class="empty">
+            <div style="font-size:32px;margin-bottom:6px">🗄️</div>
+            <strong>ยังไม่มีเอกสารในหมวดนี้</strong><br>
+            ทุกครั้งที่คุณกดออกเอกสาร PDF จากระบบใดก็ได้ในแอป (เช่น ใบขอออกนอกโรงเรียน, ใบลา, เยี่ยมบ้าน, คะแนน, รายงานผู้บริหาร) ระบบจะเก็บสำเนาไว้ที่นี่ให้อัตโนมัติครับ
+          </div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map((it) => {
+        const canReprint = Boolean(it.pagesHtml && it.pagesHtml.length);
+        const canDel = it.source === "local_pdf" && (isExecOrAdmin || it.authorId === currentUser.id);
+        return `
+          <article class="doc-card">
+            <div class="doc-top">
+              <div class="doc-ico">${CAT_ICONS[it.category] || "📄"}</div>
+              <div class="doc-info">
+                <span class="doc-cat-badge">${it.category}</span>
+                <h2 class="doc-title">${it.title}</h2>
+                <div class="doc-meta">${it.authorName} • ${it.dateThai || "-"} ${it.pageCount > 1 ? `• ${it.pageCount} หน้า` : ""}</div>
+              </div>
+            </div>
+            <div class="doc-actions">
+              ${canReprint
+                ? `<button type="button" class="btn-view" data-reprint="${it.id}">👁️ เปิดดู / พิมพ์ซ้ำ PDF</button>`
+                : `<button type="button" class="btn-view" style="opacity:0.75" data-info="${it.id}">📋 ดูรายละเอียดเอกสาร</button>`}
+              ${canDel ? `<button type="button" class="btn-del" data-del="${it.id}">ลบ</button>` : ""}
+            </div>
+          </article>`;
+      }).join("");
+    }
+
+    document.getElementById("scopeSeg").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-scope]");
+      if (!b) return;
+      ui.scope = b.dataset.scope;
+      ui.category = "ทั้งหมด";
+      render();
+    });
+    document.getElementById("catBar").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-cat]");
+      if (!b) return;
+      ui.category = b.dataset.cat;
+      render();
+    });
+    document.getElementById("searchIn").oninput = (e) => {
+      ui.query = e.target.value;
+      render();
+    };
+    document.getElementById("docList").addEventListener("click", async (e) => {
+      const rep = e.target.closest("[data-reprint]");
+      if (rep) {
+        const it = ui.items.find((x) => x.id === rep.dataset.reprint);
+        if (!it || !it.pagesHtml) return;
+        if (it.pagesHtml.length > 1) {
+          await window.BPP_PDF.exportMultiPageA4(it.pagesHtml, it.fileName, { shareToAdmin: true, onStatus: showToast, skipVault: true });
+        } else {
+          await window.BPP_PDF.exportOrShare(it.pagesHtml[0], it.fileName, { shareToAdmin: true, onStatus: showToast, skipVault: true });
+        }
+        return;
+      }
+      const inf = e.target.closest("[data-info]");
+      if (inf) {
+        const it = ui.items.find((x) => x.id === inf.dataset.info);
+        if (it) showToast(`${it.category}: ${it.title} (${it.dateThai})`);
+        return;
+      }
+      const del = e.target.closest("[data-del]");
+      if (del) {
+        if (!confirm("ต้องการลบเอกสารนี้จากคลังย้อนหลังใช่หรือไม่?")) return;
+        let localVault = [];
+        try { localVault = JSON.parse(localStorage.getItem("bpp_doc_vault_v1") || "[]"); } catch (_) {}
+        localVault = localVault.filter((x) => x.id !== del.dataset.del);
+        localStorage.setItem("bpp_doc_vault_v1", JSON.stringify(localVault));
+        loadAllVaultItems();
+        render();
+        showToast("ลบเอกสารจากคลังแล้ว");
+      }
+    });
+
+    loadAllVaultItems();
+    render();
+    pullCloudIndex();
+  </script>
+</body>
+</html>

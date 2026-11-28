@@ -180,10 +180,33 @@
     .card-box { background: var(--surface); border-radius: 18px; padding: 14px; border: 1px solid var(--sep); margin-bottom: 12px; }
     .card-box h2 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
     .field, .select-field, .textarea-field {
-      width: 100%; border: 1px solid var(--sep); background: var(--bg); color: var(--text);
-      border-radius: 11px; padding: 9px 11px; font: inherit; font-size: 13.5px; margin-bottom: 9px; outline: none;
+      width: 100%; max-width: 100%; min-width: 0;
+      border: 1px solid var(--sep); background: var(--bg); color: var(--text);
+      border-radius: 11px; padding: 9px 10px; font: inherit; font-size: 16px; margin-bottom: 9px; outline: none;
     }
-    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .row-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+    .row-2 > *, .sheet div { min-width: 0; }
+    .wl-card {
+      background: var(--bg); border: 1px solid var(--sep); border-radius: 12px;
+      padding: 8px; margin-bottom: 7px;
+    }
+    .wl-card-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+    .wl-card-grid .select-field { margin-bottom: 0; padding: 7px 8px; font-size: 14px; }
+    .comp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .comp-chip {
+      border: 1px solid var(--sep); background: var(--bg); color: var(--text);
+      font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 10px;
+      border-radius: 999px; cursor: pointer;
+    }
+    .comp-chip.active { background: var(--accent); color: #FFF; border-color: var(--accent); }
+    .baht-row { display: flex; gap: 6px; align-items: stretch; margin-bottom: 9px; }
+    .baht-row .field { margin-bottom: 0; flex: 1; }
+    .baht-btn {
+      border: none; background: rgba(0, 122, 255, 0.14); color: var(--accent);
+      font: inherit; font-size: 12px; font-weight: 700; padding: 0 11px;
+      border-radius: 11px; cursor: pointer; flex-shrink: 0; white-space: nowrap;
+    }
+    .baht-btn:active { transform: scale(0.95); }
     .lbl { display: block; font-size: 11.5px; font-weight: 600; color: var(--secondary); margin-bottom: 3px; }
     .day-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; }
     .day-chip { border: 1px solid var(--sep); background: var(--bg); color: var(--secondary); font: inherit; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 9px; cursor: pointer; }
@@ -204,7 +227,10 @@
     }
     .backdrop.open { opacity: 1; pointer-events: auto; }
     .sheet {
-      width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+      width: 100%; max-width: 500px; max-height: 90dvh;
+      overflow-y: auto; overflow-x: hidden;
+      overscroll-behavior: contain; overscroll-behavior-x: none;
+      touch-action: pan-y; -webkit-overflow-scrolling: touch;
       background: var(--surface); border-radius: 24px 24px 0 0;
       padding: 12px 16px calc(22px + env(safe-area-inset-bottom));
       transform: translateY(100%); transition: transform 0.34s var(--spring);
@@ -622,6 +648,130 @@
         </select>`;
     }
 
+    // --- Helpers: 8 กลุ่มสาระ, คาบ 1-8, ชั้น อ.2-ป.6, ผู้สอนแทน (ครู+คุณภัทรญา ไม่เอา ผอ.), ที่อยู่ จ./อ./ต., แปลงตัวเลขเป็นบาทถ้วน ---
+    const PERIOD_OPTS = ["1", "2", "3", "4", "5", "6", "7", "8"];
+    const SUBJECT_GROUPS = [
+      "ภาษาไทย",
+      "คณิตศาสตร์",
+      "วิทยาศาสตร์และเทคโนโลยี",
+      "สังคมศึกษา ศาสนา และวัฒนธรรม",
+      "สุขศึกษาและพลศึกษา",
+      "ศิลปะ",
+      "การงานอาชีพ",
+      "ภาษาต่างประเทศ",
+      "กิจกรรมพัฒนาผู้เรียน / แนะแนว",
+      "งานพิเศษ / ธุรการ"
+    ];
+    const GRADE_OPTS = ["อ.2", "อ.3", "ป.1", "ป.2", "ป.3", "ป.4", "ป.5", "ป.6"];
+
+    function getSubstituteUsers() {
+      // เฉพาะครูและคุณภัทรญา (ไม่เอา ผอ.นภาพร และไม่เอาคุณกุล)
+      return getAllUsers().filter((u) => u.id !== "napaporn" && u.role !== "director" && u.id !== "kun");
+    }
+
+    function getTeacherAndStaffUsers() {
+      return getAllUsers().filter((u) => u.id !== teacher.id);
+    }
+
+    const THAI_ADDR_DATA = {
+      "นครราชสีมา": {
+        "ปากช่อง": ["จันทึก", "ปากช่อง", "กลางดง", "หมูสี", "หนองสาหร่าย", "ขนงพระ", "โป่งตาลอง", "คลองม่วง", "หนองน้ำแดง", "วังกะทะ", "วังไทร", "พญาเย็น"],
+        "สีคิ้ว": ["สีคิ้ว", "บ้านหัน", "กฤษณา", "ลาดบัวขาว", "หนองน้ำใส", "กุดน้อย", "หนองหญ้าขาว", "คลองไผ่", "มิตรภาพ", "หนองบัวน้อย", "ดอนเมือง", "วังโรงใหญ่"],
+        "เมืองนครราชสีมา": ["ในเมือง", "โพธิ์กลาง", "หนองจะบก", "โคกสูง", "มะเริง", "หนองระเวียง", "ปรุใหญ่", "หมื่นไวย", "พลกรัง", "หนองไผ่ล้อม", "หัวทะเล", "บ้านเกาะ", "จอหอ", "สุรนารี"],
+        "สูงเนิน": ["สูงเนิน", "เสมา", "โคราช", "บุ่งขี้เหล็ก", "โนนค่า", "โค้งยาง", "มะเกลือเก่า", "มะเกลือใหม่", "นากลาง", "หนองตะไก้", "กุดจิก"],
+        "ด่านขุนทด": ["ด่านขุนทด", "กุดพิมาน", "ด่านนอก", "ด่านใน", "ตะเคียน", "บ้านเก่า", "บ้านแปรง", "พันชนะ", "สระจรเข้", "หนองกราด", "ห้วยบง"],
+        "ปักธงชัย": ["เมืองปัก", "ตะคุ", "โคกไทย", "สำโรง", "ตะขบ", "นกออก", "ดอน", "ตูม", "งิ้ว", "สะแกราช"],
+        "พิมาย": ["ในเมือง", "สัมฤทธิ์", "โบสถ์", "กระเบื้องใหญ่", "ท่าหลวง", "รังกาใหญ่", "ชีวาน", "นิคมสร้างตนเอง"],
+        "ขามทะเลสอ": ["ขามทะเลสอ", "โป่งแดง", "พันดุง", "หนองสรวง", "บึงอ้อ"]
+      },
+      "สระบุรี": {
+        "มวกเหล็ก": ["มวกเหล็ก", "มิตรภาพ", "หนองย่างเสือ", "ลำสมพุง", "ลำพญากลาง", "ซับสนุ่น"],
+        "แก่งคอย": ["แก่งคอย", "ทับกวาง", "ตาลเดี่ยว", "ห้วยแห้ง", "ท่าคล้อ", "หินซ้อน"],
+        "เมืองสระบุรี": ["ปากเพรียว", "ดาวเรือง", "นาโฉง", "โคกสว่าง", "หนองโน", "ตลิ่งชัน"]
+      },
+      "ลพบุรี": {
+        "พัฒนานิคม": ["พัฒนานิคม", "ช่องสาริกา", "มะนาวหวาน", "ดีลัง", "โคกสลุง"],
+        "ชัยบาดาล": ["ลำนารายณ์", "ชัยนารายณ์", "ศิลาทิพย์", "ห้วยหิน", "ม่วงค่อม"],
+        "เมืองลพบุรี": ["ท่าหิน", "ทะเลชุบศร", "ป่าตาล", "เขาพระงาม", "นิคมสร้างตนเอง"]
+      },
+      "กรุงเทพมหานคร": {
+        "ดุสิต": ["ดุสิต", "วชิรพยาบาล", "สวนจิตรลดา", "สี่แยกมหานาค"],
+        "ปทุมวัน": ["ปทุมวัน", "วังใหม่", "ลุมพินี", "รองเมือง"],
+        "จตุจักร": ["ลาดยาว", "เสนานิคม", "จันทรเกษม", "จอมพล", "จตุจักร"]
+      },
+      "ขอนแก่น": {
+        "เมืองขอนแก่น": ["ในเมือง", "สำราญ", "โคกสี", "ท่าพระ", "บ้านทุ่ม", "ศิลา", "บ้านเป็ด"]
+      },
+      "ชัยภูมิ": {
+        "เมืองชัยภูมิ": ["ในเมือง", "รอบเมือง", "โพนทอง", "นาฝาย", "บ้านค่าย"],
+        "เทพสถิต": ["วะตะแบก", "ห้วยยายจิ๋ว", "นายางกลัก", "บ้านไร่", "โป่งนก"]
+      },
+      "บุรีรัมย์": {
+        "เมืองบุรีรัมย์": ["ในเมือง", "อิสาณ", "เสม็ด", "บ้านบัว", "กระสัง"],
+        "นางรอง": ["นางรอง", "สะเดา", "ชุมแสง", "หนองโบสถ์", "ถนนหัก"]
+      },
+      "นครนายก": {
+        "เมืองนครนายก": ["นครนายก", "ท่าช้าง", "บ้านใหญ่", "วังกระโจม", "สาริกา", "หินตั้ง"]
+      }
+    };
+
+    function thaiBahtText(input) {
+      const cleaned = String(input || "").replace(/,/g, "").trim();
+      const num = parseFloat(cleaned);
+      if (Number.isNaN(num) || num < 0) return "";
+      if (num === 0) return "ศูนย์บาทถ้วน";
+      const txtNum = ["ศูนย์", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า", "หก", "เจ็ด", "แปด", "เก้า"];
+      const txtPos = ["", "สิบ", "ร้อย", "พัน", "หมื่น", "แสน", "ล้าน"];
+      function readInt(nStr) {
+        let out = "";
+        const len = nStr.length;
+        for (let i = 0; i < len; i++) {
+          const d = Number(nStr[i]);
+          const pos = (len - i - 1) % 6;
+          if (d !== 0) {
+            if (pos === 0 && d === 1 && out.length > 0) out += "เอ็ด";
+            else if (pos === 1 && d === 2) out += "ยี่";
+            else if (pos === 1 && d === 1) out += "";
+            else out += txtNum[d];
+            out += txtPos[pos];
+          }
+          if (pos === 0 && len - i - 1 >= 6) out += "ล้าน";
+        }
+        return out;
+      }
+      const fixed = num.toFixed(2);
+      const [bahtPart, satangPart] = fixed.split(".");
+      const bahtNum = Number(bahtPart);
+      const satangNum = Number(satangPart);
+      let res = bahtNum > 0 ? readInt(String(bahtNum)) + "บาท" : "";
+      if (satangNum === 0) res += "ถ้วน";
+      else res += readInt(String(satangNum)) + "สตางค์";
+      return res;
+    }
+
+    function wireThaiAddressPicker(prefix, initProv = "นครราชสีมา", initAmp = "ปากช่อง", initTam = "จันทึก") {
+      const pSel = $(prefix + "Prov"), aSel = $(prefix + "Amp"), tSel = $(prefix + "Tam");
+      if (!pSel || !aSel) return;
+      const provList = [...Object.keys(THAI_ADDR_DATA), "อื่นๆ"];
+      pSel.innerHTML = provList.map((p) => `<option value="${p}" ${p === initProv ? "selected" : ""}>${p}</option>`).join("");
+
+      function fillAmp(selectedAmp) {
+        const p = pSel.value;
+        const amps = THAI_ADDR_DATA[p] ? [...Object.keys(THAI_ADDR_DATA[p]), "อื่นๆ"] : ["อื่นๆ"];
+        aSel.innerHTML = amps.map((a) => `<option value="${a}" ${a === selectedAmp ? "selected" : ""}>${a}</option>`).join("");
+        if (tSel) fillTam(initTam);
+      }
+      function fillTam(selectedTam) {
+        if (!tSel) return;
+        const p = pSel.value, a = aSel.value;
+        const tams = (THAI_ADDR_DATA[p] && THAI_ADDR_DATA[p][a]) ? [...THAI_ADDR_DATA[p][a], "อื่นๆ"] : ["อื่นๆ"];
+        tSel.innerHTML = tams.map((t) => `<option value="${t}" ${t === selectedTam ? "selected" : ""}>${t}</option>`).join("");
+      }
+      pSel.onchange = () => { fillAmp(""); };
+      aSel.onchange = () => { fillTam(""); };
+      fillAmp(initAmp);
+    }
+
     // --- 5 Official Form Input Sheets ---
     function openFormSheet(mode) {
       const today = todayYmd();
@@ -629,6 +779,12 @@
       const nextH = String(Math.min(23, new Date().getHours() + 1)).padStart(2, "0");
 
       if (mode === "offcampus") {
+        const subUsers = getSubstituteUsers();
+        const subOpts = `<option value="">-- ผู้สอนแทน --</option>` + subUsers.map((u) => `<option value="${u.name}">${u.shortName} (${u.name})</option>`).join("");
+        const periodOpts = `<option value="">-- คาบ --</option>` + PERIOD_OPTS.map((p) => `<option value="${p}">คาบ ${p}</option>`).join("");
+        const subjOpts = `<option value="">-- วิชา (8 กลุ่มสาระ) --</option>` + SUBJECT_GROUPS.map((s) => `<option value="${s}">${s}</option>`).join("");
+        const gradeOpts = `<option value="">-- ชั้น --</option>` + GRADE_OPTS.map((g) => `<option value="${g}">${g}</option>`).join("");
+
         openSheet(`
           <h3>🚗 ขออนุญาตออกนอกบริเวณโรงเรียน</h3>
           <div class="row-2">
@@ -645,17 +801,20 @@
           <label class="lbl">มีความจำเป็นเนื่องจาก (ระบุ)</label>
           <textarea class="textarea-field" id="fReason" rows="2"></textarea>
           <label class="lbl">ภาระงาน</label>
-          <div style="display:flex;gap:14px;margin-bottom:8px;font-size:13px">
+          <div style="display:flex;gap:14px;margin-bottom:8px;font-size:13.5px">
             <label><input type="radio" name="fWL" value="no" checked /> ไม่มี</label>
             <label><input type="radio" name="fWL" value="yes" /> มี (มอบหมายงานสอน)</label>
           </div>
           <div id="wlBox" class="hidden" style="margin-bottom:8px">
             ${[1, 2, 3, 4].map((n) => `
-              <div style="display:grid;grid-template-columns:46px 1fr 50px 1fr;gap:4px;margin-bottom:4px">
-                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlP${n}" placeholder="คาบ" />
-                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlT${n}" placeholder="งานสอน" />
-                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlG${n}" placeholder="ชั้น" />
-                <input class="field" style="margin:0;padding:6px;font-size:12px" id="wlS${n}" placeholder="ผู้สอนแทน" />
+              <div class="wl-card">
+                <div style="font-size:11px;font-weight:700;color:var(--secondary);margin-bottom:5px">รายการที่ ${n}</div>
+                <div class="wl-card-grid">
+                  <select class="select-field" id="wlP${n}">${periodOpts}</select>
+                  <select class="select-field" id="wlG${n}">${gradeOpts}</select>
+                  <select class="select-field" id="wlT${n}">${subjOpts}</select>
+                  <select class="select-field" id="wlS${n}">${subOpts}</select>
+                </div>
               </div>`).join("")}
           </div>
           <button type="button" class="btn-primary" id="fSaveBtn" style="width:100%;margin-bottom:7px">บันทึกคำขอ</button>
@@ -708,33 +867,57 @@
           </div>
           <label class="lbl">เนื่องจาก</label>
           <textarea class="textarea-field" id="fReason" rows="2"></textarea>
-          <label class="lbl">ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่</label>
-          <input class="field" id="fContactAddr" placeholder="บ้านเลขที่ / หมู่ / ตำบล / อำเภอ / จังหวัด" />
+          <label class="lbl">ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่ (บ้านเลขที่ / หมู่)</label>
+          <input class="field" id="fHouseNo" placeholder="เช่น บ้านเลขที่ 123 หมู่ 1" />
+          <div class="row-2">
+            <div><label class="lbl">จังหวัด</label><select class="select-field" id="lvAddrProv"></select></div>
+            <div><label class="lbl">อำเภอ</label><select class="select-field" id="lvAddrAmp"></select></div>
+          </div>
+          <label class="lbl">ตำบล</label>
+          <select class="select-field" id="lvAddrTam"></select>
           <label class="lbl">เบอร์โทรศัพท์</label>
           <input class="field" id="fPhone" placeholder="เช่น 08x-xxx-xxxx" value="${teacher.phone || ""}" />
           <button type="button" class="btn-primary" id="fSaveBtn" style="width:100%;margin-bottom:7px">บันทึกใบลา</button>
           <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
         `);
+        wireThaiAddressPicker("lvAddr", "นครราชสีมา", "ปากช่อง", "จันทึก");
         $("fCancelBtn").onclick = closeSheet;
         $("fSaveBtn").onclick = () => {
           const reason = $("fReason").value.trim();
           if (!reason) { showToast("กรุณาระบุเหตุผลการลา"); return; }
           const startDate = $("fStartDate").value || today, endDate = $("fEndDate").value || startDate;
+          const house = $("fHouseNo").value.trim();
+          const tam = $("lvAddrTam").value;
+          const amp = $("lvAddrAmp").value;
+          const prov = $("lvAddrProv").value;
+          const addrParts = [
+            house,
+            tam && tam !== "อื่นๆ" ? `ตำบล${tam}` : "",
+            amp && amp !== "อื่นๆ" ? `อำเภอ${amp}` : "",
+            prov && prov !== "อื่นๆ" ? `จังหวัด${prov}` : ""
+          ].filter(Boolean);
           saveNewRequest({
             type: $("fType").value,
             startDate, endDate,
             reason,
-            meta: { contactAddr: $("fContactAddr").value.trim(), phone: $("fPhone").value.trim() }
+            meta: { contactAddr: addrParts.join(" "), phone: $("fPhone").value.trim() }
           });
         };
         return;
       }
 
       if (mode === "duty") {
+        const compPool = getTeacherAndStaffUsers();
+        const selectedCompIds = new Set();
         openSheet(`
           <h3>🏛️ บันทึกข้อความ ขออนุญาตไปราชการ</h3>
           <div class="row-2">
-            <div><label class="lbl">กลุ่มสาระการเรียนรู้</label><input class="field" id="fDept" placeholder="เช่น วิทยาศาสตร์ฯ / ปฐมวัย" /></div>
+            <div>
+              <label class="lbl">กลุ่มสาระการเรียนรู้</label>
+              <select class="select-field" id="fDept">
+                ${SUBJECT_GROUPS.map((g) => `<option value="${g}">${g}</option>`).join("")}
+              </select>
+            </div>
             <div><label class="lbl">พาหนะเดินทาง</label><input class="field" id="fVehicle" placeholder="รถยนต์ส่วนตัว" value="รถยนต์ส่วนตัว" /></div>
           </div>
           <label class="lbl">ไปราชการเพื่อ</label>
@@ -758,8 +941,8 @@
           ${buildDestinationSelectHtml("fDutyDestSelect")}
           <input class="field hidden" id="fDest" placeholder="ระบุชื่อสถานที่ / โรงแรม / โรงเรียน..." />
           <div class="row-2">
-            <div><label class="lbl">อำเภอ</label><input class="field" id="fAmphoe" value="สีคิ้ว" /></div>
-            <div><label class="lbl">จังหวัด</label><input class="field" id="fProvince" value="นครราชสีมา" /></div>
+            <div><label class="lbl">จังหวัด</label><select class="select-field" id="dutyAddrProv"></select></div>
+            <div><label class="lbl">อำเภอ</label><select class="select-field" id="dutyAddrAmp"></select></div>
           </div>
           <div class="row-2">
             <div><label class="lbl">ตั้งแต่วันที่</label><input class="field" id="fStartDate" type="date" value="${today}" /></div>
@@ -769,23 +952,55 @@
             <div><label class="lbl">ตั้งแต่เวลา</label><input class="field" id="fStartTime" type="time" value="08:30" /></div>
             <div><label class="lbl">ถึงเวลา</label><input class="field" id="fEndTime" type="time" value="16:30" /></div>
           </div>
-          <div class="row-2">
-            <div><label class="lbl">ขออนุมัติค่าใช้จ่าย (บาท)</label><input class="field" id="fBudget" placeholder="เช่น - หรือ 500" /></div>
-            <div><label class="lbl">จำนวนเงิน (ตัวอักษร)</label><input class="field" id="fBudgetText" placeholder="เช่น ห้าร้อยบาทถ้วน" /></div>
+          <label class="lbl">ขออนุมัติค่าใช้จ่าย (บาท)</label>
+          <div class="baht-row">
+            <input class="field" id="fBudget" type="number" step="0.01" placeholder="เช่น 500 หรือเว้นว่าง" />
+            <button type="button" class="baht-btn" id="convertBahtBtn">🔄 แปลงเป็นตัวอักษร</button>
           </div>
-          <label class="lbl">ผู้ร่วมเดินทาง (ไม่บังคับ — คั่นด้วยบรรทัดใหม่ ชื่อ,ตำแหน่ง)</label>
-          <textarea class="textarea-field" id="fCompanions" rows="2" placeholder="เช่น นางสาวน้ำเพชร ชมประเสริฐ,ครู"></textarea>
+          <label class="lbl">จำนวนเงิน (ตัวอักษร)</label>
+          <input class="field" id="fBudgetText" placeholder="กดปุ่มแปลงด้านบน หรือพิมพ์เอง เช่น ห้าร้อยบาทถ้วน" />
+          <label class="lbl">ผู้ร่วมเดินทาง (แตะเลือกชื่อบุคลากรได้เลย)</label>
+          <div class="comp-chips" id="compChipsWrap">
+            ${compPool.map((u) => `<button type="button" class="comp-chip" data-comp-id="${u.id}">+ ${u.shortName}</button>`).join("")}
+          </div>
+          <textarea class="textarea-field" id="fCompanions" rows="2" placeholder="รายชื่อผู้ร่วมเดินทาง (จะเติมให้อัตโนมัติเมื่อกดเลือกด้านบน)"></textarea>
           <button type="button" class="btn-primary" id="fSaveBtn" style="width:100%;margin-bottom:7px">บันทึกขออนุญาตไปราชการ</button>
           <button type="button" class="btn-soft" id="fCancelBtn" style="width:100%">ยกเลิก</button>
         `);
+        wireThaiAddressPicker("dutyAddr", "นครราชสีมา", "สีคิ้ว", "");
+        $("convertBahtBtn").onclick = () => {
+          const val = $("fBudget").value.trim();
+          if (!val) { $("fBudgetText").value = "-"; showToast("กรุณากรอกจำนวนเงินก่อนแปลง"); return; }
+          const txt = thaiBahtText(val);
+          $("fBudgetText").value = txt;
+          showToast(`แปลงเป็น: ${txt}`);
+        };
+        $("fBudget").onblur = () => {
+          const val = $("fBudget").value.trim();
+          if (val && !$("fBudgetText").value.trim()) $("fBudgetText").value = thaiBahtText(val);
+        };
+        $("compChipsWrap").addEventListener("click", (e) => {
+          const b = e.target.closest("[data-comp-id]");
+          if (!b) return;
+          const uid = b.dataset.compId;
+          if (selectedCompIds.has(uid)) selectedCompIds.delete(uid);
+          else selectedCompIds.add(uid);
+          b.classList.toggle("active", selectedCompIds.has(uid));
+          const lines = [...selectedCompIds].map((id) => {
+            const u = compPool.find((x) => x.id === id);
+            return u ? `${u.name},${getOfficialPosition(u.id, u.position)}` : "";
+          }).filter(Boolean);
+          $("fCompanions").value = lines.join("\n");
+        });
         $("fDutyDestSelect").onchange = () => {
           const sel = $("fDutyDestSelect");
           const isOther = sel.value === "__other__";
           $("fDest").classList.toggle("hidden", !isOther);
           const opt = sel.options[sel.selectedIndex];
           if (!isOther && opt) {
-            if (opt.dataset.amphoe) $("fAmphoe").value = opt.dataset.amphoe;
-            if (opt.dataset.province) $("fProvince").value = opt.dataset.province;
+            const p = opt.dataset.province || "นครราชสีมา";
+            const a = opt.dataset.amphoe || "สีคิ้ว";
+            wireThaiAddressPicker("dutyAddr", p, a, "");
           }
         };
         $("fCancelBtn").onclick = closeSheet;
@@ -798,6 +1013,8 @@
             const [n, p] = l.split(",");
             return { name: (n || "").trim(), pos: (p || "ครู").trim() };
           });
+          const budgetRaw = $("fBudget").value.trim();
+          const budgetTextVal = $("fBudgetText").value.trim() || (budgetRaw ? thaiBahtText(budgetRaw) : "-");
           saveNewRequest({
             type: "duty",
             startDate: $("fStartDate").value || today,
@@ -812,10 +1029,10 @@
               dutyKind: $("fDutyKind").value,
               org,
               dutySubject: $("fDutySubject").value.trim(),
-              amphoe: $("fAmphoe").value.trim(),
-              province: $("fProvince").value.trim(),
-              budget: $("fBudget").value.trim(),
-              budgetText: $("fBudgetText").value.trim(),
+              amphoe: $("dutyAddrAmp").value,
+              province: $("dutyAddrProv").value,
+              budget: budgetRaw || "-",
+              budgetText: budgetTextVal,
               companions
             }
           });
@@ -825,6 +1042,7 @@
 
       // miss_in (08.15) or miss_out (16.30)
       const isIn = mode === "miss_in";
+      const witnessPool = getTeacherAndStaffUsers();
       openSheet(`
         <h3>${isIn ? "🕗 ชี้แจงการมาลงเวลาปฏิบัติราชการ (08.15 น.)" : "🕓 ชี้แจงการไม่ลงเวลากลับ (16.30 น.)"}</h3>
         <div class="row-2">
@@ -834,7 +1052,13 @@
         ${isIn ? `
           <div class="row-2">
             <div><label class="lbl">มาปฏิบัติงานตั้งแต่เวลา</label><input class="field" id="fStartTime" type="time" value="08:00" /></div>
-            <div><label class="lbl">ผู้ร่วมปฏิบัติงาน (พยาน)</label><input class="field" id="fWitness" placeholder="ชื่อ-สกุล ครูผู้ร่วมงาน" /></div>
+            <div>
+              <label class="lbl">ผู้ร่วมปฏิบัติงาน (พยาน)</label>
+              <select class="select-field" id="fWitness">
+                <option value="">-- เลือกครูพยาน --</option>
+                ${witnessPool.map((u) => `<option value="${u.name}">${u.shortName} (${u.name})</option>`).join("")}
+              </select>
+            </div>
           </div>` : ""}
         <label class="lbl">เนื่องจาก (ระบุเหตุผล/ความจำเป็น)</label>
         <textarea class="textarea-field" id="fReason" rows="2"></textarea>

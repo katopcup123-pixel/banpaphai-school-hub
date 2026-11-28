@@ -2121,7 +2121,8 @@
         </div>`
       : "";
 
-    const filtersHtml = `
+    const isRadial = (state.menuView || localStorage.getItem("bpp_connect_menu_view_v1") || "radial") === "radial" && !state.jiggleMode;
+    const filtersHtml = (isRadial && !isListMode) ? "" : `
       <div class="filter-bar" role="tablist" aria-label="ฝ่ายบริหาร">
         ${config.divisions
           .map((d) => {
@@ -2139,7 +2140,6 @@
     const sectionHeading = state.division === "all" ? "เมนูระบบงานทั้งหมด" : `ฝ่ายบริหารงาน${currentDivLabel}`;
 
     let bodyHtml = "";
-    const isRadial = (state.menuView || "radial") === "radial" && !state.jiggleMode;
     if (visible.length === 0) {
       bodyHtml = `<div class="empty-state">ไม่พบระบบงานที่ค้นหา</div>`;
     } else if (!isListMode) {
@@ -3096,7 +3096,9 @@
     }
     if (e.target.id === "toggleMenuViewBtn") {
       haptic();
-      state.menuView = (state.menuView || "radial") === "radial" ? "grid" : "radial";
+      const cur = state.menuView || localStorage.getItem("bpp_connect_menu_view_v1") || "radial";
+      state.menuView = cur === "radial" ? "grid" : "radial";
+      try { localStorage.setItem("bpp_connect_menu_view_v1", state.menuView); } catch (_) {}
       render();
       return;
     }
